@@ -25,13 +25,23 @@ def anonimizar_texto(texto):
     # 2. CNPJs (14 dígitos formatados)
     texto = re.sub(r'\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b', '[CNPJ]', texto)
     
-    # 3. Ocultar nomes próprios após honoríficos ou no corpo padrão
-    # Ex: Sr. João da Silva, advogado José Antônio
+    # 3. Ocultar nomes próprios (Após honoríficos ou em formato Nome e Sobrenome Maiúsculos)
     honorificos = r'(?:Sr\.|Sra\.|Dr\.|Dra\.|advogado|advogada|autor|autora|réu|ré|juiz|juíza|relator|relatora|desembargador|desembargadora)'
-    # Captura 2 a 4 palavras com iniciais maiúsculas após o honorífico
     texto = re.sub(fr'(?i){honorificos}\s+([A-ZÀ-Ÿ][a-zà-ÿ]+\s+){{1,4}}[A-ZÀ-Ÿ][a-zà-ÿ]+', r'\g<0> ([NOME_OCULTADO])', texto)
     
-    # Mascarar números de contas/agências comuns e CEPs numéricos puros
+    # Nomes Próprios Isolados: 3 ou mais palavras Capitalizadas seguidas (Ex: Geraldo Ferreira da Silva)
+    texto = re.sub(r'\b([A-ZÀ-Ÿ][a-zà-ÿ]+\s+){2,5}[A-ZÀ-Ÿ][a-zà-ÿ]+\b', '[NOME_PESSOA]', texto)
+    
+    # 4. Endereços, Municípios da Paraíba Frequentes e Empresas
+    # Municípios, Zonas e Logradouros
+    locais = r'(?i)(em\s+João Pessoa|em\s+S\.\s*Miguel|em\s+São Miguel|no\s+Conde|Sítio Corredor|zona rural.*?(?=[,\.]))'
+    texto = re.sub(locais, ' [LOCAL_OCULTADO] ', texto)
+    texto = re.sub(r'(?i)(rua|avenida|praça|sítio|bairro) [a-zà-ÿ\s]+', '[ENDEREÇO]', texto)
+    
+    # Empresas (Razão Social contendo Ltda, S/A, S.A, ME)
+    texto = re.sub(r'\b[A-ZÀ-Ÿa-zà-ÿ\s]+\s+(Ltda\.?|LTDA\.?|S/A|S\.A\.?|ME|EPP)\b', '[EMPRESA]', texto)
+
+    # 5. Mascarar números de contas/agências comuns e CEPs numéricos puros
     texto = re.sub(r'\b\d{4,5}-\d{1}\b', '[CONTA-DIGITO]', texto)
     texto = re.sub(r'\b\d{5}-\d{3}\b', '[CEP]', texto)
 
