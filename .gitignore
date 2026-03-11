@@ -1,0 +1,18 @@
+# Bases de Dados e Dumps
+*.sql
+*.sqlite
+*.db
+
+# Arquivos de Dados (JSON / JSONL)
+*.json
+*.jsonl
+dump_strings.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+env/
+.venv/
