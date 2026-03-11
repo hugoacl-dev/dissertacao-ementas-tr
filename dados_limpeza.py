@@ -29,23 +29,29 @@ def limpar_texto(texto):
     # Ex: "Processo nº 0500148-54.2016.4.05.8200" ou "Autos: 1234..."
     texto = re.sub(r'(?i)(processo|protocolo|autos)[\s\w]*n[º°o]?[\s:]*[\d\.\-]+(?:/\d+)?', ' ', texto)
     
-    # Remoção de IDs de documentos PJe (ex: "id: 48772689")
-    texto = re.sub(r'(?i)\bid[\s:]*\d{6,}', ' ', texto)
+    # Remoção de IDs de documentos PJe (incluindo com parênteses ex: "(id. 48772689)")
+    texto = re.sub(r'(?i)\(?id\.?[\s:]*\d{6,}\)?', ' ', texto)
 
-    # 4. Remoção de Datas Soltas / Extensas de Julgamento
-    # Ex: "João Pessoa, 10 de maio de 2023" ou "27/08/2025"
+    # 4. Remoção de Datas Soltas / Extensas e Carimbos de DJe
+    # Ex: "PROCESSO ELETRÔNICO DJe-s/n DIVULG 23-05-2024"
+    texto = re.sub(r'(?i)(Data de Julgamento.*?|PROCESSO ELETRÔNICO.*?DJe-s/n.*?(PUBLIC|DIVULG).*?\d{4})', ' ', texto)
+    
     cidades = r'(joão pessoa|campina grande|guarabira|patos|monteiro|sousa)'
     meses = r'(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)'
     texto = re.sub(fr'(?i){cidades}[\s,]+(\d{{1,2}})[\sde]+{meses}[\sde]+(\d{{4}})', ' ', texto)
     texto = re.sub(r'(?i)\d{1,2}/\d{1,2}/\d{4}', ' ', texto) # Datas dd/mm/yyyy
 
     # 5. Remoção de Assinaturas, Saudações Honoríficas e Praxe do Tribunal
-    # Remove blocos como: "A Turma Recursal dos Juizados Especiais Federais... DEU PROVIMENTO..."
+    # Remove blocos como: "A Turma Recursal dos Juizados Especiais... DEU PROVIMENTO..."
     # que costumam aparecer no final do voto poluindo a ratio decidendi.
     texto = re.sub(r'(?i)A Turma Recursal dos Juizados Especiais.*?(votos?|juiz[- ]relator|honorários).*?(?=\.|$)', ' ', texto)
     
-    # Retira menções a quem relatou ou assinou, se isolado no início ou fim
+    # Destroi a "Súmula de Julgamento" e blocos finais com Nomes de Juízes soltos em CAPSLOCK
+    texto = re.sub(r'(?i)Súmula de Julgamento:?.*$', ' ', texto)
     texto = re.sub(r'(?i)(Juiz Federal|Juíza Federal|Relator|Relatora|Excelentíssimo|Desembargador)[\w\s]*?$', ' ', texto)
+    
+    # Ex: "BIANOR ARRUDA BEZERRA NETO" jogado no final da string
+    texto = re.sub(r'\.?[ \n]*[A-ZÀ-Ÿ\s]{10,}$', ' ', texto)
 
     # 6. Normalização de Espaços e Quebras de Linha
     # O PJe gera muitas quebras duplas \n e tabs \t
