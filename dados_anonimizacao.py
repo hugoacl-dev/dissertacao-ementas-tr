@@ -32,14 +32,25 @@ def anonimizar_texto(texto):
     # Nomes Próprios Isolados: 3 ou mais palavras Capitalizadas seguidas (Ex: Geraldo Ferreira da Silva)
     texto = re.sub(r'\b([A-ZÀ-Ÿ][a-zà-ÿ]+\s+){2,5}[A-ZÀ-Ÿ][a-zà-ÿ]+\b', '[NOME_PESSOA]', texto)
     
-    # 4. Endereços, Municípios da Paraíba Frequentes e Empresas
-    # Municípios, Zonas e Logradouros
-    locais = r'(?i)(em\s+João Pessoa|em\s+S\.\s*Miguel|em\s+São Miguel|no\s+Conde|Sítio Corredor|zona rural.*?(?=[,\.]))'
-    texto = re.sub(locais, ' [LOCAL_OCULTADO] ', texto)
-    texto = re.sub(r'(?i)(rua|avenida|praça|sítio|bairro) [a-zà-ÿ\s]+', '[ENDEREÇO]', texto)
+    # 4. Endereços, Municípios e Empresas
+    # Lista compacta das 223 cidades da Paraíba + capitais vizinhas comuns
+    cidades_pb = (
+        r'\b(?:em\s+|no\s+|na\s+|de\s+)?(João Pessoa|Campina Grande|Santa Rita|Patos|Bayeux|Sousa|'
+        r'Cajazeiras|Guarabira|Cabedelo|Sapé|Mamanguape|Queimadas|São Bento|Monteiro|Esperança|'
+        r'Pombal|Catolé do Rocha|Alagoa Grande|Pedras de Fogo|Lagoa Seca|Santa Luzia|São João do Rio do Peixe|'
+        r'Itaporanga|Rio Tinto|Princesa Isabel|Areia|Mari|Jacaraú|Bananal|Conde|São Miguel de Taipu|'
+        r'Boa Vista|Boqueirão|Coremas|Cuité|Itabaiana|Lucena|Picuí|Pitimbu|Solânea|Taperoá|Umbuzeiro|'
+        r'Recife|Natal|Maceió|Fortaleza|zona rural|sítio corredor)\b'
+    )
+    texto = re.sub(cidades_pb, ' [LOCAL_OCULTADO] ', texto, flags=re.IGNORECASE)
     
-    # Empresas (Razão Social contendo Ltda, S/A, S.A, ME)
-    texto = re.sub(r'\b[A-ZÀ-Ÿa-zà-ÿ\s]+\s+(Ltda\.?|LTDA\.?|S/A|S\.A\.?|ME|EPP)\b', '[EMPRESA]', texto)
+    # Endereços (Logradouros): Captura restrita c/ âncora em Numeral ou CEP
+    # Cobre: Rua X, nº 10 / Av. Y, CEP 58000 / Travessa Z, bloco 2
+    logradouros = r'(?i)\b(rua|r\.|avenida|av\.|praça|pça\.|travessa|tv\.|rodovia|br-\d+|sítio|fazenda)[^\.,]{1,60}?(n[º°o]?\s*\d+|cep\s*\d|bloco\s*\d|lote\s*\d)'
+    texto = re.sub(logradouros, '[ENDEREÇO_COMPLETO]', texto)
+
+    # Empresas (Razão Social contendo Ltda, S/A, S.A, ME, EPP)
+    texto = re.sub(r'\b[A-ZÀ-Ÿ0-9a-zà-ÿ\s\-\&]{2,40}\s+(Ltda\.?|LTDA\.?|S/A|S\.A\.?|ME|EPP|Comércio|Empreendimentos|Serviços)\b', '[EMPRESA]', texto, flags=re.IGNORECASE)
 
     # 5. Mascarar números de contas/agências comuns e CEPs numéricos puros
     texto = re.sub(r'\b\d{4,5}-\d{1}\b', '[CONTA-DIGITO]', texto)
