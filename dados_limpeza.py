@@ -32,14 +32,22 @@ def limpar_texto(texto):
     # Remoção de IDs de documentos PJe (incluindo com parênteses ex: "(id. 48772689)")
     texto = re.sub(r'(?i)\(?id\.?[\s:]*\d{6,}\)?', ' ', texto)
 
-    # 4. Remoção de Datas Soltas / Extensas e Carimbos de DJe
-    # Ex: "PROCESSO ELETRÔNICO DJe-s/n DIVULG 23-05-2024"
+    # 4. Remoção de Datas Soltas / Extensas, Carimbos DJe e Ações Civis Públicas (ACP) irrelevantes
+    # Ex: "PROCESSO ELETRÔNICO DJe-s/n DIVULG 23-05-2024" ou "DJe 26.09.2012"
     texto = re.sub(r'(?i)(Data de Julgamento.*?|PROCESSO ELETRÔNICO.*?DJe-s/n.*?(PUBLIC|DIVULG).*?\d{4})', ' ', texto)
+    texto = re.sub(r'(?i)DJe\s+\d{1,2}[\./]\d{1,2}[\./]\d{2,4}', ' ', texto)
+    
+    # Ex: "Ação Civil Pública - ACP nº 1012072-89.2018.401.3400 -- DPU"
+    texto = re.sub(r'(?i)Ação Civil Pública[\s\-]+ACP\s*n[º°o]?\s*[\d\.\-]+[^\.]*DPU', ' ', texto)
     
     cidades = r'(joão pessoa|campina grande|guarabira|patos|monteiro|sousa)'
     meses = r'(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)'
     texto = re.sub(fr'(?i){cidades}[\s,]+(\d{{1,2}})[\sde]+{meses}[\sde]+(\d{{4}})', ' ', texto)
-    texto = re.sub(r'(?i)\d{1,2}/\d{1,2}/\d{4}', ' ', texto) # Datas dd/mm/yyyy
+    
+    # Remover menções soltas relativas a datas do tipo dia.mês.ano ou dia/mês/ano com prefixos
+    texto = re.sub(r'(?i)(atualizado|falecido)[\s]+em[\s]+\d{1,2}[\./]\d{1,2}[\./]\d{2,4}', ' ', texto)
+    texto = re.sub(r'(?i)falecido[\s]+em[\s]+\d{4}', ' ', texto)
+    texto = re.sub(r'(?i)\d{1,2}[\./]\d{1,2}[\./]\d{2,4}', ' ', texto) # Datas dd/mm/yyyy ou dd.mm.yyyy
 
     # 5. Remoção de Assinaturas, Saudações Honoríficas e Praxe do Tribunal
     # Remove blocos como: "A juizado especial dos Juizados Especiais... DEU PROVIMENTO..."
