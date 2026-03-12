@@ -8,6 +8,7 @@ Métricas calculadas:
   - Funil de attrition (brutos → limpos → finais)
   - Distribuição de comprimento (em palavras) das fundamentações e ementas
   - Razão de compressão (fundamentação / ementa)
+  - Novel n-grams (grau de abstratividade do corpus)
   - Período temporal coberto pelos julgamentos
   - Totais de palavras para fine-tuning
 
@@ -137,6 +138,55 @@ def _distribuicao(valores: list[int]) -> dict[str, Any]:
     }
 
 
+def _ngrams(palavras: list[str], n: int) -> set[tuple[str, ...]]:
+    """Gera o conjunto de n-grams a partir de uma lista de palavras."""
+    return {tuple(palavras[i:i + n]) for i in range(len(palavras) - n + 1)}
+
+
+def calcular_novel_ngrams(
+    pares: list[tuple[str, str]],
+) -> dict[str, dict[str, float]]:
+    """Calcula a taxa de novel n-grams (uni/bi/tri) das ementas vs. fundamentações.
+
+    Novel n-gram = n-gram presente na ementa que NÃO aparece na fundamentação.
+    Taxa alta → corpus genuinamente abstrativo.
+    Referência: See et al. (2017), 'Get To The Point'.
+
+    Args:
+        pares: Lista de tuplas (fundamentação, ementa) em texto limpo.
+
+    Returns:
+        Dicionário com taxas médias de novelty para uni/bi/trigramas.
+    """
+    novelty: dict[str, list[float]] = {"unigrams": [], "bigrams": [], "trigrams": []}
+
+    for fund, ementa in pares:
+        palavras_fund = fund.lower().split()
+        palavras_ementa = ementa.lower().split()
+
+        if len(palavras_ementa) < 2:
+            continue
+
+        for n, nome in [(1, "unigrams"), (2, "bigrams"), (3, "trigrams")]:
+            if len(palavras_ementa) < n:
+                continue
+            ng_ementa = _ngrams(palavras_ementa, n)
+            ng_fund = _ngrams(palavras_fund, n)
+            novel = ng_ementa - ng_fund
+            taxa = len(novel) / len(ng_ementa) * 100 if ng_ementa else 0.0
+            novelty[nome].append(taxa)
+
+    resultado = {}
+    for nome, valores in novelty.items():
+        if valores:
+            resultado[nome] = {
+                "media": round(sum(valores) / len(valores), 1),
+                "mediana": round(stats.median(valores), 1),
+                "desvio_padrao": round(stats.pstdev(valores), 1),
+            }
+    return resultado
+
+
 def calcular_funil(brutos: list, limpos: list, treino: list, teste: list) -> dict:
     """Calcula o funil de attrition do pipeline."""
     return {
@@ -245,6 +295,7 @@ def gerar_relatorio(
     fundamentos_palavras: list[int] = []
     ementas_palavras: list[int] = []
     razoes: list[float] = []
+    pares_texto: list[tuple[str, str]] = []
 
     for obj in all_data:
         fund, ementa = _extrair_texto_do_jsonl(obj)
@@ -252,6 +303,7 @@ def gerar_relatorio(
         n_ementa = _contar_palavras(ementa)
         fundamentos_palavras.append(n_fund)
         ementas_palavras.append(n_ementa)
+        pares_texto.append((fund, ementa))
         if n_ementa > 0:
             razoes.append(n_fund / n_ementa)
 
@@ -276,6 +328,15 @@ def gerar_relatorio(
         razao_stats["media"], razao_stats["mediana"], razao_stats["desvio_padrao"],
     )
 
+    # --- Novel n-grams (abstratividade) ---
+    log.info("Calculando novel n-grams (abstratividade)...")
+    novelty = calcular_novel_ngrams(pares_texto)
+    for nome, vals in novelty.items():
+        log.info(
+            "  Novel %s: média=%.1f%% | mediana=%.1f%% | std=%.1f%%",
+            nome, vals["media"], vals["mediana"], vals["desvio_padrao"],
+        )
+
     # --- Período temporal ---
     log.info("Analisando período temporal...")
     periodo = calcular_periodo_temporal(brutos)
@@ -295,6 +356,7 @@ def gerar_relatorio(
         "fundamentacao": dist_fund,
         "ementa": dist_ementa,
         "razao_compressao": razao_stats,
+        "novel_ngrams": novelty,
         "periodo_temporal": periodo,
     }
 
