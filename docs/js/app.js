@@ -137,9 +137,9 @@ function buildPhaseMeta(data) {
 
 /* ===== Phase Section Builder ===== */
 function buildPhase(num, data, contentFn) {
-  const section = el('section', 'phase');
-  const header  = el('div', 'phase__header');
   const isDone  = data.status === 'concluida';
+  const section = el('section', `phase${isDone ? '' : ' phase--pending'}`);
+  const header  = el('div', 'phase__header');
 
   const numBadge = el('div', `phase__number ${isDone ? 'phase__number--done' : 'phase__number--pending'}`);
   numBadge.textContent = num;
@@ -153,29 +153,33 @@ function buildPhase(num, data, contentFn) {
   header.append(numBadge, title, status);
   section.appendChild(header);
 
+  // Body container — all content below the header
+  const body = el('div', 'phase__body');
+
   if (data.descricao) {
     const desc = el('p', 'phase__desc');
     desc.textContent = data.descricao;
-    section.appendChild(desc);
+    body.appendChild(desc);
   }
 
   // Phase metadata (script, time, artifacts)
   if (isDone) {
-    section.appendChild(buildPhaseMeta(data));
+    body.appendChild(buildPhaseMeta(data));
   }
 
   // Contextual narrative
   if (data.narrativa) {
     const narr = el('p', 'phase__narrativa');
     narr.textContent = data.narrativa;
-    section.appendChild(narr);
+    body.appendChild(narr);
   }
 
   if (contentFn) {
     const content = contentFn();
-    if (content) section.appendChild(content);
+    if (content) body.appendChild(content);
   }
 
+  section.appendChild(body);
   return section;
 }
 
