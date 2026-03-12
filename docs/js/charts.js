@@ -77,11 +77,14 @@ function renderFunnelChart(f4) {
         tooltip: { callbacks: { label: ctx => `${ctx.raw.toLocaleString('pt-BR')} registros` } },
         datalabels: {
           anchor: 'end',
-          align: 'left',
+          align(ctx) {
+            const max = Math.max(...ctx.dataset.data);
+            return ctx.dataset.data[ctx.dataIndex] < max * 0.2 ? 'right' : 'left';
+          },
           color: c.label,
           font: { size: 12, weight: '700', family: 'Inter' },
           formatter: v => v.toLocaleString('pt-BR'),
-          padding: { right: 8 },
+          padding: { right: 8, left: 4 },
         },
       },
       scales: {
