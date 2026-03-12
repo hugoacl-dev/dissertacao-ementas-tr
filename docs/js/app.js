@@ -185,7 +185,7 @@ function buildPhase(num, data, contentFn) {
   const loading = document.getElementById('loading');
 
   try {
-    const resp = await fetch('../data/estatisticas_corpus.json');
+    const resp = await fetch('data/estatisticas_corpus.json');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
     const data = await resp.json();
     loading.remove();
