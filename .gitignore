@@ -1,18 +1,15 @@
-# Bases de Dados e Dumps
-*.sql
-*.sqlite
-*.db
-
-# Arquivos de Dados (JSON / JSONL)
-*.json
-*.jsonl
-dump_strings.txt
+# Dados gerados pelo pipeline (pesados, não versionados)
+data/
+dump_sistema_judicial.sql
 
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-.env
-venv/
-env/
-.venv/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
