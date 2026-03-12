@@ -1,5 +1,6 @@
 # Dados gerados pelo pipeline (pesados, não versionados)
-data/
+/data/
+!docs/data/
 dump_tr_one.sql
 
 # Python
