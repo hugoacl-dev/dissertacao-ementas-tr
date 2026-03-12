@@ -521,8 +521,8 @@ body {
 @media (max-width: 480px) {
   .hero { padding: 2rem 1rem 1.5rem; }
   .hero h1 { font-size: 1.25rem; }
-  .hero__badge { font-size: 0.7rem; padding: 0.3rem 0.8rem; margin-bottom: 0.8rem; }
-  .hero__author { font-size: 0.85rem; margin-bottom: 1rem; }
+  .hero__badge { font-size: 0.75rem; padding: 0.3rem 0.8rem; margin-bottom: 0.8rem; }
+  .hero__author { font-size: 0.88rem; margin-bottom: 1rem; }
   .hero__meta { flex-direction: column; align-items: center; gap: 0.4rem; }
 
   .container { padding: 1rem 0.75rem; }
@@ -536,32 +536,32 @@ body {
   }
   .phase__number { width: 36px; height: 36px; font-size: 0.85rem; }
   .phase__title { font-size: 1.05rem; }
-  .phase__status { font-size: 0.7rem; padding: 0.2rem 0.6rem; }
-  .phase__desc { font-size: 0.82rem; margin-bottom: 0.5rem; }
+  .phase__status { font-size: 0.75rem; padding: 0.2rem 0.6rem; }
+  .phase__desc { font-size: 0.88rem; margin-bottom: 0.5rem; }
   .phase__narrativa {
-    font-size: 0.8rem;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    line-height: 1.65;
     padding-left: 0.8rem;
     margin-bottom: 0.8rem;
   }
 
   /* Phase meta */
-  .phase__meta { gap: 0.5rem 1rem; font-size: 0.75rem; }
+  .phase__meta { gap: 0.5rem 1rem; font-size: 0.8rem; }
 
   /* Artifacts */
-  .artifact { font-size: 0.75rem; padding: 0.35rem 0.5rem; gap: 0.4rem; }
-  .artifact__badge { font-size: 0.65rem; padding: 0.1rem 0.4rem; }
-  .artifact__name { font-size: 0.72rem; }
+  .artifact { font-size: 0.8rem; padding: 0.35rem 0.5rem; gap: 0.4rem; }
+  .artifact__badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; }
+  .artifact__name { font-size: 0.78rem; }
   .artifact__icon { width: 14px; height: 14px; }
-  .artifact__desc { font-size: 0.7rem; width: 100%; margin-left: 0; margin-top: 0.2rem; }
+  .artifact__desc { font-size: 0.78rem; width: 100%; margin-left: 0; margin-top: 0.2rem; }
 
   /* Cards — single column */
   .cards { grid-template-columns: 1fr; gap: 0.7rem; }
   .card { padding: 0.9rem; }
-  .card__label { font-size: 0.7rem; margin-bottom: 0.35rem; }
+  .card__label { font-size: 0.75rem; margin-bottom: 0.35rem; }
   .card__value { font-size: 1.5rem; }
-  .card__sub { font-size: 0.75rem; }
-  .card__hint { font-size: 0.78rem; line-height: 1.6; }
+  .card__sub { font-size: 0.8rem; }
+  .card__hint { font-size: 0.85rem; line-height: 1.65; }
 
   /* Charts — taller on mobile for readability */
   .chart-container { height: 240px; }
@@ -569,19 +569,19 @@ body {
   /* Gauges — 3 across on mobile still, but smaller */
   .gauge-grid { grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
   .gauge-item canvas { max-width: 90px; }
-  .gauge-item__label { font-size: 0.65rem; margin-top: 0.3rem; }
+  .gauge-item__label { font-size: 0.75rem; margin-top: 0.3rem; }
   .gauge-item__value { font-size: 1.2rem; }
 
   /* Tables */
-  .comp-table { font-size: 0.75rem; }
-  .comp-table th { font-size: 0.68rem; padding: 0.4rem 0.5rem; }
+  .comp-table { font-size: 0.8rem; }
+  .comp-table th { font-size: 0.75rem; padding: 0.4rem 0.5rem; }
   .comp-table td { padding: 0.4rem 0.5rem; }
 
   /* Footer */
-  .footer { font-size: 0.7rem; padding: 1.5rem 0.8rem; }
-  .footer code { font-size: 0.68rem; }
+  .footer { font-size: 0.78rem; padding: 1.5rem 0.8rem; }
+  .footer code { font-size: 0.75rem; }
 
   /* Toggle */
-  .theme-toggle { top: 0.6rem; right: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.7rem; gap: 0.3rem; }
+  .theme-toggle { top: 0.6rem; right: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.75rem; gap: 0.3rem; }
   .theme-toggle__icon { font-size: 0.9rem; }
 }
