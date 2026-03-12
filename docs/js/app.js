@@ -9,7 +9,7 @@ const themeIcon   = document.getElementById('themeIcon');
 const themeLabel  = document.getElementById('themeLabel');
 
 function getTheme() {
-  return localStorage.getItem('dashboard-theme') || 'dark';
+  return localStorage.getItem('dashboard-theme') || 'light';
 }
 
 function applyTheme(theme) {
