@@ -542,7 +542,7 @@ def gerar_relatorio(
             f"alta complexidade com textos muito extensos."
         ),
         "temporal": (
-            f"Quantidade de processos recebidos pelas relatorias da juizado especial a cada ano, "
+            f"Quantidade de processos recebidos pelas relatorias da juizado especial no sistema sistema judicial a cada ano, "
             f"abrangendo o período de {periodo.get('data_mais_antiga', '—')[:4]} a "
             f"{periodo.get('data_mais_recente', '—')[:4]}."
         ),
