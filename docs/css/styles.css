@@ -169,11 +169,42 @@ body {
 
 /* ===== PHASE SECTION ===== */
 .phase {
-  margin-bottom: 3rem;
+  margin-bottom: 0;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeUp 0.5s ease forwards;
+  position: relative;
+  padding-left: 3.2rem;
 }
+/* Timeline vertical connector */
+.phase::before {
+  content: '';
+  position: absolute;
+  left: 21px;
+  top: 44px;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-3);
+}
+.phase:last-child::before { display: none; }
+/* Pending phases get dashed line */
+.phase--pending::before {
+  background: none;
+  border-left: 2px dashed var(--border);
+}
+
+/* Gradient divider between phases */
+.phase + .phase { padding-top: 1rem; }
+.phase + .phase::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 3.2rem;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--border) 50%, transparent 100%);
+}
+
 .phase:nth-child(1) { animation-delay: 0.05s; }
 .phase:nth-child(2) { animation-delay: 0.1s; }
 .phase:nth-child(3) { animation-delay: 0.15s; }
@@ -190,7 +221,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
   cursor: pointer;
   user-select: none;
   position: sticky;
@@ -198,13 +229,23 @@ body {
   z-index: 20;
   background: var(--bg-primary);
   padding: 0.8rem 0;
-  margin-top: -0.8rem;
+  margin-left: -3.2rem;
+  padding-left: 0;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .phase__header--stuck {
   border-bottom-color: var(--border);
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ===== PHASE BODY CARD ===== */
+.phase__body {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
 }
 .phase__number {
   width: 44px;
@@ -235,14 +276,14 @@ body {
   color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 0.6rem;
-  padding-left: 3.5rem;
+  padding-left: 0;
   font-weight: 400;
 }
 
 /* ===== PHASE NARRATIVE (contextual interpretation) ===== */
 .phase__narrativa {
-  padding-left: 3.5rem;
-  padding-right: 1rem;
+  padding-left: 0.8rem;
+  padding-right: 0;
   margin-bottom: 1rem;
   font-size: 0.85rem;
   line-height: 1.8;
@@ -250,7 +291,6 @@ body {
   font-weight: 400;
   font-style: italic;
   border-left: 3px solid var(--accent);
-  padding-left: calc(3.5rem + 0.8rem);
   margin-left: 0;
 }
 
@@ -260,7 +300,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem 2rem;
-  padding-left: 3.5rem;
+  padding-left: 0;
   margin-bottom: 1rem;
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -354,7 +394,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  padding-left: 3.5rem;
+  padding-left: 0;
 }
 .card {
   background: var(--bg-card);
@@ -527,8 +567,16 @@ body {
 
   .container { padding: 1rem 0.75rem; }
 
+  /* Phase timeline — compact on mobile */
+  .phase { padding-left: 2.4rem; }
+  .phase::before { left: 15px; top: 36px; }
+  .phase__header { margin-left: -2.4rem; padding-left: 0; }
+  .phase + .phase::after { left: 2.4rem; }
+
+  /* Phase body card — less padding on mobile */
+  .phase__body { padding: 0.8rem 1rem; margin-bottom: 1rem; }
+
   /* Phase sections */
-  .phase { margin-bottom: 2rem; }
   .phase__header {
     flex-wrap: wrap;
     gap: 0.6rem;
