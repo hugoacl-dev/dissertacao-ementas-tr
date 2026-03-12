@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-12T15:33:19",
+    "gerado_em": "2026-03-12T16:39:27",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "Hugo Andrade Correia Lima Filho",
     "unidade_de_medida": "palavras (split por espaço)",
@@ -236,7 +236,7 @@
         "distribuicao": "A fundamentação tem mediana de 535 palavras enquanto a ementa tem apenas 27, uma razão de ~19:1. Essa assimetria extrema define a complexidade da tarefa de sumarização.",
         "novel_ngrams": "Novel n-grams medem quanto do texto da ementa NÃO aparece na fundamentação. Valores altos (87.0% de trigrams novos) confirmam que os juízes reformulam significativamente o texto. É sumarização abstrativa, não extrativa.",
         "histograma": "A maioria das fundamentações concentra-se entre 0-199 e 400-599 palavras, mas a cauda longa revela casos de alta complexidade com textos muito extensos.",
-        "temporal": "Quantidade de processos recebidos pelas relatorias da Turma Recursal a cada ano, abrangendo o período de 2024 a 2026."
+        "temporal": "Quantidade de processos recebidos pelas relatorias da Turma Recursal no sistema TR-ONE a cada ano, abrangendo o período de 2024 a 2026."
       },
       "artefatos": [
         {
