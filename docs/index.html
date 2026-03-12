@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline Dashboard — Dissertação Ementas TR</title>
+  <meta name="description" content="Dashboard de acompanhamento do pipeline de pesquisa: Geração Abstrativa de Ementas Judiciais">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" id="themeToggle" title="Alternar tema claro/escuro">
+    <span class="theme-toggle__icon" id="themeIcon">🌙</span>
+    <span id="themeLabel">Escuro</span>
+  </button>
+
+  <header class="hero" id="hero">
+    <div class="hero__badge">Pipeline de Pesquisa</div>
+    <h1 id="titulo">Carregando...</h1>
+    <p class="hero__author" id="autor"></p>
+    <div class="hero__meta">
+      <span id="meta-gerado">—</span>
+      <span id="meta-pipeline-time" style="display:none">—</span>
+    </div>
+  </header>
+
+  <main class="container" id="main">
+    <div class="loading" id="loading">
+      <div class="loading__spinner"></div>
+      <p>Carregando estatísticas do corpus...</p>
+    </div>
+  </main>
+
+  <footer class="footer" id="footer" style="display:none">
+    Gerado automaticamente por <code>pipeline/04_estatisticas.py</code> ·
+    Para atualizar: <code>bash pipeline/run_all.sh</code>
+  </footer>
+
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

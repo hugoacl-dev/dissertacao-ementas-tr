@@ -349,15 +349,246 @@ def gerar_relatorio(
     else:
         log.warning("  %s", periodo["erro"])
 
-    # --- Montar resultado final ---
-    resultado = {
-        "unidade_de_medida": "palavras (split por espaço)",
+    # --- Metadados por fase (para o dashboard) ---
+    import os
+    from datetime import datetime
+    from collections import Counter
+
+    def _file_size_mb(path: Path) -> float | None:
+        try:
+            return round(os.path.getsize(path) / (1024 * 1024), 1)
+        except OSError:
+            return None
+
+    # --- Ler timing do pipeline (gerado por run_all.sh) ---
+    timing_path = Path("data/.pipeline_timing.json")
+    timing: dict = {}
+    if timing_path.exists():
+        try:
+            with timing_path.open("r") as f:
+                timing = json.load(f)
+            log.info("Timing do pipeline carregado: %s", timing)
+        except (json.JSONDecodeError, OSError):
+            log.warning("Não foi possível ler timing do pipeline.")
+
+    # --- Vocabulário e histograma ---
+    log.info("Calculando vocabulário e histogramas...")
+    vocab_fund: set[str] = set()
+    vocab_ementa: set[str] = set()
+    for fund, ementa in pares_texto:
+        vocab_fund.update(fund.lower().split())
+        vocab_ementa.update(ementa.lower().split())
+    vocab_total = vocab_fund | vocab_ementa
+
+    vocabulario = {
+        "fundamentacao": len(vocab_fund),
+        "ementa": len(vocab_ementa),
+        "total_unico": len(vocab_total),
+        "sobreposicao": len(vocab_fund & vocab_ementa),
+    }
+    log.info(
+        "Vocabulário: fund=%d | ementa=%d | total=%d | sobreposição=%d",
+        vocabulario["fundamentacao"], vocabulario["ementa"],
+        vocabulario["total_unico"], vocabulario["sobreposicao"],
+    )
+
+    # Histograma de comprimento (bins de 100 palavras para fundamentação, 10 para ementa)
+    def _histograma(valores: list[int], bin_size: int) -> dict:
+        bins: dict[str, int] = {}
+        for v in valores:
+            bucket = (v // bin_size) * bin_size
+            label = f"{bucket}-{bucket + bin_size - 1}"
+            bins[label] = bins.get(label, 0) + 1
+        # Ordenar por bucket numérico e limitar aos primeiros 15 buckets
+        sorted_bins = dict(sorted(bins.items(), key=lambda x: int(x[0].split("-")[0]))[:15])
+        return sorted_bins
+
+    hist_fund = _histograma(fundamentos_palavras, 200)
+    hist_ementa = _histograma(ementas_palavras, 10)
+
+    # --- Artefatos completos por fase ---
+    db_path = Path("data/banco_sistema_judicial.sqlite")
+    dump_path = Path("dump_sistema_judicial.sql")
+
+    # --- Narrativas contextuais (didáticas) ---
+    taxa_ret_f1 = round(len(brutos) / TOTAL_DUMP * 100, 1)
+    perda_f1 = TOTAL_DUMP - len(brutos)
+    narrativa_f1 = (
+        f"O sistema sistema judicial (juizado especial federal) armazena "
+        f"votos e ementas em PostgreSQL. O dump original contém {TOTAL_DUMP:,} registros. "
+        f"Após descartar {perda_f1:,} registros sem voto (fundamentação) ou ementa preenchida, "
+        f"{len(brutos):,} pares válidos foram exportados, uma retenção de {taxa_ret_f1}%, "
+        f"indicando alta completude da base de dados."
+    ).replace(",", ".")
+
+    taxa_ret_f2 = round(len(limpos) / len(brutos) * 100, 1) if brutos else 0
+    perda_f2 = len(brutos) - len(limpos)
+    narrativa_f2 = (
+        f"Textos jurídicos contêm ruído processual (identificadores PJe, carimbos de "
+        f"publicação DJe, assinaturas) que polui o treinamento de modelos de linguagem. "
+        f"Após aplicar 6 regras de limpeza via expressões regulares, {perda_f2:,} registros "
+        f"foram descartados por fundamentação ou ementa muito curta. A retenção de {taxa_ret_f2}% "
+        f"confirma que o ruído era pontual. A maioria do corpus é utilizável."
+    ).replace(",", ".")
+
+    narrativa_f3 = (
+        f"Para conformidade com a LGPD, dados pessoais (CPF, CNPJ, nomes, endereços) foram "
+        f"substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado "
+        f"foi dividido em treino ({len(treino):,} registros, 90%) e teste ({len(teste):,} registros, "
+        f"10%) com split estratificado (seed=42), garantindo reprodutibilidade."
+    ).replace(",", ".")
+
+    razao_media = razao_stats.get("media", 0)
+    novel_uni = novelty.get("unigrams", {}).get("media", 0)
+    novel_tri = novelty.get("trigrams", {}).get("media", 0)
+    narrativa_f4 = (
+        "Esta fase analisa quantitativamente o corpus para caracterizar "
+        "a complexidade da tarefa de sumarização e validar a qualidade dos dados."
+    )
+
+    fase1 = {
+        "nome": "Ingestão",
+        "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema sistema judicial.",
+        "narrativa": narrativa_f1,
+        "status": "concluida",
+        "script": "pipeline/01_ingestao.py",
+        "duracao_segundos": timing.get("fase1_ingestao"),
+        "registros_dump": TOTAL_DUMP,
+        "registros_exportados": len(brutos),
+        "perda": perda_f1,
+        "taxa_retencao": taxa_ret_f1,
+        "fonte": "sistema judicial / PostgreSQL",
+        "artefatos": [
+            {"nome": "dump_sistema_judicial.sql", "tamanho_mb": _file_size_mb(dump_path), "tipo": "entrada", "conteudo": "Dump binário PostgreSQL (custom format)"},
+            {"nome": "dados_brutos.json", "tamanho_mb": _file_size_mb(brutos_path), "tipo": "saida", "conteudo": "{id, fundamentação, ementa}"},
+        ],
+    }
+
+    regras_higienizacao = [
+        "Remoção de identificadores PJe (ex: 0500xxx-xx.xxxx.x.xx.xxxx)",
+        "Remoção de carimbos DJe (Publicação/Intimação + data)",
+        "Remoção de assinaturas em CAPSLOCK (juízes/servidores)",
+        "Remoção de datas de publicação/julgamento isoladas",
+        "Filtro: fundamentação < 50 caracteres → descarte",
+        "Filtro: ementa < 20 caracteres → descarte",
+    ]
+
+    fase2 = {
+        "nome": "Higienização",
+        "descricao": "Limpeza do corpus para remoção de ruídos processuais via expressões regulares.",
+        "narrativa": narrativa_f2,
+        "status": "concluida",
+        "script": "pipeline/02_higienizacao.py",
+        "duracao_segundos": timing.get("fase2_higienizacao"),
+        "registros_entrada": len(brutos),
+        "registros_saida": len(limpos),
+        "perda": perda_f2,
+        "taxa_retencao": taxa_ret_f2,
+        "regras_aplicadas": regras_higienizacao,
+        "artefatos": [
+            {"nome": "dados_brutos.json", "tamanho_mb": _file_size_mb(brutos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa}"},
+            {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "saida", "conteudo": "{id, fundamentação, ementa} limpos"},
+        ],
+    }
+
+    fase3 = {
+        "nome": "Anonimização (LGPD)",
+        "descricao": "Substituição de dados pessoais por tokens genéricos e formatação para fine-tuning.",
+        "narrativa": narrativa_f3,
+        "status": "concluida",
+        "script": "pipeline/03_anonimizacao.py",
+        "duracao_segundos": timing.get("fase3_anonimizacao"),
+        "registros_entrada": len(limpos),
+        "registros_saida": len(treino) + len(teste),
+        "treino": len(treino),
+        "teste": len(teste),
+        "split_ratio": "90/10",
+        "random_seed": 42,
+        "categorias_pii": [
+            "CPF", "CNPJ", "CEP", "CONTA-DIGITO",
+            "NOME_OCULTADO", "NOME_PESSOA",
+            "LOCAL_OCULTADO", "ENDEREÇO_COMPLETO", "EMPRESA",
+        ],
+        "artefatos": [
+            {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa} limpos"},
+            {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "saida", "conteudo": "{instruction, output} anonimizado · 90%"},
+            {"nome": "dataset_teste.jsonl", "tamanho_mb": _file_size_mb(teste_path), "tipo": "saida", "conteudo": "{instruction, output} anonimizado · 10%"},
+        ],
+    }
+
+    # Dicas didáticas para cada quadro da Fase 4
+    perda_total_pct = round((1 - funil.get("taxa_retencao_global", 100) / 100) * 100, 1)
+    mediana_fund = dist_fund.get("mediana", 0)
+    mediana_ementa = dist_ementa.get("mediana", 0)
+    dicas = {
+        "funil": (
+            f"O funil mostra quantos registros sobreviveram a cada etapa do pipeline. "
+            f"A perda total foi de apenas {perda_total_pct}%, indicando que a base original "
+            f"é consistente e quase não há dados inutilizáveis."
+        ),
+        "distribuicao": (
+            f"A fundamentação tem mediana de {mediana_fund} palavras enquanto a ementa "
+            f"tem apenas {mediana_ementa}, uma razão de ~{mediana_fund // mediana_ementa}:1. "
+            f"Essa assimetria extrema define a complexidade da tarefa de sumarização."
+        ),
+        "novel_ngrams": (
+            f"Novel n-grams medem quanto do texto da ementa NÃO aparece na fundamentação. "
+            f"Valores altos ({novel_tri}% de trigrams novos) confirmam que os juízes "
+            f"reformulam significativamente o texto. É sumarização abstrativa, não extrativa."
+        ),
+        "histograma": (
+            f"A maioria das fundamentações concentra-se entre {list(hist_fund.keys())[0]} e "
+            f"{list(hist_fund.keys())[2]} palavras, mas a cauda longa revela casos de "
+            f"alta complexidade com textos muito extensos."
+        ),
+        "temporal": (
+            f"Quantidade de processos recebidos pelas relatorias da juizado especial a cada ano, "
+            f"abrangendo o período de {periodo.get('data_mais_antiga', '—')[:4]} a "
+            f"{periodo.get('data_mais_recente', '—')[:4]}."
+        ),
+    }
+
+    fase4 = {
+        "nome": "Estatísticas Descritivas",
+        "descricao": "Análise quantitativa do corpus: distribuições, compressão e grau de abstratividade.",
+        "narrativa": narrativa_f4,
+        "status": "concluida",
+        "script": "pipeline/04_estatisticas.py",
+        "duracao_segundos": timing.get("fase4_estatisticas"),
         "funil": funil,
         "fundamentacao": dist_fund,
         "ementa": dist_ementa,
         "razao_compressao": razao_stats,
         "novel_ngrams": novelty,
         "periodo_temporal": periodo,
+        "vocabulario": vocabulario,
+        "histograma_fundamentacao": hist_fund,
+        "histograma_ementa": hist_ementa,
+        "dicas": dicas,
+        "artefatos": [
+            {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "entrada", "conteudo": "{instruction, output} anonimizado"},
+            {"nome": "estatisticas_corpus.json", "tamanho_mb": None, "tipo": "saida", "conteudo": "Métricas, distribuições, funil"},
+        ],
+    }
+
+    # --- Montar resultado final ---
+    resultado = {
+        "meta": {
+            "gerado_em": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
+            "autor": "AUTOR_ANONIMIZADO",
+            "unidade_de_medida": "palavras (split por espaço)",
+            "pipeline_total_segundos": timing.get("pipeline_total"),
+        },
+        "fases": {
+            "fase1_ingestao": fase1,
+            "fase2_higienizacao": fase2,
+            "fase3_anonimizacao": fase3,
+            "fase4_estatisticas": fase4,
+            "fase5_finetuning": None,
+            "fase6_baseline": None,
+            "fase7_avaliacao": None,
+        },
     }
 
     # --- Gravar JSON ---
