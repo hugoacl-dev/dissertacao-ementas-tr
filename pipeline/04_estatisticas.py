@@ -596,6 +596,12 @@ def gerar_relatorio(
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(resultado, f, ensure_ascii=False, indent=2)
 
+    # Cópia para GitHub Pages (docs/)
+    docs_data = Path("docs/data")
+    docs_data.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copy2(output_path, docs_data / output_path.name)
+
     log.info("=== Fase 4 finalizada com sucesso. ===")
     return resultado
 
