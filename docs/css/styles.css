@@ -239,12 +239,9 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* ===== PHASE BODY CARD ===== */
+/* ===== PHASE BODY (structural wrapper) ===== */
 .phase__body {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.2rem 1.5rem;
+  padding: 0;
   margin-bottom: 1.5rem;
 }
 .phase__number {
@@ -573,8 +570,8 @@ body {
   .phase__header { margin-left: -2.4rem; padding-left: 0; }
   .phase + .phase::after { left: 2.4rem; }
 
-  /* Phase body card — less padding on mobile */
-  .phase__body { padding: 0.8rem 1rem; margin-bottom: 1rem; }
+  /* Phase body — compact on mobile */
+  .phase__body { margin-bottom: 1rem; }
 
   /* Phase sections */
   .phase__header {
