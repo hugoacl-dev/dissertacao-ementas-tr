@@ -1,6 +1,6 @@
 # Geração Abstrativa de Ementas Judiciais via Fine-Tuning de LLM
 
-Pipeline de dados e treinamento para dissertação de mestrado em Processamento de Linguagem Natural aplicado ao domínio jurídico.
+Pipeline de dados e treinamento para Processamento de Linguagem Natural aplicado ao domínio jurídico.
 
 **Autor:** AUTOR_ANONIMIZADO
 **Modelo Base:** `gemini-3.1-pro` (Google DeepMind)
