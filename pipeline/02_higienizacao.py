@@ -2,9 +2,8 @@
 02_higienizacao.py — Fase 2: Saneamento e Higienização Avançada
 
 Aplica expressões regulares pré-compiladas sobre os textos brutos gerados
-pela Fase 1, removendo ruídos processuais (HTML, IDs do PJe,
-carimbos DJe, assinaturas de juízes) e substituindo datas por token [DATA]
-para preservar informação semântica de mérito jurídico.
+pela Fase 1, removendo **ruído estrutural** (HTML, IDs do PJe,
+carimbos DJe, assinaturas de juízes). Datas e conteúdo de mérito são preservados.
 
 Entradas : data/dados_brutos.json
 Saídas   : data/dados_limpos.json
@@ -100,8 +99,6 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 6b. "Ação Civil Pública" / "Ação Civil Pública" sem ACP — menção isolada
-    ("acao_civil_publica", re.compile(r"Ação Civil Pública", re.IGNORECASE), " "),
 
     # 7. Datas com cidade prefixada — "João Pessoa, 12 de março de 2021"
     # [C1] Substituição por token semântico [DATA] em vez de espaço vazio.
@@ -114,47 +111,6 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " [DATA] ",
     ),
 
-    # 8. Datas extensas — "12 de março de 2021"
-    # [C1] Datas fazem parte do mérito (prazos, óbitos, benefícios).
-    (
-        "data_extensa",
-        re.compile(rf"\d{{1,2}}\s+de\s+{_MESES}\s+de\s+\d{{4}}", re.IGNORECASE),
-        " [DATA] ",
-    ),
-
-    # 9. Datas com prefixo de contexto — "atualizado em 01/01/2020", "falecido em 2022"
-    (
-        "data_prefixada",
-        re.compile(
-            r"(?:atualizado|falecido)\s+em\s+\d{1,2}[./]\d{1,2}[./]\d{2,4}",
-            re.IGNORECASE,
-        ),
-        " [DATA] ",
-    ),
-    (
-        "falecido_ano",
-        re.compile(r"falecido\s+em\s+\d{4}", re.IGNORECASE),
-        " [DATA] ",
-    ),
-
-    # 10. Datas numéricas genéricas — "01/03/2024", "01.03.2024"
-    # [C1] Preserva a informação de que havia uma referência temporal.
-    (
-        "data_numerica",
-        re.compile(r"\d{1,2}[./]\d{1,2}[./]\d{2,4}"),
-        " [DATA] ",
-    ),
-
-    # 11. Bloco da Turma Recursal no final — "A Turma Recursal dos Juizados … DEU PROVIMENTO"
-    # [C2] re.DOTALL para que '.' cruze quebras de linha (\n).
-    (
-        "turma_recursal",
-        re.compile(
-            r"A Turma Recursal dos Juizados Especiais.*?(?:votos?|juiz[- ]relator|honorários).*?(?=\.|$)",
-            re.IGNORECASE | re.DOTALL,
-        ),
-        " ",
-    ),
 
     # 12. "Súmula de Julgamento: …" até o final da string
     (

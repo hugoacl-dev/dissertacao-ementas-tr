@@ -473,10 +473,16 @@ def gerar_relatorio(
     }
 
     regras_higienizacao = [
-        "Remoção de identificadores PJe (ex: 0500xxx-xx.xxxx.x.xx.xxxx)",
-        "Remoção de carimbos DJe (Publicação/Intimação + data)",
-        "Remoção de assinaturas em CAPSLOCK (juízes/servidores)",
-        "Remoção de datas de publicação/julgamento isoladas",
+        "Remoção de tags HTML (artefatos de renderização)",
+        "Remoção de metadados processuais (Processo nº, NPU)",
+        "Remoção de identificadores PJe (id. 48772689, etc.)",
+        "Remoção de carimbos DJe completos e simples",
+        "Remoção de 'DIVULG' isolado (resíduo DJe)",
+        "Remoção de Ação Civil Pública + DPU com nº (cabeçalho formatado)",
+        "Substituição de datas prefixadas por cidade por token [DATA]",
+        "Remoção de Súmula de Julgamento (rodapé processual)",
+        "Remoção de honoríficos de juízes no final (assinatura)",
+        "Remoção de blocos em CAPSLOCK no final (assinatura)",
         "Filtro: fundamentação < 50 caracteres → descarte",
         "Filtro: ementa < 20 caracteres → descarte",
     ]
