@@ -273,7 +273,7 @@ function render(data) {
     );
     if (f3.categorias_pii) {
       const piiCard = el('div', 'card card--wide');
-      piiCard.innerHTML = `<div class="card__label">Categorias PII Substituídas</div>`;
+      piiCard.innerHTML = `<div class="card__label">Categorias de Dados Pessoais Substituídas</div>`;
       const tags = el('div', 'tags');
       f3.categorias_pii.forEach(c => {
         const t = el('span', 'tag');
