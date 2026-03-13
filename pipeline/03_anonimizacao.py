@@ -56,40 +56,37 @@ _INSTRUCAO_SISTEMA = (
 # ---------------------------------------------------------------------------
 # Padrões de anonimização pré-compilados
 # ---------------------------------------------------------------------------
-
-# Municípios da Paraíba com maior frequência no corpus (~40 dos 223 totais)
-# Suficiente para cobertura de ~95% das ocorrências geográficas no corpus.
-_CIDADES_PB = re.compile(
-    r"\b(?:em\s+|no\s+|na\s+|de\s+)?"
-    r"(?:João Pessoa|Campina Grande|Santa Rita|Patos|Bayeux|Sousa|"
-    r"Cajazeiras|Guarabira|Cabedelo|Sapé|Mamanguape|Queimadas|São Bento|"
-    r"Monteiro|Esperança|Pombal|Catolé do Rocha|Alagoa Grande|Pedras de Fogo|"
-    r"Lagoa Seca|Santa Luzia|São João do Rio do Peixe|Itaporanga|Rio Tinto|"
-    r"Princesa Isabel|Areia|Mari|Jacaraú|Bananal|Conde|São Miguel de Taipu|"
-    r"Boa Vista|Boqueirão|Coremas|Cuité|Itabaiana|Lucena|Picuí|Pitimbu|"
-    r"Solânea|Taperoá|Umbuzeiro|Recife|Natal|Maceió|Fortaleza|"
-    r"Paraíba|PB|zona rural|sítio corredor)\b",
-    re.IGNORECASE,
-)
+# Nota sobre escopo LGPD: a Lei 13.709/2018 protege dados pessoais de
+# PESSOA NATURAL (Art. 1º, Art. 5º-I). Razões sociais (PJ), municípios
+# e CEPs são informação pública — não são PII e não são anonimizados.
+# ---------------------------------------------------------------------------
 
 _RE_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
 _RE_CNPJ = re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b")
-_RE_CEP = re.compile(r"\b\d{5}-\d{3}\b")
-# [C10] Restrito a contexto bancário — o pattern anterior r"\b\d{4,5}-\d{1}\b"
-# capturava números de benefício INSS (formato XXXXXXX-X), que são a referência
-# central nos processos previdenciários da juizado especial.
+
+# Conta bancária — exige âncora de contexto para evitar falsos positivos
+# com números de benefício INSS (formato XXXXXXX-X).
 _RE_CONTA = re.compile(
     r"(?:conta\s*(?:corrente|poupança|bancária)?|ag[êe]ncia|ag\.?|c/c|c\.c\.)"
     r"\s*(?:n[º°o]?\s*)?\d{4,5}-\d\b",
     re.IGNORECASE,
 )
 
+# E-mail — PII inequívoca (Art. 5º, I LGPD)
+_RE_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
+
+# Telefone — formatos BR: (83) 99999-9999, 83 99999-9999, 9999-9999
+_RE_TELEFONE = re.compile(
+    r"\(?\d{2}\)?\s*\d{4,5}-?\d{4}\b"
+)
+
 # Honorífico + nome — ex: "Dr. João da Silva", "autora Maria Souza Nunes"
 _HONORIFICOS = (
     r"(?:Sr\.|Sra\.|Dr\.|Dra\.|advogado|advogada|autor|autora|"
-    r"réu|ré|juiz|juíza|relator|relatora|desembargador|desembargadora)"
+    r"réu|ré|juiz|juíza|relator|relatora|desembargador|desembargadora|"
+    r"perito|perita)"
 )
-_RE_NOME_HONORÍFICO = re.compile(
+_RE_NOME_HONORIFICO = re.compile(
     rf"(?i)\b({_HONORIFICOS})\s+([A-ZÀ-Ÿ][a-zà-ÿ]+\s*){{1,4}}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
 )
 
@@ -98,55 +95,65 @@ _RE_NOME_PROPRIO = re.compile(
     r"\b([A-ZÀ-Ÿ][a-zà-ÿ]+\s+){2,5}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
 )
 
-# [C8] Termos jurídicos que NÃO devem ser substituídos por [NOME_PESSOA].
-# O pattern acima captura qualquer sequência de 3+ palavras capitalizadas,
-# incluindo "Superior Tribunal de Justiça", "Código de Processo Civil", etc.
-# Esta lista de exclusão preserva a semântica jurídica das fundamentações.
-_TERMOS_JURIDICOS = frozenset({
+# Termos jurídicos que NÃO devem ser substituídos por [NOME_PESSOA].
+# Usa PREFIX MATCHING — "Tribunal Regional Federal da 5ª Região" dá match
+# porque começa com "Tribunal Regional Federal" que está na lista.
+_PREFIXOS_JURIDICOS = (
     # Tribunais e órgãos
-    "Superior Tribunal de Justiça",
-    "Supremo Tribunal Federal",
-    "Tribunal Regional Federal",
-    "Turma Nacional de Uniformização",
-    "juizado especial Federal",
-    "Juizado Especial Federal",
-    "Juizados Especiais Federais",
-    "Conselho Nacional de Justiça",
-    "Instituto Nacional do Seguro Social",
-    "Ministério Público Federal",
-    "Defensoria Pública da União",
-    "Advocacia Geral da União",
-    "Procuradoria Geral Federal",
-    "Caixa Econômica Federal",
-    "Banco Central do Brasil",
+    "Superior Tribunal",
+    "Supremo Tribunal",
+    "Tribunal Regional",
+    "Tribunal de Justiça",
+    "Turma Nacional",
+    "juizado especial",
+    "Juizado Especial",
+    "Juizados Especiais",
+    "Conselho Nacional",
+    "Instituto Nacional",
+    "Ministério Público",
+    "Defensoria Pública",
+    "Advocacia Geral",
+    "Procuradoria Geral",
+    "Caixa Econômica",
+    "Banco Central",
     "Banco do Brasil",
     # Diplomas legais e institutos
-    "Código de Processo Civil",
-    "Código Civil Brasileiro",
-    "Código Penal Brasileiro",
-    "Consolidação das Leis do Trabalho",
-    "Constituição Federal Brasileira",
-    "Lei de Benefícios da Previdência Social",
-    "Regime Geral de Previdência Social",
-    "Fundo de Garantia do Tempo de Serviço",
-    "Benefício de Prestação Continuada",
+    "Código de Processo",
+    "Código Civil",
+    "Código Penal",
+    "Consolidação das Leis",
+    "Constituição Federal",
+    "Lei de Benefícios",
+    "Lei Orgânica",
+    "Regime Geral",
+    "Fundo de Garantia",
+    "Benefício de Prestação",
     # Expressões processuais capitalizadas
-    "Recurso Cível Inominado",
-    "Recurso Extraordinário de Divergência",
+    "Recurso Cível",
+    "Recurso Especial",
+    "Recurso Extraordinário",
     "Embargos de Declaração",
     "Mandado de Segurança",
-    "Mandado de Segurança Coletivo",
     "Ação Civil Pública",
-    "Recurso Especial Repetitivo",
-})
+    "Ação Penal",
+    "Projeto de Lei",
+    "Medida Provisória",
+)
 
 
 def _substituir_nome_proprio(match: re.Match) -> str:
-    """Callback para re.sub: substitui nomes próprios preservando termos jurídicos."""
+    """Callback para re.sub: substitui nomes próprios preservando termos jurídicos.
+
+    Usa prefix matching — se o texto capturado COMEÇA com um prefixo
+    jurídico conhecido, é preservado. Isso cobre variações como
+    "Tribunal Regional Federal da 5ª Região" sem exigir match exato.
+    """
     texto_match = match.group(0)
-    if texto_match in _TERMOS_JURIDICOS:
-        return texto_match
+    for prefixo in _PREFIXOS_JURIDICOS:
+        if texto_match.startswith(prefixo):
+            return texto_match
     return "[NOME_PESSOA]"
+
 
 # Logradouros com âncora numérica — Rua X, nº 10 / Av. Y, CEP 58000
 _RE_LOGRADOURO = re.compile(
@@ -154,32 +161,6 @@ _RE_LOGRADOURO = re.compile(
     r"[^.,]{1,60}?"
     r"(?:n[º°o]?\s*\d+|cep\s*\d|bloco\s*\d|lote\s*\d)",
     re.IGNORECASE,
-)
-
-# Empresa: sufixo jurídico inequívoco (Ltda, S/A, EPP) antecedido por 2–40 chars
-# Mais restrito do que antes para evitar falsos positivos com "ME" e "SA".
-_RE_EMPRESA_LTDA = re.compile(
-    r"\b[\w\s\-&À-ÿ]{2,40}\s+(?:Ltda\.?|LTDA\.?|S/A|S\.A\.?|EPP|Empreendimentos|Comércio|Serviços)(?:\b|\s)",
-    re.IGNORECASE,
-)
-# "ME" e "SA" são sufixos curtos demais — só substitui quando precedidos de
-# nome que começa com maiúscula (sinal de razão social).
-_RE_EMPRESA_ME = re.compile(
-    r"\b[A-ZÀ-Ÿ][\w\s\-&À-ÿ]{2,38}\s+(?:ME|SA)\b"
-)
-
-# Empresa com prefixo já anonimizado — ex: "[NOME_PESSOA] LTDA" / "[LOCAL_OCULTADO] Ltda."
-# Ocorre quando o nome foi substituído por token mas o sufixo jurídico sobreviveu.
-_RE_EMPRESA_POS_TOKEN = re.compile(
-    r"(?:\[(?:NOME_PESSOA|NOME_OCULTADO|LOCAL_OCULTADO|EMPRESA)\])\s+"
-    r"(?:Ltda\.?|LTDA\.?|EPP|S/A|S\.A\.?|ME|SA)\b",
-    re.IGNORECASE,
-)
-
-# Passe final: any surviving Ltda/LTDA/EPP is unambiguously a company suffix.
-# Applied last so it only catches what slipped through all previous patterns.
-_RE_EMPRESA_SUFIXO_RESIDUAL = re.compile(
-    r"\b(?:Ltda\.?|LTDA\.?|EPP)\b"
 )
 
 
@@ -195,24 +176,21 @@ class AnonimizationStats:
 
     cpfs: int = 0
     cnpjs: int = 0
-    ceps: int = 0
     contas: int = 0
+    emails: int = 0
+    telefones: int = 0
     nomes_honorificos: int = 0
     nomes_proprios: int = 0
-    locais: int = 0
     logradouros: int = 0
-    empresas: int = 0
-    empresas_pos_token: int = 0   # [C11] sufixos pós-anonimização de nome
-    empresas_residual: int = 0    # [C11] Ltda/EPP remanescentes
-    descartados_pos_anon: int = 0 # [C14] registros destruídos pela anonimização
+    descartados_pos_anon: int = 0  # registros destruídos pela anonimização
 
     @property
     def total(self) -> int:
         return (
-            self.cpfs + self.cnpjs + self.ceps + self.contas
+            self.cpfs + self.cnpjs + self.contas
+            + self.emails + self.telefones
             + self.nomes_honorificos + self.nomes_proprios
-            + self.locais + self.logradouros + self.empresas
-            + self.empresas_pos_token + self.empresas_residual
+            + self.logradouros
         )
 
 
@@ -226,13 +204,15 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
     Camadas de proteção (em ordem de aplicação):
         1. CPF formatado → [CPF]
         2. CNPJ formatado → [CNPJ]
-        3. CEP numérico → [CEP]
-        4. Conta bancária com dígito → [CONTA-DIGITO]
-        5. Nomes após honorífico → [NOME_OCULTADO]
-        6. Nomes próprios isolados (3+ palavras capitalizadas) → [NOME_PESSOA]
-        7. Municípios da Paraíba (corpus representativo) → [LOCAL_OCULTADO]
+        3. Conta bancária (com âncora) → [CONTA-DIGITO]
+        4. E-mail → [EMAIL]
+        5. Telefone → [TELEFONE]
+        6. Nomes após honorífico → [NOME_OCULTADO]
+        7. Nomes próprios isolados (3+ palavras) → [NOME_PESSOA]
         8. Logradouros com âncora numérica → [ENDEREÇO_COMPLETO]
-        9. Razões sociais com sufixo jurídico → [EMPRESA]
+
+    Nota LGPD: cidades, CEPs e razões sociais (PJ) NÃO são anonimizados
+    pois não constituem dados pessoais de pessoa natural (Art. 5º, I).
 
     Args:
         texto: String a ser anonimizada; pode ser None.
@@ -248,40 +228,27 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
     if stats:
         stats.cpfs += _count(_RE_CPF, texto)
         stats.cnpjs += _count(_RE_CNPJ, texto)
-        stats.ceps += _count(_RE_CEP, texto)
         stats.contas += _count(_RE_CONTA, texto)
-        stats.nomes_honorificos += _count(_RE_NOME_HONORÍFICO, texto)
-        # nomes_proprios contados APÓS substituição (exclui termos jurídicos)
-        stats.locais += _count(_CIDADES_PB, texto)
+        stats.emails += _count(_RE_EMAIL, texto)
+        stats.telefones += _count(_RE_TELEFONE, texto)
+        stats.nomes_honorificos += _count(_RE_NOME_HONORIFICO, texto)
         stats.logradouros += _count(_RE_LOGRADOURO, texto)
-        stats.empresas += _count(_RE_EMPRESA_LTDA, texto) + _count(_RE_EMPRESA_ME, texto)
 
     texto = _RE_CPF.sub("[CPF]", texto)
     texto = _RE_CNPJ.sub("[CNPJ]", texto)
-    texto = _RE_CEP.sub("[CEP]", texto)
     texto = _RE_CONTA.sub("[CONTA-DIGITO]", texto)
-    texto = _RE_NOME_HONORÍFICO.sub(r"\1 [NOME_OCULTADO]", texto)
+    texto = _RE_EMAIL.sub("[EMAIL]", texto)
+    texto = _RE_TELEFONE.sub("[TELEFONE]", texto)
+    texto = _RE_NOME_HONORIFICO.sub(r"\1 [NOME_OCULTADO]", texto)
 
-    # [C8] Nomes próprios com exclusão de termos jurídicos via callback.
+    # Nomes próprios com exclusão de termos jurídicos via callback.
     # Contagem pós-sub para refletir apenas substituições efetivas.
     nomes_antes = texto.count("[NOME_PESSOA]")
     texto = _RE_NOME_PROPRIO.sub(_substituir_nome_proprio, texto)
     if stats:
         stats.nomes_proprios += texto.count("[NOME_PESSOA]") - nomes_antes
 
-    texto = _CIDADES_PB.sub(" [LOCAL_OCULTADO] ", texto)
     texto = _RE_LOGRADOURO.sub("[ENDEREÇO_COMPLETO]", texto)
-    texto = _RE_EMPRESA_LTDA.sub("[EMPRESA] ", texto)
-    texto = _RE_EMPRESA_ME.sub("[EMPRESA]", texto)
-
-    # [C11] Contagem dos passes dependentes de estado pós-substituição.
-    if stats:
-        stats.empresas_pos_token += _count(_RE_EMPRESA_POS_TOKEN, texto)
-    texto = _RE_EMPRESA_POS_TOKEN.sub("[EMPRESA]", texto)
-
-    if stats:
-        stats.empresas_residual += _count(_RE_EMPRESA_SUFIXO_RESIDUAL, texto)
-    texto = _RE_EMPRESA_SUFIXO_RESIDUAL.sub("[EMPRESA]", texto)
 
     return texto
 
@@ -423,19 +390,16 @@ def gerar_datasets(
 
     log.info(
         "Anonimização concluída. Total de tokens PII substituídos: %d "
-        "(CPFs: %d | CNPJs: %d | Nomes hon.: %d | Nomes próprios: %d | "
-        "Locais: %d | Logradouros: %d | "
-        "Empresas: %d | Emp. pós-token: %d | Emp. residual: %d)",
+        "(CPFs: %d | CNPJs: %d | Emails: %d | Telefones: %d | "
+        "Nomes hon.: %d | Nomes próprios: %d | Logradouros: %d)",
         stats.total,
         stats.cpfs,
         stats.cnpjs,
+        stats.emails,
+        stats.telefones,
         stats.nomes_honorificos,
         stats.nomes_proprios,
-        stats.locais,
         stats.logradouros,
-        stats.empresas,
-        stats.empresas_pos_token,
-        stats.empresas_residual,
     )
 
     if stats.descartados_pos_anon > 0:
