@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-13T11:56:32",
+    "gerado_em": "2026-03-13T12:52:54",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 246
+    "pipeline_total_segundos": 257
   },
   "fases": {
     "fase1_ingestao": {
@@ -46,10 +46,16 @@
       "perda": 50,
       "taxa_retencao": 99.8,
       "regras_aplicadas": [
-        "Remoção de identificadores PJe (ex: 0500xxx-xx.xxxx.x.xx.xxxx)",
-        "Remoção de carimbos DJe (Publicação/Intimação + data)",
-        "Remoção de assinaturas em CAPSLOCK (juízes/servidores)",
-        "Remoção de datas de publicação/julgamento isoladas",
+        "Remoção de tags HTML (artefatos de renderização)",
+        "Remoção de metadados processuais (Processo nº, NPU)",
+        "Remoção de identificadores PJe (id. 48772689, etc.)",
+        "Remoção de carimbos DJe completos e simples",
+        "Remoção de 'DIVULG' isolado (resíduo DJe)",
+        "Remoção de Ação Civil Pública + DPU com nº (cabeçalho formatado)",
+        "Substituição de datas prefixadas por cidade por token [DATA]",
+        "Remoção de Súmula de Julgamento (rodapé processual)",
+        "Remoção de honoríficos de juízes no final (assinatura)",
+        "Remoção de blocos em CAPSLOCK no final (assinatura)",
         "Filtro: fundamentação < 50 caracteres → descarte",
         "Filtro: ementa < 20 caracteres → descarte"
       ],
@@ -62,7 +68,7 @@
         },
         {
           "nome": "dados_limpos.json",
-          "tamanho_mb": 146.3,
+          "tamanho_mb": 148.1,
           "tipo": "saida",
           "conteudo": "{id, fundamentação, ementa} limpos"
         }
@@ -71,43 +77,43 @@
     "fase3_anonimizacao": {
       "nome": "Anonimização (LGPD)",
       "descricao": "Substituição de dados pessoais por tokens genéricos e formatação para fine-tuning.",
-      "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.095 registros. 90%) e teste (3.232 registros. 10%) com split estratificado (seed=42). garantindo reprodutibilidade.",
+      "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.093 registros. 90%) e teste (3.232 registros. 10%) com split estratificado (seed=42). garantindo reprodutibilidade.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": 160,
+      "duracao_segundos": 167,
       "registros_entrada": 32327,
-      "registros_saida": 32327,
-      "treino": 29095,
+      "registros_saida": 32325,
+      "treino": 29093,
       "teste": 3232,
       "split_ratio": "90/10",
       "random_seed": 42,
       "categorias_pii": [
         "CPF",
         "CNPJ",
-        "CEP",
+        "NPU",
         "CONTA-DIGITO",
+        "EMAIL",
+        "TELEFONE",
         "NOME_OCULTADO",
         "NOME_PESSOA",
-        "LOCAL_OCULTADO",
-        "ENDEREÇO_COMPLETO",
-        "EMPRESA"
+        "ENDEREÇO_COMPLETO"
       ],
       "artefatos": [
         {
           "nome": "dados_limpos.json",
-          "tamanho_mb": 146.3,
+          "tamanho_mb": 148.1,
           "tipo": "entrada",
           "conteudo": "{id, fundamentação, ementa} limpos"
         },
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 142.7,
+          "tamanho_mb": 143.8,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"
         },
         {
           "nome": "dataset_teste.jsonl",
-          "tamanho_mb": 15.8,
+          "tamanho_mb": 16.1,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 10%"
         }
@@ -119,67 +125,67 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 16,
+      "duracao_segundos": 17,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
         "apos_limpeza_fase2": 32327,
-        "dataset_final_fase3": 32327,
-        "treino": 29095,
+        "dataset_final_fase3": 32325,
+        "treino": 29093,
         "teste": 3232,
         "perda_fase1": 101,
         "perda_fase2": 50,
-        "perda_total": 151,
+        "perda_total": 153,
         "taxa_retencao_global": 99.5
       },
       "fundamentacao": {
-        "contagem": 32327,
-        "media": 658.7,
+        "contagem": 32325,
+        "media": 659.2,
         "mediana": 541,
-        "desvio_padrao": 465.3,
+        "desvio_padrao": 467.4,
         "min": 9,
-        "max": 10033,
-        "p5": 229.0,
-        "p25": 382.0,
-        "p75": 793.0,
-        "p95": 1416.0,
-        "total_palavras": 21293534
+        "max": 9984,
+        "p5": 231.0,
+        "p25": 384.0,
+        "p75": 791.0,
+        "p95": 1415.8,
+        "total_palavras": 21308364
       },
       "ementa": {
-        "contagem": 32327,
+        "contagem": 32325,
         "media": 30.0,
         "mediana": 27,
         "desvio_padrao": 13.3,
         "min": 2,
-        "max": 1037,
+        "max": 1030,
         "p5": 16.0,
         "p25": 22.0,
         "p75": 35.0,
         "p95": 53.0,
-        "total_palavras": 971073
+        "total_palavras": 970451
       },
       "razao_compressao": {
-        "media": 23.83,
+        "media": 23.88,
         "mediana": 19.33,
-        "desvio_padrao": 16.77,
-        "min": 0.07,
-        "max": 453.33
+        "desvio_padrao": 17.19,
+        "min": 0.12,
+        "max": 891.5
       },
       "novel_ngrams": {
         "unigrams": {
-          "media": 38.7,
-          "mediana": 38.1,
-          "desvio_padrao": 10.4
+          "media": 38.3,
+          "mediana": 37.5,
+          "desvio_padrao": 10.3
         },
         "bigrams": {
-          "media": 72.6,
-          "mediana": 73.2,
-          "desvio_padrao": 11.9
+          "media": 72.3,
+          "mediana": 72.7,
+          "desvio_padrao": 12.0
         },
         "trigrams": {
-          "media": 87.0,
-          "mediana": 88.2,
-          "desvio_padrao": 10.5
+          "media": 86.6,
+          "mediana": 87.9,
+          "desvio_padrao": 10.6
         }
       },
       "periodo_temporal": {
@@ -192,40 +198,40 @@
         }
       },
       "vocabulario": {
-        "fundamentacao": 185801,
-        "ementa": 12283,
-        "total_unico": 187388,
-        "sobreposicao": 10696
+        "fundamentacao": 221812,
+        "ementa": 12595,
+        "total_unico": 223427,
+        "sobreposicao": 10980
       },
       "histograma_fundamentacao": {
-        "0-199": 1046,
-        "200-399": 7906,
-        "400-599": 9633,
-        "600-799": 5788,
-        "800-999": 3200,
-        "1000-1199": 1941,
-        "1200-1399": 1134,
-        "1400-1599": 615,
-        "1600-1799": 309,
-        "1800-1999": 195,
-        "2000-2199": 137,
-        "2200-2399": 88,
-        "2400-2599": 72,
-        "2600-2799": 52,
-        "2800-2999": 30
+        "0-199": 1010,
+        "200-399": 7850,
+        "400-599": 9672,
+        "600-799": 5870,
+        "800-999": 3197,
+        "1000-1199": 1914,
+        "1200-1399": 1118,
+        "1400-1599": 620,
+        "1600-1799": 303,
+        "1800-1999": 209,
+        "2000-2199": 132,
+        "2200-2399": 90,
+        "2400-2599": 76,
+        "2600-2799": 46,
+        "2800-2999": 32
       },
       "histograma_ementa": {
-        "0-9": 260,
-        "10-19": 5116,
-        "20-29": 13009,
-        "30-39": 7874,
-        "40-49": 3774,
-        "50-59": 1397,
-        "60-69": 592,
-        "70-79": 195,
-        "80-89": 64,
-        "90-99": 27,
-        "100-109": 11,
+        "0-9": 258,
+        "10-19": 5123,
+        "20-29": 13005,
+        "30-39": 7879,
+        "40-49": 3741,
+        "50-59": 1432,
+        "60-69": 584,
+        "70-79": 203,
+        "80-89": 57,
+        "90-99": 23,
+        "100-109": 12,
         "110-119": 5,
         "120-129": 1,
         "140-149": 1,
@@ -234,14 +240,14 @@
       "dicas": {
         "funil": "O funil mostra quantos registros sobreviveram a cada etapa do pipeline. A perda total foi de apenas 0.5%, indicando que a base original é consistente e quase não há dados inutilizáveis.",
         "distribuicao": "A fundamentação tem mediana de 541 palavras enquanto a ementa tem apenas 27, uma razão de ~20:1. Essa assimetria extrema define a complexidade da tarefa de sumarização.",
-        "novel_ngrams": "Novel n-grams medem quanto do texto da ementa NÃO aparece na fundamentação. Valores altos (87.0% de trigrams novos) confirmam que os juízes reformulam significativamente o texto. É sumarização abstrativa, não extrativa.",
+        "novel_ngrams": "Novel n-grams medem quanto do texto da ementa NÃO aparece na fundamentação. Valores altos (86.6% de trigrams novos) confirmam que os juízes reformulam significativamente o texto. É sumarização abstrativa, não extrativa.",
         "histograma": "A maioria das fundamentações concentra-se entre 0-199 e 400-599 palavras, mas a cauda longa revela casos de alta complexidade com textos muito extensos.",
         "temporal": "Quantidade de processos recebidos pelas relatorias da juizado especial no sistema sistema judicial a cada ano, abrangendo o período de 2024 a 2026."
       },
       "artefatos": [
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 142.7,
+          "tamanho_mb": 143.8,
           "tipo": "entrada",
           "conteudo": "{contents: [{role, parts}]} anonimizado"
         },
