@@ -44,7 +44,7 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     ),
     "4. ID PJe": re.compile(r"(?i)\bid[\s.]*[\s:]*\d{5,}"),
     "5. E-mail": re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"),
-    "6. Telefone": re.compile(r"\(?\d{2}\)?\s*\d{4,5}-?\d{4}\b"),
+    "6. Telefone": re.compile(r"(?:\(\d{2}\)\s*\d{4,5}-?\d{4}|\d{2}\s+\d{4,5}-\d{4})\b"),
     # Juízes/Relatores: forma nominal com nome próprio após título
     "7. Juízes/Relatores (forma nominal)": re.compile(
         r"(?i)\b(?:Juiz Federal|Juíza Federal|Desembargador)\s+[A-ZÀ-Ÿ]"
