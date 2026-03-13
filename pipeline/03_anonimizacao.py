@@ -39,6 +39,11 @@ TEST_PATH = Path("data/dataset_teste.jsonl")
 TEST_SIZE: float = 0.10  # 10% para avaliação da banca; 90% para fine-tuning
 RANDOM_SEED: int = 42    # Seed fixa para divisão reproduzível Treino/Teste
 
+# [C14] Comprimento mínimo pós-anonimização — registros cujo conteúdo era
+# majoritariamente PII ficam apenas com tokens como [NOME_PESSOA] [LOCAL_OCULTADO].
+MIN_FUND_ANON_LEN: int = 50
+MIN_EMENTA_ANON_LEN: int = 20
+
 # Instrução de sistema embutida no prompt do usuário (ver nota no cabeçalho)
 _INSTRUCAO_SISTEMA = (
     "Você é um assistente jurídico experiente que auxilia juízes a escreverem "
@@ -70,7 +75,14 @@ _CIDADES_PB = re.compile(
 _RE_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
 _RE_CNPJ = re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b")
 _RE_CEP = re.compile(r"\b\d{5}-\d{3}\b")
-_RE_CONTA = re.compile(r"\b\d{4,5}-\d{1}\b")
+# [C10] Restrito a contexto bancário — o pattern anterior r"\b\d{4,5}-\d{1}\b"
+# capturava números de benefício INSS (formato XXXXXXX-X), que são a referência
+# central nos processos previdenciários da juizado especial.
+_RE_CONTA = re.compile(
+    r"(?:conta\s*(?:corrente|poupança|bancária)?|ag[êe]ncia|ag\.?|c/c|c\.c\.)"
+    r"\s*(?:n[º°o]?\s*)?\d{4,5}-\d\b",
+    re.IGNORECASE,
+)
 
 # Honorífico + nome — ex: "Dr. João da Silva", "autora Maria Souza Nunes"
 _HONORIFICOS = (
@@ -85,6 +97,56 @@ _RE_NOME_HONORÍFICO = re.compile(
 _RE_NOME_PROPRIO = re.compile(
     r"\b([A-ZÀ-Ÿ][a-zà-ÿ]+\s+){2,5}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
 )
+
+# [C8] Termos jurídicos que NÃO devem ser substituídos por [NOME_PESSOA].
+# O pattern acima captura qualquer sequência de 3+ palavras capitalizadas,
+# incluindo "Superior Tribunal de Justiça", "Código de Processo Civil", etc.
+# Esta lista de exclusão preserva a semântica jurídica das fundamentações.
+_TERMOS_JURIDICOS = frozenset({
+    # Tribunais e órgãos
+    "Superior Tribunal de Justiça",
+    "Supremo Tribunal Federal",
+    "Tribunal Regional Federal",
+    "Turma Nacional de Uniformização",
+    "juizado especial Federal",
+    "Juizado Especial Federal",
+    "Juizados Especiais Federais",
+    "Conselho Nacional de Justiça",
+    "Instituto Nacional do Seguro Social",
+    "Ministério Público Federal",
+    "Defensoria Pública da União",
+    "Advocacia Geral da União",
+    "Procuradoria Geral Federal",
+    "Caixa Econômica Federal",
+    "Banco Central do Brasil",
+    "Banco do Brasil",
+    # Diplomas legais e institutos
+    "Código de Processo Civil",
+    "Código Civil Brasileiro",
+    "Código Penal Brasileiro",
+    "Consolidação das Leis do Trabalho",
+    "Constituição Federal Brasileira",
+    "Lei de Benefícios da Previdência Social",
+    "Regime Geral de Previdência Social",
+    "Fundo de Garantia do Tempo de Serviço",
+    "Benefício de Prestação Continuada",
+    # Expressões processuais capitalizadas
+    "Recurso Cível Inominado",
+    "Recurso Extraordinário de Divergência",
+    "Embargos de Declaração",
+    "Mandado de Segurança",
+    "Mandado de Segurança Coletivo",
+    "Ação Civil Pública",
+    "Recurso Especial Repetitivo",
+})
+
+
+def _substituir_nome_proprio(match: re.Match) -> str:
+    """Callback para re.sub: substitui nomes próprios preservando termos jurídicos."""
+    texto_match = match.group(0)
+    if texto_match in _TERMOS_JURIDICOS:
+        return texto_match
+    return "[NOME_PESSOA]"
 
 # Logradouros com âncora numérica — Rua X, nº 10 / Av. Y, CEP 58000
 _RE_LOGRADOURO = re.compile(
@@ -140,6 +202,9 @@ class AnonimizationStats:
     locais: int = 0
     logradouros: int = 0
     empresas: int = 0
+    empresas_pos_token: int = 0   # [C11] sufixos pós-anonimização de nome
+    empresas_residual: int = 0    # [C11] Ltda/EPP remanescentes
+    descartados_pos_anon: int = 0 # [C14] registros destruídos pela anonimização
 
     @property
     def total(self) -> int:
@@ -147,6 +212,7 @@ class AnonimizationStats:
             self.cpfs + self.cnpjs + self.ceps + self.contas
             + self.nomes_honorificos + self.nomes_proprios
             + self.locais + self.logradouros + self.empresas
+            + self.empresas_pos_token + self.empresas_residual
         )
 
 
@@ -178,13 +244,14 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
     if not texto:
         return ""
 
+    # Contagem ANTES das substituições (exceto nomes próprios — ver abaixo).
     if stats:
         stats.cpfs += _count(_RE_CPF, texto)
         stats.cnpjs += _count(_RE_CNPJ, texto)
         stats.ceps += _count(_RE_CEP, texto)
         stats.contas += _count(_RE_CONTA, texto)
         stats.nomes_honorificos += _count(_RE_NOME_HONORÍFICO, texto)
-        stats.nomes_proprios += _count(_RE_NOME_PROPRIO, texto)
+        # nomes_proprios contados APÓS substituição (exclui termos jurídicos)
         stats.locais += _count(_CIDADES_PB, texto)
         stats.logradouros += _count(_RE_LOGRADOURO, texto)
         stats.empresas += _count(_RE_EMPRESA_LTDA, texto) + _count(_RE_EMPRESA_ME, texto)
@@ -194,14 +261,26 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
     texto = _RE_CEP.sub("[CEP]", texto)
     texto = _RE_CONTA.sub("[CONTA-DIGITO]", texto)
     texto = _RE_NOME_HONORÍFICO.sub(r"\1 [NOME_OCULTADO]", texto)
-    texto = _RE_NOME_PROPRIO.sub("[NOME_PESSOA]", texto)
+
+    # [C8] Nomes próprios com exclusão de termos jurídicos via callback.
+    # Contagem pós-sub para refletir apenas substituições efetivas.
+    nomes_antes = texto.count("[NOME_PESSOA]")
+    texto = _RE_NOME_PROPRIO.sub(_substituir_nome_proprio, texto)
+    if stats:
+        stats.nomes_proprios += texto.count("[NOME_PESSOA]") - nomes_antes
+
     texto = _CIDADES_PB.sub(" [LOCAL_OCULTADO] ", texto)
     texto = _RE_LOGRADOURO.sub("[ENDEREÇO_COMPLETO]", texto)
     texto = _RE_EMPRESA_LTDA.sub("[EMPRESA] ", texto)
     texto = _RE_EMPRESA_ME.sub("[EMPRESA]", texto)
-    # Captura sufixos que sobreviveram após anonimização do nome da empresa
+
+    # [C11] Contagem dos passes dependentes de estado pós-substituição.
+    if stats:
+        stats.empresas_pos_token += _count(_RE_EMPRESA_POS_TOKEN, texto)
     texto = _RE_EMPRESA_POS_TOKEN.sub("[EMPRESA]", texto)
-    # Passe final: captura qualquer Ltda/LTDA/EPP remanescente (inequivocamente sufixo de empresa)
+
+    if stats:
+        stats.empresas_residual += _count(_RE_EMPRESA_SUFIXO_RESIDUAL, texto)
     texto = _RE_EMPRESA_SUFIXO_RESIDUAL.sub("[EMPRESA]", texto)
 
     return texto
@@ -263,6 +342,12 @@ def _anonimizar_registros(
     for i, item in enumerate(registros, start=1):
         fund = anonimizar_texto(item["fundamentacao"], stats)
         ementa = anonimizar_texto(item["ementa"], stats)
+
+        # [C14] Descarta registros destruídos pela anonimização.
+        if len(fund) < MIN_FUND_ANON_LEN or len(ementa) < MIN_EMENTA_ANON_LEN:
+            stats.descartados_pos_anon += 1
+            continue
+
         exemplos.append(formatar_exemplo_gemini(fund, ementa))
 
         if i % 5_000 == 0:
@@ -338,14 +423,29 @@ def gerar_datasets(
 
     log.info(
         "Anonimização concluída. Total de tokens PII substituídos: %d "
-        "(CPFs: %d | CNPJs: %d | Nomes: %d | Locais: %d | Empresas: %d)",
+        "(CPFs: %d | CNPJs: %d | Nomes hon.: %d | Nomes próprios: %d | "
+        "Locais: %d | Logradouros: %d | "
+        "Empresas: %d | Emp. pós-token: %d | Emp. residual: %d)",
         stats.total,
         stats.cpfs,
         stats.cnpjs,
-        stats.nomes_honorificos + stats.nomes_proprios,
+        stats.nomes_honorificos,
+        stats.nomes_proprios,
         stats.locais,
-        stats.empresas + stats.logradouros,
+        stats.logradouros,
+        stats.empresas,
+        stats.empresas_pos_token,
+        stats.empresas_residual,
     )
+
+    if stats.descartados_pos_anon > 0:
+        log.warning(
+            "[C14] %d registros descartados por ficarem abaixo do comprimento "
+            "mínimo após anonimização (fund < %d ou ementa < %d chars).",
+            stats.descartados_pos_anon,
+            MIN_FUND_ANON_LEN,
+            MIN_EMENTA_ANON_LEN,
+        )
 
     _dividir_e_gravar(exemplos, train_path, test_path, test_size, seed)
     log.info("=== Fase 3 finalizada com sucesso. ===")
