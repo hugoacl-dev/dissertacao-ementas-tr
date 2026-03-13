@@ -64,6 +64,10 @@ _INSTRUCAO_SISTEMA = (
 _RE_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
 _RE_CNPJ = re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b")
 
+# NPU (Número Único do Processo) — formato CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO
+# Embora públicos, permitem localizar processos e identificar partes.
+_RE_NPU = re.compile(r"\b\d{7}-\d{2}\.\d{4}\.\d{1,2}\.\d{2}\.\d{4}\b")
+
 # Conta bancária — exige âncora de contexto para evitar falsos positivos
 # com números de benefício INSS (formato XXXXXXX-X).
 _RE_CONTA = re.compile(
@@ -75,9 +79,10 @@ _RE_CONTA = re.compile(
 # E-mail — dado pessoal inequívoco (Art. 5º, I LGPD)
 _RE_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
 
-# Telefone — formatos BR: (83) 99999-9999, 83 99999-9999, 9999-9999
+# Telefone — exige separador (hífen, espaço ou parênteses) para evitar
+# falsos positivos com números de benefício INSS (11 dígitos sem separador).
 _RE_TELEFONE = re.compile(
-    r"\(?\d{2}\)?\s*\d{4,5}-?\d{4}\b"
+    r"(?:\(\d{2}\)\s*\d{4,5}-?\d{4}|\d{2}\s+\d{4,5}-\d{4})\b"
 )
 
 # Honorífico + nome — ex: "Dr. João da Silva", "autora Maria Souza Nunes"
@@ -176,6 +181,7 @@ class AnonimizationStats:
 
     cpfs: int = 0
     cnpjs: int = 0
+    npus: int = 0
     contas: int = 0
     emails: int = 0
     telefones: int = 0
@@ -187,7 +193,7 @@ class AnonimizationStats:
     @property
     def total(self) -> int:
         return (
-            self.cpfs + self.cnpjs + self.contas
+            self.cpfs + self.cnpjs + self.npus + self.contas
             + self.emails + self.telefones
             + self.nomes_honorificos + self.nomes_proprios
             + self.logradouros
@@ -228,6 +234,7 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
     if stats:
         stats.cpfs += _count(_RE_CPF, texto)
         stats.cnpjs += _count(_RE_CNPJ, texto)
+        stats.npus += _count(_RE_NPU, texto)
         stats.contas += _count(_RE_CONTA, texto)
         stats.emails += _count(_RE_EMAIL, texto)
         stats.telefones += _count(_RE_TELEFONE, texto)
@@ -236,6 +243,7 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
 
     texto = _RE_CPF.sub("[CPF]", texto)
     texto = _RE_CNPJ.sub("[CNPJ]", texto)
+    texto = _RE_NPU.sub("[NPU]", texto)
     texto = _RE_CONTA.sub("[CONTA-DIGITO]", texto)
     texto = _RE_EMAIL.sub("[EMAIL]", texto)
     texto = _RE_TELEFONE.sub("[TELEFONE]", texto)
@@ -390,11 +398,12 @@ def gerar_datasets(
 
     log.info(
         "Anonimização concluída. Total de tokens de dados pessoais substituídos: %d "
-        "(CPFs: %d | CNPJs: %d | Emails: %d | Telefones: %d | "
+        "(CPFs: %d | CNPJs: %d | NPUs: %d | Emails: %d | Telefones: %d | "
         "Nomes hon.: %d | Nomes próprios: %d | Logradouros: %d)",
         stats.total,
         stats.cpfs,
         stats.cnpjs,
+        stats.npus,
         stats.emails,
         stats.telefones,
         stats.nomes_honorificos,
