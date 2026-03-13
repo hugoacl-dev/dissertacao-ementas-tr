@@ -325,7 +325,7 @@ def gerar_datasets(
     if not input_path.exists():
         raise FileNotFoundError(
             f"Arquivo de entrada não encontrado: {input_path}\n"
-            "Execute a Fase 2 primeiro (dados_limpeza.py)."
+            "Execute a Fase 2 primeiro (02_higienizacao.py)."
         )
 
     log.info("=== Fase 3: Anonimização (LGPD) e Formatação JSONL ===")
