@@ -117,6 +117,11 @@ def _percentil(valores_ordenados: list[int], p: float) -> float:
 
 def _distribuicao(valores: list[int]) -> dict[str, Any]:
     """Calcula estatísticas descritivas sobre uma lista de inteiros."""
+    if not valores:
+        return {
+            "contagem": 0, "media": 0.0, "mediana": 0.0, "desvio_padrao": 0.0,
+            "min": 0, "max": 0, "p25": 0.0, "p75": 0.0, "p95": 0.0,
+        }
     ordenados = sorted(valores)
     n = len(ordenados)
     media = sum(ordenados) / n
@@ -316,13 +321,16 @@ def gerar_relatorio(
     _imprimir_distribuicao("Ementa", dist_ementa)
 
     # --- Razão de compressão ---
-    razao_stats = {
-        "media": round(sum(razoes) / len(razoes), 2),
-        "mediana": round(stats.median(razoes), 2),
-        "desvio_padrao": round(stats.pstdev(razoes), 2),
-        "min": round(min(razoes), 2),
-        "max": round(max(razoes), 2),
-    }
+    if razoes:
+        razao_stats = {
+            "media": round(sum(razoes) / len(razoes), 2),
+            "mediana": round(stats.median(razoes), 2),
+            "desvio_padrao": round(stats.pstdev(razoes), 2),
+            "min": round(min(razoes), 2),
+            "max": round(max(razoes), 2),
+        }
+    else:
+        razao_stats = {"media": 0.0, "mediana": 0.0, "desvio_padrao": 0.0, "min": 0.0, "max": 0.0}
     log.info(
         "Razão de Compressão (fund./ementa): média=%.2f | mediana=%.2f | std=%.2f",
         razao_stats["media"], razao_stats["mediana"], razao_stats["desvio_padrao"],
