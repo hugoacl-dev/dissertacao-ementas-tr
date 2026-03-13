@@ -3,6 +3,10 @@
 # Uso: bash pipeline/run_all.sh  (a partir da raiz do projeto)
 set -euo pipefail
 
+# Ensure Homebrew binaries (including pg_restore) are in PATH
+# Needed because keg-only formulae (e.g. postgresql@16) may not be symlinked
+export PATH="/opt/homebrew/bin:/opt/homebrew/opt/postgresql@16/bin:$PATH"
+
 TIMING_FILE="data/.pipeline_timing.json"
 mkdir -p data
 
