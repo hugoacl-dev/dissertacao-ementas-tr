@@ -1,0 +1,7 @@
+# Dependências do pipeline — Dissertação Ementas TR
+#
+# Fases 1-4 (ingestão, higienização, anonimização, estatísticas):
+#   Usam apenas a biblioteca padrão do Python (≥ 3.10). Sem dependências externas.
+#
+# Fase 5 (fine-tuning via Google AI Studio):
+google-generativeai>=0.8.0

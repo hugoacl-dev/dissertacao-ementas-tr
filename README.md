@@ -66,7 +66,7 @@ A Fase 7 gera ementas com o modelo fine-tuned e, para cada amostra, compara a `e
 
 | Artefato | Descrição |
 |---|---|
-| `requirements.txt` | Dependências do pipeline local (Fases 1–6) com versões fixas |
+| `requirements.txt` | Dependência externa do pipeline (Fases 1–4 usam apenas stdlib) |
 | `random.seed(42)` | Seed para divisão treino/teste determinística |
 | `.gitignore` | Exclui dados brutos, banco SQLite e documentos privados |
 

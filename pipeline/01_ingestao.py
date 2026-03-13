@@ -148,7 +148,8 @@ def _stream_pg_restore(dump_path: Path) -> Iterator[str]:
         text=True,
         encoding="utf-8",
     ) as proc:
-        assert proc.stdout is not None
+        if proc.stdout is None:
+            raise RuntimeError("pg_restore não produziu saída (stdout é None)")
         yield from (linha.rstrip("\n") for linha in proc.stdout)
 
         _, stderr_output = proc.communicate()
