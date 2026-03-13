@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-13T11:08:17",
+    "gerado_em": "2026-03-13T11:56:32",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "Hugo Andrade Correia Lima Filho",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": null
+    "pipeline_total_segundos": 246
   },
   "fases": {
     "fase1_ingestao": {
@@ -13,7 +13,7 @@
       "narrativa": "O sistema TR-ONE (Turma Recursal da Justiça Federal na Paraíba) armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
       "status": "concluida",
       "script": "pipeline/01_ingestao.py",
-      "duracao_segundos": null,
+      "duracao_segundos": 5,
       "registros_dump": 32478,
       "registros_exportados": 32377,
       "perda": 101,
@@ -40,7 +40,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 50 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
-      "duracao_segundos": null,
+      "duracao_segundos": 46,
       "registros_entrada": 32377,
       "registros_saida": 32327,
       "perda": 50,
@@ -74,7 +74,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.095 registros. 90%) e teste (3.232 registros. 10%) com split estratificado (seed=42). garantindo reprodutibilidade.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": null,
+      "duracao_segundos": 160,
       "registros_entrada": 32327,
       "registros_saida": 32327,
       "treino": 29095,
@@ -119,7 +119,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": null,
+      "duracao_segundos": 16,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
