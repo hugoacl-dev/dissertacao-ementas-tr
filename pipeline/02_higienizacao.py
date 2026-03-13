@@ -173,7 +173,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 14. Blocos isolados CAPSLOCK no final (assinaturas) — "BIANOR ARRUDA BEZERRA NETO"
+    # 14. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
     (
         "capslock_assinatura",
         re.compile(r"\.?[ \n]*[A-ZÀ-Ÿ\s]{10,}$"),
