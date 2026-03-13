@@ -41,7 +41,7 @@ bash pipeline/run_all.sh
 ### Auditoria LGPD
 
 ```bash
-# Verifica ausência de PII residual nos datasets
+# Verifica ausência de dados pessoais residuais nos datasets
 python3 pipeline/audit.py
 ```
 

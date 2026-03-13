@@ -1,7 +1,7 @@
 """
 03_anonimizacao.py — Fase 3: Anonimização (LGPD) e Formatação JSONL
 
-Substitui Informações Pessoalmente Identificáveis (PII) por tokens neutros,
+Substitui dados pessoais (LGPD) por tokens neutros,
 formata os pares {fundamentacao, ementa} no padrão multiturno conversacional
 exigido pela API de fine-tuning do Gemini, e realiza a divisão treino/teste.
 
@@ -40,7 +40,7 @@ TEST_SIZE: float = 0.10  # 10% para avaliação da banca; 90% para fine-tuning
 RANDOM_SEED: int = 42    # Seed fixa para divisão reproduzível Treino/Teste
 
 # [C14] Comprimento mínimo pós-anonimização — registros cujo conteúdo era
-# majoritariamente PII ficam apenas com tokens como [NOME_PESSOA] [LOCAL_OCULTADO].
+# majoritariamente dados pessoais ficam apenas com tokens como [NOME_PESSOA] [LOCAL_OCULTADO].
 MIN_FUND_ANON_LEN: int = 50
 MIN_EMENTA_ANON_LEN: int = 20
 
@@ -58,7 +58,7 @@ _INSTRUCAO_SISTEMA = (
 # ---------------------------------------------------------------------------
 # Nota sobre escopo LGPD: a Lei 13.709/2018 protege dados pessoais de
 # PESSOA NATURAL (Art. 1º, Art. 5º-I). Razões sociais (PJ), municípios
-# e CEPs são informação pública — não são PII e não são anonimizados.
+# e CEPs são informação pública — não são dados pessoais e não são anonimizados.
 # ---------------------------------------------------------------------------
 
 _RE_CPF = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
@@ -72,7 +72,7 @@ _RE_CONTA = re.compile(
     re.IGNORECASE,
 )
 
-# E-mail — PII inequívoca (Art. 5º, I LGPD)
+# E-mail — dado pessoal inequívoco (Art. 5º, I LGPD)
 _RE_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
 
 # Telefone — formatos BR: (83) 99999-9999, 83 99999-9999, 9999-9999
@@ -172,7 +172,7 @@ _RE_LOGRADOURO = re.compile(
 
 @dataclass
 class AnonimizationStats:
-    """Contadores de tokens PII substituídos ao longo de toda a base."""
+    """Contadores de tokens de dados pessoais substituídos ao longo de toda a base."""
 
     cpfs: int = 0
     cnpjs: int = 0
@@ -199,7 +199,7 @@ def _count(pattern: re.Pattern[str], texto: str) -> int:
 
 
 def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None) -> str:
-    """Substitui PII no texto por tokens genéricos, em conformidade com a LGPD.
+    """Substitui dados pessoais no texto por tokens genéricos, em conformidade com a LGPD.
 
     Camadas de proteção (em ordem de aplicação):
         1. CPF formatado → [CPF]
@@ -219,7 +219,7 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
         stats: Objeto de contagem; se fornecido, é atualizado in-place.
 
     Returns:
-        String com PII substituída por tokens neutros.
+        String com dados pessoais substituídos por tokens neutros.
     """
     if not texto:
         return ""
@@ -372,7 +372,7 @@ def gerar_datasets(
     """Pipeline completo da Fase 3: anonimização LGPD + formatação JSONL + split.
 
     Returns:
-        Estatísticas de tokens PII substituídos.
+        Estatísticas de tokens de dados pessoais substituídos.
     """
     if not input_path.exists():
         raise FileNotFoundError(
@@ -389,7 +389,7 @@ def gerar_datasets(
     exemplos, stats = _anonimizar_registros(registros)
 
     log.info(
-        "Anonimização concluída. Total de tokens PII substituídos: %d "
+        "Anonimização concluída. Total de tokens de dados pessoais substituídos: %d "
         "(CPFs: %d | CNPJs: %d | Emails: %d | Telefones: %d | "
         "Nomes hon.: %d | Nomes próprios: %d | Logradouros: %d)",
         stats.total,
