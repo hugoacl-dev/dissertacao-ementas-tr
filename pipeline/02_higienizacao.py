@@ -2,8 +2,9 @@
 02_higienizacao.py — Fase 2: Saneamento e Higienização Avançada
 
 Aplica expressões regulares pré-compiladas sobre os textos brutos gerados
-pela Fase 1, removendo ruídos processuais (HTML, IDs do PJe, datas,
-carimbos DJe, assinaturas de juízes).
+pela Fase 1, removendo ruídos processuais (HTML, IDs do PJe,
+carimbos DJe, assinaturas de juízes) e substituindo datas por token [DATA]
+para preservar informação semântica de mérito jurídico.
 
 Entradas : data/dados_brutos.json
 Saídas   : data/dados_limpos.json
@@ -47,9 +48,13 @@ _CIDADES_DATA = (
     r"(?:joão pessoa|campina grande|guarabira|patos|monteiro|sousa)"
 )
 
-_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
+    # Formato: (nome, pattern, substituição)
+    # Datas são substituídas por [DATA] (não removidas) para preservar
+    # informação semântica de mérito — prazos, óbitos, DIB de benefícios.
+
     # 1. Tags HTML — <p style="...">, <strong>, <ol>, <li> …
-    ("html_tags", re.compile(r"<[^>]+>", re.IGNORECASE)),
+    ("html_tags", re.compile(r"<[^>]+>", re.IGNORECASE), " "),
 
     # 2. Metadados processuais — "Processo nº 0500148-54.2016.4.05.8200"
     (
@@ -58,10 +63,11 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"(?:processo|protocolo|autos)[\s\w]*n[º°o]?[\s:]*[\d\.\-]+(?:/\d+)?",
             re.IGNORECASE,
         ),
+        " ",
     ),
 
     # 3. IDs do PJe — todos os formatos: "id. 48772689", "(id 48772 689)", "id.. 42000664", "Id. . 25146010"
-    ("ids_pje", re.compile(r"\(?id[\s.]*[\s:]*\d{5,}\)?", re.IGNORECASE)),
+    ("ids_pje", re.compile(r"\(?id[\s.]*[\s:]*\d{5,}\)?", re.IGNORECASE), " "),
 
     # 4. Carimbo DJe + linha inteira — "PROCESSO ELETRÔNICO DJe-s/n DIVULG 23-05-2024"
     (
@@ -70,17 +76,19 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"(?:Data de Julgamento.*?|PROCESSO ELETRÔNICO.*?DJe[\w\-\s/]*(?:\d{4})?)",
             re.IGNORECASE,
         ),
+        " ",
     ),
 
     # 5a. DJe simples — "DJe 26.09.2012", "DJe-s/n"
-    ("dje_simples", re.compile(r"\bDJe[\-\s]*[s/n]*\b", re.IGNORECASE)),
+    ("dje_simples", re.compile(r"\bDJe[\-\s]*[s/n]*\b", re.IGNORECASE), " "),
     (
         "dje_data",
         re.compile(r"DJe\s+\d{1,2}[./]\d{1,2}[./]\d{2,4}", re.IGNORECASE),
+        " ",
     ),
 
     # 5b. Carimbo "DIVULG" isolado (remanescentem do DJe sem prefixo completo)
-    ("divulg_isolado", re.compile(r"\bDIVULG\b", re.IGNORECASE)),
+    ("divulg_isolado", re.compile(r"\bDIVULG\b", re.IGNORECASE), " "),
 
     # 6a. Ação Civil Pública + DPU (formato completo)
     (
@@ -89,27 +97,29 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"Ação Civil Pública[\s\-]+ACP\s*n[º°o]?\s*[\d\.\-]+[^.]*DPU",
             re.IGNORECASE,
         ),
+        " ",
     ),
 
     # 6b. "Ação Civil Pública" / "Ação Civil Pública" sem ACP — menção isolada
-    (
-        "acao_civil_publica",
-        re.compile(r"Ação Civil Pública", re.IGNORECASE),
-    ),
+    ("acao_civil_publica", re.compile(r"Ação Civil Pública", re.IGNORECASE), " "),
 
     # 7. Datas com cidade prefixada — "João Pessoa, 12 de março de 2021"
+    # [C1] Substituição por token semântico [DATA] em vez de espaço vazio.
     (
         "data_cidade",
         re.compile(
             rf"{_CIDADES_DATA}[\s,]+\d{{1,2}}[\sde]+{_MESES}[\sde]+\d{{4}}",
             re.IGNORECASE,
         ),
+        " [DATA] ",
     ),
 
     # 8. Datas extensas — "12 de março de 2021"
+    # [C1] Datas fazem parte do mérito (prazos, óbitos, benefícios).
     (
         "data_extensa",
         re.compile(rf"\d{{1,2}}\s+de\s+{_MESES}\s+de\s+\d{{4}}", re.IGNORECASE),
+        " [DATA] ",
     ),
 
     # 9. Datas com prefixo de contexto — "atualizado em 01/01/2020", "falecido em 2022"
@@ -119,31 +129,38 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"(?:atualizado|falecido)\s+em\s+\d{1,2}[./]\d{1,2}[./]\d{2,4}",
             re.IGNORECASE,
         ),
+        " [DATA] ",
     ),
     (
         "falecido_ano",
         re.compile(r"falecido\s+em\s+\d{4}", re.IGNORECASE),
+        " [DATA] ",
     ),
 
     # 10. Datas numéricas genéricas — "01/03/2024", "01.03.2024"
+    # [C1] Preserva a informação de que havia uma referência temporal.
     (
         "data_numerica",
         re.compile(r"\d{1,2}[./]\d{1,2}[./]\d{2,4}"),
+        " [DATA] ",
     ),
 
     # 11. Bloco da juizado especial no final — "A juizado especial dos Juizados … DEU PROVIMENTO"
+    # [C2] re.DOTALL para que '.' cruze quebras de linha (\n).
     (
         "turma_recursal",
         re.compile(
             r"A juizado especial dos Juizados Especiais.*?(?:votos?|juiz[- ]relator|honorários).*?(?=\.|$)",
-            re.IGNORECASE,
+            re.IGNORECASE | re.DOTALL,
         ),
+        " ",
     ),
 
     # 12. "Súmula de Julgamento: …" até o final da string
     (
         "sumula_julgamento",
         re.compile(r"Súmula de Julgamento:?.*$", re.IGNORECASE),
+        " ",
     ),
 
     # 13. Honoríficos de juízes até o final da string
@@ -153,12 +170,14 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"(?:Juiz Federal|Juíza Federal|Relator|Relatora|Excelentíssimo|Desembargador)[\w\s]*?$",
             re.IGNORECASE,
         ),
+        " ",
     ),
 
-    # 14. Blocos isolados CAPSLOCK no final (assinaturas) — "BIANOR ARRUDA BEZERRA NETO"
+    # 14. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
     (
         "capslock_assinatura",
         re.compile(r"\.?[ \n]*[A-ZÀ-Ÿ\s]{10,}$"),
+        " ",
     ),
 ]
 
@@ -189,9 +208,9 @@ class CleaningStats:
 
 
 def _aplicar_patterns(texto: str) -> str:
-    """Aplica todos os padrões de remoção de ruído sequencialmente."""
-    for _nome, pattern in _PATTERNS:
-        texto = pattern.sub(" ", texto)
+    """Aplica todos os padrões de limpeza sequencialmente com sua substituição específica."""
+    for _nome, pattern, repl in _PATTERNS:
+        texto = pattern.sub(repl, texto)
     return texto
 
 
