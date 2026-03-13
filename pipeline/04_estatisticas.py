@@ -511,8 +511,8 @@ def gerar_relatorio(
         ],
         "artefatos": [
             {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa} limpos"},
-            {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "saida", "conteudo": "{instruction, output} anonimizado · 90%"},
-            {"nome": "dataset_teste.jsonl", "tamanho_mb": _file_size_mb(teste_path), "tipo": "saida", "conteudo": "{instruction, output} anonimizado · 10%"},
+            {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "saida", "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"},
+            {"nome": "dataset_teste.jsonl", "tamanho_mb": _file_size_mb(teste_path), "tipo": "saida", "conteudo": "{contents: [{role, parts}]} anonimizado · 10%"},
         ],
     }
 
@@ -566,7 +566,7 @@ def gerar_relatorio(
         "histograma_ementa": hist_ementa,
         "dicas": dicas,
         "artefatos": [
-            {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "entrada", "conteudo": "{instruction, output} anonimizado"},
+            {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "entrada", "conteudo": "{contents: [{role, parts}]} anonimizado"},
             {"nome": "estatisticas_corpus.json", "tamanho_mb": None, "tipo": "saida", "conteudo": "Métricas, distribuições, funil"},
         ],
     }
@@ -585,9 +585,9 @@ def gerar_relatorio(
             "fase2_higienizacao": fase2,
             "fase3_anonimizacao": fase3,
             "fase4_estatisticas": fase4,
-            "fase5_finetuning": None,
-            "fase6_baseline": None,
-            "fase7_avaliacao": None,
+            "fase5_finetuning": {"nome": "Fine-Tuning", "status": "pendente", "script": "pipeline/05_finetuning.py"},
+            "fase6_baseline": {"nome": "Baseline Zero-Shot", "status": "pendente", "script": "pipeline/06_baseline.py"},
+            "fase7_avaliacao": {"nome": "Avaliação", "status": "pendente", "script": "Apresentacao_Dissertacao_Colab.ipynb"},
         },
     }
 

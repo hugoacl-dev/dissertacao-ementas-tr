@@ -394,7 +394,7 @@ function render(data) {
   const pendingPhases = [
     { num: 5, key: 'fase5_finetuning', nome: 'Fine-Tuning', desc: 'Fine-Tuning Supervisionado do Gemini 3.1 Pro via API Google AI Studio.' },
     { num: 6, key: 'fase6_baseline', nome: 'Baseline Zero-Shot', desc: 'Inferência com modelo base (sem fine-tuning) para comparação.' },
-    { num: 7, key: 'fase7_avaliacao', nome: 'Avaliação Final', desc: 'ROUGE + BERTScore + NLI (auditoria factual) + Bootstrap significance.' },
+    { num: 7, key: 'fase7_avaliacao', nome: 'Avaliação Final', desc: 'ROUGE + BERTScore + NLI (auditoria factual) + Bootstrap significance + Avaliação Humana (Likert + Kappa).' },
   ];
   pendingPhases.forEach(p => {
     const phaseData = fases[p.key];

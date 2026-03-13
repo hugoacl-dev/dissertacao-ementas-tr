@@ -283,7 +283,7 @@ def processar(input_path: Path = INPUT_PATH, output_path: Path = OUTPUT_PATH) ->
     if not input_path.exists():
         raise FileNotFoundError(
             f"Arquivo de entrada não encontrado: {input_path}\n"
-            "Execute a Fase 1 primeiro (dados_extracao.py)."
+            "Execute a Fase 1 primeiro (01_ingestao.py)."
         )
 
     log.info("=== Fase 2: Saneamento e Higienização (Regex) ===")
