@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-13T12:52:54",
+    "gerado_em": "2026-03-13T13:25:46",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "Hugo Andrade Correia Lima Filho",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 257
+    "pipeline_total_segundos": 130
   },
   "fases": {
     "fase1_ingestao": {
@@ -40,7 +40,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 50 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
-      "duracao_segundos": 46,
+      "duracao_segundos": 39,
       "registros_entrada": 32377,
       "registros_saida": 32327,
       "perda": 50,
@@ -80,7 +80,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.093 registros. 90%) e teste (3.232 registros. 10%) com split estratificado (seed=42). garantindo reprodutibilidade.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": 167,
+      "duracao_segundos": 56,
       "registros_entrada": 32327,
       "registros_saida": 32325,
       "treino": 29093,
@@ -107,7 +107,7 @@
         },
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 143.8,
+          "tamanho_mb": 143.9,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"
         },
@@ -125,7 +125,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 17,
+      "duracao_segundos": 15,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
@@ -140,16 +140,16 @@
       },
       "fundamentacao": {
         "contagem": 32325,
-        "media": 659.2,
+        "media": 659.8,
         "mediana": 541,
-        "desvio_padrao": 467.4,
+        "desvio_padrao": 468.0,
         "min": 9,
-        "max": 9984,
+        "max": 9989,
         "p5": 231.0,
         "p25": 384.0,
-        "p75": 791.0,
-        "p95": 1415.8,
-        "total_palavras": 21308364
+        "p75": 792.0,
+        "p95": 1417.0,
+        "total_palavras": 21329006
       },
       "ementa": {
         "contagem": 32325,
@@ -157,19 +157,19 @@
         "mediana": 27,
         "desvio_padrao": 13.3,
         "min": 2,
-        "max": 1030,
+        "max": 1034,
         "p5": 16.0,
         "p25": 22.0,
         "p75": 35.0,
         "p95": 53.0,
-        "total_palavras": 970451
+        "total_palavras": 970551
       },
       "razao_compressao": {
-        "media": 23.88,
-        "mediana": 19.33,
-        "desvio_padrao": 17.19,
+        "media": 23.9,
+        "mediana": 19.35,
+        "desvio_padrao": 17.21,
         "min": 0.12,
-        "max": 891.5
+        "max": 893.0
       },
       "novel_ngrams": {
         "unigrams": {
@@ -198,36 +198,36 @@
         }
       },
       "vocabulario": {
-        "fundamentacao": 221812,
-        "ementa": 12595,
-        "total_unico": 223427,
-        "sobreposicao": 10980
+        "fundamentacao": 221975,
+        "ementa": 12601,
+        "total_unico": 223592,
+        "sobreposicao": 10984
       },
       "histograma_fundamentacao": {
-        "0-199": 1010,
-        "200-399": 7850,
-        "400-599": 9672,
-        "600-799": 5870,
-        "800-999": 3197,
-        "1000-1199": 1914,
-        "1200-1399": 1118,
-        "1400-1599": 620,
-        "1600-1799": 303,
+        "0-199": 1003,
+        "200-399": 7842,
+        "400-599": 9684,
+        "600-799": 5862,
+        "800-999": 3189,
+        "1000-1199": 1927,
+        "1200-1399": 1105,
+        "1400-1599": 635,
+        "1600-1799": 304,
         "1800-1999": 209,
-        "2000-2199": 132,
-        "2200-2399": 90,
-        "2400-2599": 76,
-        "2600-2799": 46,
+        "2000-2199": 134,
+        "2200-2399": 91,
+        "2400-2599": 75,
+        "2600-2799": 47,
         "2800-2999": 32
       },
       "histograma_ementa": {
         "0-9": 258,
         "10-19": 5123,
         "20-29": 13005,
-        "30-39": 7879,
+        "30-39": 7874,
         "40-49": 3741,
-        "50-59": 1432,
-        "60-69": 584,
+        "50-59": 1436,
+        "60-69": 585,
         "70-79": 203,
         "80-89": 57,
         "90-99": 23,
@@ -247,7 +247,7 @@
       "artefatos": [
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 143.8,
+          "tamanho_mb": 143.9,
           "tipo": "entrada",
           "conteudo": "{contents: [{role, parts}]} anonimizado"
         },
