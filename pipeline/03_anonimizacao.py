@@ -85,14 +85,21 @@ _RE_TELEFONE = re.compile(
     r"(?:\(\d{2}\)\s*\d{4,5}-?\d{4}|\d{2}\s+\d{4,5}-\d{4})\b"
 )
 
-# Honorífico + nome — ex: "Dr. PESSOA TESTE ALFA", "autora PESSOA TESTE BETA"
-_HONORIFICOS = (
+# Honorífico + nome — separados em dois grupos por natureza jurídica.
+#
+# Grupo 1: PARTES PRIVADAS → anonimizar (dados pessoais LGPD)
+#   autor/réu, advogado, Sr./Sra., Dr./Dra. (geralmente advogados), perito
+#
+# Grupo 2: AGENTES PÚBLICOS → preservar (Art. 93, IX CF — publicidade)
+#   relator, desembargador, juiz, Ministro/Min. — nomes públicos em citações
+#   de precedentes são referências bibliográficas, não dados pessoais.
+
+_HONORIFICOS_PRIVADOS = (
     r"(?:Sr\.|Sra\.|Dr\.|Dra\.|advogado|advogada|autor|autora|"
-    r"réu|ré|juiz|juíza|relator|relatora|desembargador|desembargadora|"
-    r"perito|perita)"
+    r"réu|ré|perito|perita)"
 )
 _RE_NOME_HONORIFICO = re.compile(
-    rf"(?i)\b({_HONORIFICOS})\s+([A-ZÀ-Ÿ][a-zà-ÿ]+\s*){{1,4}}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
+    rf"(?i)\b({_HONORIFICOS_PRIVADOS})\s+([A-ZÀ-Ÿ][a-zà-ÿ]+\s*){{1,4}}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
 )
 
 # Nome próprio isolado: 3+ palavras com inicial maiúscula consecutivas
