@@ -37,33 +37,20 @@ _PREFIXO_SISTEMA = (
 # ---------------------------------------------------------------------------
 
 PATTERNS: dict[str, re.Pattern[str]] = {
-    "1. Datas (dd/mm/aaaa ou dd.mm.aaaa)": re.compile(
-        r"\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b"
-    ),
-    "2. Datas Extensas": re.compile(
-        r"(?i)\b\d{1,2}\s+de\s+(?:janeiro|fevereiro|março|abril|maio|junho|"
-        r"julho|agosto|setembro|outubro|novembro|dezembro)\s+de\s+\d{4}\b"
-    ),
+    "1. CPF": re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b"),
+    "2. CNPJ": re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b"),
     "3. NPU (Número do Processo)": re.compile(
         r"\b\d{7}-\d{2}\.\d{4}\.\d{1,2}\.\d{2}\.\d{4}\b"
     ),
     "4. ID PJe": re.compile(r"(?i)\bid[\s.]*[\s:]*\d{5,}"),
-    "5. CPF": re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b"),
-    "6. CNPJ": re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b"),
-    "7. Cidades Explícitas (PB)": re.compile(
-        r"(?i)\b(?:João Pessoa|Campina Grande|Cabedelo|Santa Rita|Patos|"
-        r"Sousa|Cajazeiras|Guarabira|Paraíba)\b"
-    ),
-    # Empresa: S/A sozinho é ambíguo em citações jurídicas (STJ, S/A Banco, etc.)
-    # Auditamos apenas Ltda e EPP que são mais inequívocos.
-    "8. Empresa (Ltda, EPP)": re.compile(r"(?i)\b(?:Ltda\.?|EPP)\b"),
-    # Relatores: apenas a forma nominal com inicial maiúscula isolada no final de frase
-    # Formas como 'relator o em. ministro' em citações STJ não são PII.
-    "9. Juízes/Relatores (forma nominal isolada)": re.compile(
+    "5. E-mail": re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"),
+    "6. Telefone": re.compile(r"\(?\d{2}\)?\s*\d{4,5}-?\d{4}\b"),
+    # Juízes/Relatores: forma nominal com nome próprio após título
+    "7. Juízes/Relatores (forma nominal)": re.compile(
         r"(?i)\b(?:Juiz Federal|Juíza Federal|Desembargador)\s+[A-ZÀ-Ÿ]"
     ),
-    # DJe apenas quando seguido de data (carimbo real), não em citações esparsas
-    "10. DJe com data residual": re.compile(
+    # DJe apenas quando seguido de data (carimbo real)
+    "8. DJe com data residual": re.compile(
         r"(?i)\bDJe\s+\d{1,2}[./]\d{1,2}[./]\d{2,4}"
     ),
 }
