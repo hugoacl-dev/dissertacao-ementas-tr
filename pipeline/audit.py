@@ -1,7 +1,7 @@
 """
-audit.py — Validação pós-Fase 3: Auditoria de Vazamentos PII
+audit.py — Validação pós-Fase 3: Auditoria de Vazamentos de Dados Pessoais
 
-Varre os arquivos JSONL gerados pela Fase 3 em busca de resíduos de PII
+Varre os arquivos JSONL gerados pela Fase 3 em busca de resíduos de dados pessoais
 que tenham escapado da limpeza e anonimização.
 
 Executar a partir da raiz do projeto: python3 pipeline/audit.py
@@ -9,7 +9,7 @@ Executar a partir da raiz do projeto: python3 pipeline/audit.py
 Lógica de extração de texto:
   - Turno "user": extrai apenas o conteúdo da fundamentação, removendo o
     prefix fixo da instrução de sistema (que contém palavras como "relator"
-    e "Desembargador" de forma legítima, não como PII).
+    e "Desembargador" de forma legítima, não como dados pessoais).
   - Turno "model": extrai o texto da ementa diretamente.
 
 Isso evita falsos positivos causados pela instrução de sistema embutida.
@@ -85,7 +85,7 @@ def _extrair_textos_de_dado(obj: dict) -> str:
 
 
 def audit(file_path: str | Path) -> bool:
-    """Audita um arquivo JSONL em busca de vazamentos PII.
+    """Audita um arquivo JSONL em busca de vazamentos de dados pessoais.
 
     Args:
         file_path: Caminho para o arquivo JSONL a auditar.
@@ -132,7 +132,7 @@ def audit(file_path: str | Path) -> bool:
             print(f"[OK] {cat}")
 
     if all_clean:
-        print("\n✓ Base 100% limpa — nenhum vazamento PII detectado.")
+        print("\n✓ Base 100% limpa — nenhum vazamento de dados pessoais detectado.")
     else:
         print(f"\n✗ Vazamentos detectados em {sum(1 for c in counts.values() if c > 0)} categorias.")
 
