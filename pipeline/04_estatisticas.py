@@ -519,7 +519,7 @@ def gerar_relatorio(
         "split_ratio": "90/10",
         "random_seed": 42,
         "categorias_pii": [
-            "CPF", "CNPJ", "CONTA-DIGITO",
+            "CPF", "CNPJ", "NPU", "CONTA-DIGITO",
             "EMAIL", "TELEFONE",
             "NOME_OCULTADO", "NOME_PESSOA",
             "ENDEREÇO_COMPLETO",
