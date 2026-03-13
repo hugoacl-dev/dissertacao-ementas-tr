@@ -519,9 +519,10 @@ def gerar_relatorio(
         "split_ratio": "90/10",
         "random_seed": 42,
         "categorias_pii": [
-            "CPF", "CNPJ", "CEP", "CONTA-DIGITO",
+            "CPF", "CNPJ", "CONTA-DIGITO",
+            "EMAIL", "TELEFONE",
             "NOME_OCULTADO", "NOME_PESSOA",
-            "LOCAL_OCULTADO", "ENDEREÇO_COMPLETO", "EMPRESA",
+            "ENDEREÇO_COMPLETO",
         ],
         "artefatos": [
             {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa} limpos"},
