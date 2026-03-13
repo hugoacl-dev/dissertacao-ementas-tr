@@ -19,7 +19,7 @@ Desenvolver e validar um pipeline computacional completo para a **geração abst
 
 ## Pipeline
 
-O projeto é dividido em **7 fases sequenciais**:
+O projeto é dividido em **7 fases**. As Fases 1–4 são sequenciais; após a Fase 4, as Fases 5 e 6 executam em **paralelo**, convergindo na Fase 7:
 
 | Fase | Script | Descrição |
 |---:|---|---|
@@ -29,7 +29,7 @@ O projeto é dividido em **7 fases sequenciais**:
 | 4 | `pipeline/04_estatisticas.py` | Estatísticas descritivas: funil de attrition, distribuições, novel n-grams |
 | 5 | `pipeline/05_finetuning.py` | Fine-tuning supervisionado via API Google AI Studio *(em desenvolvimento)* |
 | 6 | `pipeline/06_baseline.py` | Baseline zero-shot para comparação *(em desenvolvimento)* |
-| 7 | Notebook Colab | Avaliação: ROUGE, BERTScore, NLI, bootstrap resampling *(em desenvolvimento)* |
+| 7 | Notebook Colab | Avaliação: ROUGE, BERTScore, NLI, bootstrap, avaliação humana (Likert + Kappa) *(em desenvolvimento)* |
 
 ### Execução
 
@@ -55,18 +55,20 @@ Dashboard interativo para visualização das estatísticas do corpus, disponíve
 
 ## Avaliação (Fase 7)
 
-A validação será conduzida em três eixos:
+A Fase 7 gera ementas com o modelo fine-tuned e compara **três ementas por amostra** contra a ementa oficial (humana): `ementa_baseline` (Fase 6) e `ementa_finetuned`. A validação é conduzida em quatro eixos:
 
-1. **Sintático-Semântico:** ROUGE-1/2/L + BERTScore
+1. **Sintático-Semântico:** ROUGE-1/2/L + BERTScore com `xlm-roberta-large`
 2. **Factual:** NLI via `xlm-roberta-large-xnli` (detecção de alucinações)
-3. **Estatístico:** Bootstrap resampling (1.000 iterações, IC 95%)
+3. **Estatístico:** Bootstrap resampling (1.000 iterações, IC 95%, p-value)
+4. **Humano:** 30-50 amostras, 2 avaliadores, design cego, Likert 1-5, Cohen's Kappa (κ ≥ 0.6)
 
 ## Reprodutibilidade
 
 | Artefato | Descrição |
 |---|---|
+| `requirements.txt` | Dependências do pipeline local (Fases 1–6) com versões fixas |
 | `random.seed(42)` | Seed para divisão treino/teste determinística |
-| `.gitignore` | Exclui dados brutos e banco SQLite do versionamento |
+| `.gitignore` | Exclui dados brutos, banco SQLite e documentos privados |
 
 ## Licença
 
