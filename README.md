@@ -55,7 +55,7 @@ Dashboard interativo para visualização das estatísticas do corpus, disponíve
 
 ## Avaliação (Fase 7)
 
-A Fase 7 gera ementas com o modelo fine-tuned e compara **três ementas por amostra** contra a ementa oficial (humana): `ementa_baseline` (Fase 6) e `ementa_finetuned`. A validação é conduzida em quatro eixos:
+A Fase 7 gera ementas com o modelo fine-tuned e, para cada amostra, compara a `ementa_baseline` (Fase 6) e a `ementa_finetuned` contra a `ementa_oficial` (referência humana). A validação é conduzida em quatro eixos:
 
 1. **Sintático-Semântico:** ROUGE-1/2/L + BERTScore com `xlm-roberta-large`
 2. **Factual:** NLI via `xlm-roberta-large-xnli` (detecção de alucinações)
