@@ -268,7 +268,7 @@ function render(data) {
   if (f3) main.appendChild(buildPhase(3, f3, () => {
     const cards = el('div', 'cards');
     cards.append(
-      metricCard('Treino', fmt(f3.treino), `${f3.split_ratio} · seed=${f3.random_seed}`, 'accent'),
+      metricCard('Treino', fmt(f3.treino), `${f3.split_ratio} · divisão cronológica por data`, 'accent'),
       metricCard('Teste', fmt(f3.teste), 'holdout para avaliação', 'purple'),
     );
     if (f3.categorias_pii) {
@@ -392,9 +392,9 @@ function render(data) {
 
   // Phases 5-7 (pending)
   const pendingPhases = [
-    { num: 5, key: 'fase5_finetuning', nome: 'Fine-Tuning', desc: 'Fine-Tuning Supervisionado do Gemini 3.1 Pro via API Google AI Studio.' },
-    { num: 6, key: 'fase6_baseline', nome: 'Baseline Zero-Shot', desc: 'Inferência com modelo base (sem fine-tuning) para comparação.' },
-    { num: 7, key: 'fase7_avaliacao', nome: 'Avaliação Final', desc: 'ROUGE + BERTScore + NLI (auditoria factual) + Bootstrap significance + Avaliação Humana (Likert + Kappa).' },
+    { num: 5, key: 'fase5_finetuning', nome: 'Fine-Tuning', desc: 'Fine-Tuning Supervisionado em dois modelos: Gemini 2.5 Flash via Vertex AI (SFT nativo) e Qwen 2.5 14B via LoRA/Unsloth em RunPod A100 80GB.' },
+    { num: 6, key: 'fase6_baseline', nome: 'Baseline Zero-Shot', desc: 'Inferência zero-shot dos modelos base (sem fine-tuning) para cada modelo — Gemini 2.5 Flash e Qwen 2.5 14B — gerando artefatos separados para comparação.' },
+    { num: 7, key: 'fase7_avaliacao', nome: 'Avaliação Final', desc: 'Quatro condições experimentais (Gemini FT/ZS · Qwen FT/ZS) avaliadas em 4 eixos: ROUGE + BERTScore · LLM-as-a-Judge (DeepSeek V3, 5 dimensões CNJ 154/2024) · Bootstrap IC 95% + p-value · Avaliação Humana (Likert + Kappa).' },
   ];
   pendingPhases.forEach(p => {
     const phaseData = fases[p.key];

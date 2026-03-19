@@ -278,14 +278,24 @@ def popular_sqlite(conn: sqlite3.Connection, registros: list[RegistroProcesso]) 
 
 
 def exportar_json(registros: list[RegistroProcesso], path: Path) -> None:
-    """Serializa os registros para JSON compacto (sem indentação) em UTF-8."""
+    """Serializa os registros para JSON compacto (sem indentação) em UTF-8.
+
+    Inclui o campo 'data_cadastro' para viabilizar a divisão cronológica
+    treino/teste na Fase 3 (03_anonimizacao.py).
+    """
     payload = [
-        {"id": r.id, "fundamentacao": r.fundamentacao, "ementa": r.ementa}
+        {
+            "id": r.id,
+            "fundamentacao": r.fundamentacao,
+            "ementa": r.ementa,
+            "data_cadastro": r.data_cadastro,
+        }
         for r in registros
     ]
     with path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
     log.info("JSON exportado para %s (%s registros).", path, len(payload))
+
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,13 @@
 # Dependências do pipeline — Dissertação Ementas TR
 #
-# Fases 1-4 (ingestão, higienização, anonimização, estatísticas):
+# Fases 1–4 (ingestão, higienização, anonimização, estatísticas):
 #   Usam apenas a biblioteca padrão do Python (≥ 3.10). Sem dependências externas.
 #
-# Fase 5 (fine-tuning via Google AI Studio):
-google-generativeai>=0.8.0
+# Fase 5a (fine-tuning Gemini 2.5 Flash via Vertex AI):
+google-cloud-aiplatform>=1.40.0
+#
+# Fase 5b (fine-tuning Qwen 2.5 14B via LoRA/Unsloth — executar em RunPod):
+# unsloth[cu124-torch260]   # instalar no ambiente RunPod, não localmente
+#
+# Fases 6 e 7 (baseline + avaliação no Colab — ver requirements_colab.txt):
+# rouge-score, bert-score, transformers, deepseek-sdk  # instalar no Colab

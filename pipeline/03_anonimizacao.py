@@ -3,17 +3,25 @@
 
 Substitui dados pessoais (LGPD) por tokens neutros,
 formata os pares {fundamentacao, ementa} no padrão multiturno conversacional
-exigido pela API de fine-tuning do Gemini, e realiza a divisão treino/teste.
+exigido pela API de fine-tuning do Gemini e do Qwen, e realiza a divisão
+treino/teste por critério cronológico.
 
 Entradas : data/dados_limpos.json
+           (deve conter o campo 'data_cadastro' exportado pela Fase 1)
 Saídas   : data/dataset_treino.jsonl, data/dataset_teste.jsonl
 Executar a partir da raiz do projeto: python3 pipeline/03_anonimizacao.py
 
-Formato JSONL (compatível com Gemini Supervised Fine-Tuning):
+Divisão treino/teste: CRONOLÓGICA por 'data_cadastro'.
+As 90% decisões mais antigas vão para treino; as 10% mais recentes para teste.
+Isso evita temporal leakage — o modelo não treina em dados futuros relativos
+ao conjunto de avaliação — seguindo o protocolo do SLDS (Rolshoven et al.,
+2025). NÃO é utilizado shuffle aleatório.
+
+Formato JSONL (compatível com Gemini Supervised Fine-Tuning e Unsloth/Qwen):
   {"contents": [{"role": "user", "parts": [{"text": "..."}]},
                 {"role": "model", "parts": [{"text": "..."}]}]}
 
-Nota: a API de tuning NÃO suporta role "system" no array `contents`.
+Nota: a API de tuning do Gemini NÃO suporta role "system" no array `contents`.
 A instrução de sistema é embutida no turno `user`.
 """
 from __future__ import annotations
@@ -24,7 +32,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from random import Random
+
 
 # ---------------------------------------------------------------------------
 # Configuração
@@ -37,7 +45,11 @@ TRAIN_PATH = Path("data/dataset_treino.jsonl")
 TEST_PATH = Path("data/dataset_teste.jsonl")
 
 TEST_SIZE: float = 0.10  # 10% para avaliação da banca; 90% para fine-tuning
-RANDOM_SEED: int = 42    # Seed fixa para divisão reproduzível Treino/Teste
+
+# Divisão CRONOLÓGICA — não utiliza shuffle aleatório.
+# Os 90% de decisões mais antigas (por data_cadastro) vão para treino;
+# os 10% mais recentes vão para teste. Isso evita temporal leakage.
+# Referência: SLDS (Rolshoven et al., 2025).
 
 # [C14] Comprimento mínimo pós-anonimização — registros cujo conteúdo era
 # majoritariamente dados pessoais ficam apenas com tokens como [NOME_PESSOA] [LOCAL_OCULTADO].
@@ -343,25 +355,36 @@ def _dividir_e_gravar(
     train_path: Path,
     test_path: Path,
     test_size: float,
-    seed: int,
 ) -> tuple[int, int]:
-    """Embaralha, divide e grava os datasets de treino e teste.
+    """Divide cronologicamente e grava os datasets de treino e teste.
 
-    Usa `random.Random(seed)` para não poluir o estado global do módulo `random`.
+    A divisão é feita por 'data_cadastro' (campo preservado desde a Fase 1):
+    as decisões mais antigas vão para treino e as mais recentes para teste.
+    Isso evita temporal leakage — garantia de que o modelo não treina em
+    dados futuros relativos ao conjunto de avaliação.
+
+    Referência: SLDS (Rolshoven et al., 2025).
+
+    ATENÇÃO: não é feito shuffle. A ordem temporal é preservada durante
+    o treinamento, mas a API de tuning embaralha internamente se necessário.
 
     Returns:
         Tupla (qtd_treino, qtd_teste).
     """
-    rng = Random(seed)
-    rng.shuffle(exemplos)
+    # Ordenação cronológica crescente pelo campo 'data_cadastro'.
+    # Registros sem data_cadastro são colocados no início (tratados como antigos).
+    exemplos_ordenados = sorted(
+        exemplos,
+        key=lambda x: x.get("data_cadastro", "") or "",
+    )
 
-    qtd_teste = int(len(exemplos) * test_size)
-    dataset_teste = exemplos[:qtd_teste]
-    dataset_treino = exemplos[qtd_teste:]
+    qtd_teste = int(len(exemplos_ordenados) * test_size)
+    # As decisões MAIS RECENTES (final da lista ordenada) vão para teste.
+    dataset_treino = exemplos_ordenados[:-qtd_teste] if qtd_teste > 0 else exemplos_ordenados
+    dataset_teste = exemplos_ordenados[-qtd_teste:] if qtd_teste > 0 else []
 
     log.info(
-        "Divisão (seed=%d): %d para TREINO (%.0f%%) | %d para TESTE (%.0f%%)",
-        seed,
+        "Divisão CRONOLÓGICA: %d para TREINO (%.0f%%) | %d para TESTE (%.0f%%)",
         len(dataset_treino),
         (1 - test_size) * 100,
         len(dataset_teste),
@@ -372,7 +395,9 @@ def _dividir_e_gravar(
         log.info("Gravando %s (%d exemplos)...", path, len(dataset))
         with path.open("w", encoding="utf-8") as f:
             for ex in dataset:
-                f.write(json.dumps(ex, ensure_ascii=False, separators=(",", ":")) + "\n")
+                # Remove data_cadastro antes de gravar — não é campo do JSONL de treino.
+                ex_sem_data = {k: v for k, v in ex.items() if k != "data_cadastro"}
+                f.write(json.dumps(ex_sem_data, ensure_ascii=False, separators=(",", ":")) + "\n")
 
     return len(dataset_treino), len(dataset_teste)
 
@@ -382,9 +407,12 @@ def gerar_datasets(
     train_path: Path = TRAIN_PATH,
     test_path: Path = TEST_PATH,
     test_size: float = TEST_SIZE,
-    seed: int = RANDOM_SEED,
 ) -> AnonimizationStats:
-    """Pipeline completo da Fase 3: anonimização LGPD + formatação JSONL + split.
+    """Pipeline completo da Fase 3: anonimização LGPD + formatação JSONL + split cronológico.
+
+    A divisão treino/teste é feita por critério CRONOLÓGICO (campo 'data_cadastro'),
+    não por shuffle aleatório. As 90% decisões mais antigas vão para treino;
+    as 10% mais recentes vão para teste. Isso evita temporal leakage.
 
     Returns:
         Estatísticas de tokens de dados pessoais substituídos.
@@ -427,7 +455,7 @@ def gerar_datasets(
             MIN_EMENTA_ANON_LEN,
         )
 
-    _dividir_e_gravar(exemplos, train_path, test_path, test_size, seed)
+    _dividir_e_gravar(exemplos, train_path, test_path, test_size)
     log.info("=== Fase 3 finalizada com sucesso. ===")
     return stats
 

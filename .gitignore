@@ -21,6 +21,7 @@ credentials*.json
 *.key
 
 # Documentos de pesquisa (privados)
+/pesquisa/
 Hugo - Revisado.md
 Hugo - Revisado.docx
 NOTAS_PESQUISA.md
