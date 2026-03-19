@@ -442,6 +442,22 @@ body {
   overflow: hidden;
 }
 
+/* ===== BOX-PLOT SIDE-BY-SIDE ===== */
+.boxplot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.boxplot-panel__title {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 /* ===== TAGS ===== */
 .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
 .tag {
