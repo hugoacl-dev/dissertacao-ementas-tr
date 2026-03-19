@@ -444,12 +444,26 @@ function renderPiiChart(f3) {
   const c = getChartColors();
 
   const pii = f3.pii_contagem;
+
+  // Mapa de labels legíveis para cada token PII
+  const labelMap = {
+    'NOME_OCULTADO': 'Nomes c/ título (Dr., autor…)',
+    'NOME_PESSOA': 'Nomes isolados (3+ palavras)',
+    'NPU': 'Nº do Processo (NPU)',
+    'CPF': 'CPF',
+    'CNPJ': 'CNPJ',
+    'EMAIL': 'E-mail',
+    'TELEFONE': 'Telefone',
+    'CONTA_DIGITO': 'Conta bancária',
+    'ENDERECO_COMPLETO': 'Endereço completo',
+  };
+
   // Filtrar 'total' e 'descartados_pos_anon', ordenar por contagem
   const entries = Object.entries(pii)
     .filter(([k]) => k !== 'total' && k !== 'descartados_pos_anon')
     .sort((a, b) => b[1] - a[1]);
 
-  const labels = entries.map(([k]) => `[${k}]`);
+  const labels = entries.map(([k]) => labelMap[k] || `[${k}]`);
   const values = entries.map(([, v]) => v);
 
   const colors = [c.accent, c.accent2, c.accent3, c.accent4,
