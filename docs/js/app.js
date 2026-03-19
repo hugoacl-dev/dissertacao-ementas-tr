@@ -357,7 +357,7 @@ function render(data) {
     const boxCard = el('div', 'card card--wide');
     boxCard.innerHTML = `
       <div class="card__label">Box-Plot Comparativo <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa (em palavras)</span></div>
-      <p class="card__hint">Cada painel usa sua própria escala. A barra central (colorida) mostra onde estão 50% dos textos; as áreas mais claras cobrem 90% do total. Os valores de P25, mediana e P75 estão indicados no gráfico.</p>
+      <p class="card__hint">Cada painel usa sua própria escala. A barra central (colorida) mostra onde estão 50% dos textos; as áreas mais claras cobrem 90% do total. P25 corresponde ao primeiro quartil (Q1), P75 ao terceiro quartil (Q3), e a faixa entre eles é o intervalo interquartílico (IQR).</p>
       <div class="boxplot-grid">
         <div class="boxplot-panel"><div class="boxplot-panel__title">Fundamentação</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-fund"></canvas></div></div>
         <div class="boxplot-panel"><div class="boxplot-panel__title">Ementa</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-ementa"></canvas></div></div>
