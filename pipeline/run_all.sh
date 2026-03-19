@@ -10,7 +10,7 @@ export PATH="/opt/homebrew/bin:/opt/homebrew/opt/postgresql@16/bin:$PATH"
 TIMING_FILE="data/.pipeline_timing.json"
 mkdir -p data
 
-echo "=== Pipeline de Dados — Dissertação sistema judicial ==="
+echo "=== Pipeline de Dados — Dissertação ==="
 echo ""
 
 t_pipeline=$(date +%s)

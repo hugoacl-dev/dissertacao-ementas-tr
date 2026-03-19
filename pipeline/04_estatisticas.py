@@ -487,8 +487,8 @@ def gerar_relatorio(
     taxa_ret_f1 = round(len(brutos) / TOTAL_DUMP * 100, 1)
     perda_f1 = TOTAL_DUMP - len(brutos)
     narrativa_f1 = (
-        f"O sistema sistema judicial (juizado especial federal) armazena "
-        f"votos e ementas em PostgreSQL. O dump original contém {TOTAL_DUMP:,} registros. "
+        f"O sistema judicial armazena votos e ementas em PostgreSQL. "
+        f"O dump original contém {TOTAL_DUMP:,} registros. "
         f"Após descartar {perda_f1:,} registros sem voto (fundamentação) ou ementa preenchida, "
         f"{len(brutos):,} pares válidos foram exportados, uma retenção de {taxa_ret_f1}%, "
         f"indicando alta completude da base de dados."
@@ -521,7 +521,7 @@ def gerar_relatorio(
 
     fase1 = {
         "nome": "Ingestão",
-        "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema sistema judicial.",
+        "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema judicial.",
         "narrativa": narrativa_f1,
         "status": "concluida",
         "script": "pipeline/01_ingestao.py",
@@ -530,7 +530,7 @@ def gerar_relatorio(
         "registros_exportados": len(brutos),
         "perda": perda_f1,
         "taxa_retencao": taxa_ret_f1,
-        "fonte": "sistema judicial / PostgreSQL",
+        "fonte": "Sistema Judicial / PostgreSQL",
         "artefatos": [
             {"nome": "dump_sistema_judicial.sql", "tamanho_mb": _file_size_mb(dump_path), "tipo": "entrada", "conteudo": "Dump binário PostgreSQL (custom format)"},
             {"nome": "dados_brutos.json", "tamanho_mb": _file_size_mb(brutos_path), "tipo": "saida", "conteudo": "{id, fundamentação, ementa}"},
@@ -623,7 +623,7 @@ def gerar_relatorio(
             f"alta complexidade com textos muito extensos."
         ),
         "temporal": (
-            f"Quantidade de processos recebidos pelas relatorias da juizado especial no sistema sistema judicial a cada ano, "
+            f"Quantidade de processos registrados no sistema a cada ano, "
             f"abrangendo o período de {periodo.get('data_mais_antiga', '—')[:4]} a "
             f"{periodo.get('data_mais_recente', '—')[:4]}."
         ),

@@ -9,11 +9,11 @@ Pipeline de dados e treinamento para Processamento de Linguagem Natural aplicado
 
 ## Objetivo
 
-Desenvolver e validar estatisticamente um pipeline computacional completo para a **geração abstrativa de ementas judiciais** a partir de votos (fundamentações) da juizado especial federal (JEF), combinando extração segura de dados (LGPD e Resolução CNJ 615/2025), fine-tuning supervisionado de dois LLMs de naturezas distintas (proprietário e open-source) e validação em quatro eixos: léxico-semântico, qualidade jurídica (LLM-as-a-Judge), estatístico e humano.
+Desenvolver e validar estatisticamente um pipeline computacional completo para a **geração abstrativa de ementas judiciais** a partir de votos (fundamentações) de um juizado especial federal, combinando extração segura de dados (LGPD e Resolução CNJ 615/2025), fine-tuning supervisionado de dois LLMs de naturezas distintas (proprietário e open-source) e validação em quatro eixos: léxico-semântico, qualidade jurídica (LLM-as-a-Judge), estatístico e humano.
 
 ## Corpus
 
-- **32.325 pares** {fundamentação, ementa} extraídos do sistema sistema judicial
+- **32.325 pares** {fundamentação, ementa} extraídos do sistema judicial
 - Razão de compressão média: **23,9:1** (660 palavras → 30 palavras)
 - Novel n-grams: **38,3%** de unigramas e **86,6%** de trigramas inéditos, confirmando a natureza **genuinamente abstrativa** das ementas
 
