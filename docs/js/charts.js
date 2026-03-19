@@ -447,8 +447,8 @@ function renderPiiChart(f3) {
 
   // Mapa de labels legíveis para cada token PII
   const labelMap = {
-    'NOME_OCULTADO': 'Nomes c/ título (Dr., autor…)',
-    'NOME_PESSOA': 'Nomes re-mencionados (back-ref 2+ palavras)',
+    'NOME_OCULTADO': 'Nomes c/ título',
+    'NOME_PESSOA': 'Nomes e fragmentos',
     'NPU': 'Nº do Processo (NPU)',
     'CPF': 'CPF',
     'CNPJ': 'CNPJ',
