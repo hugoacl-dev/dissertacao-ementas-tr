@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-19T14:07:21",
+    "gerado_em": "2026-03-19T14:09:42",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
@@ -21,7 +21,7 @@
       "fonte": "Sistema Judicial / PostgreSQL",
       "artefatos": [
         {
-          "nome": "dump_sistema_judicial.sql",
+          "nome": "dump.sql",
           "tamanho_mb": 442.0,
           "tipo": "entrada",
           "conteudo": "Dump binário PostgreSQL (custom format)"
