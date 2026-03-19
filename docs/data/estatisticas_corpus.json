@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-19T11:39:55",
+    "gerado_em": "2026-03-19T12:07:06",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 122
+    "pipeline_total_segundos": 131
   },
   "fases": {
     "fase1_ingestao": {
@@ -40,7 +40,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 50 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
-      "duracao_segundos": 38,
+      "duracao_segundos": 40,
       "registros_entrada": 32377,
       "registros_saida": 32327,
       "perda": 50,
@@ -80,7 +80,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.093 registros. 90%) e teste (3.232 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": 51,
+      "duracao_segundos": 54,
       "registros_entrada": 32327,
       "registros_saida": 32325,
       "treino": 29093,
@@ -138,7 +138,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 15,
+      "duracao_segundos": 20,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
@@ -8270,10 +8270,6 @@
           "weight": 17985
         },
         {
-          "text": "nome_ocultado",
-          "weight": 17034
-        },
-        {
           "text": "previdenciário",
           "weight": 16322
         },
@@ -8646,12 +8642,16 @@
           "weight": 1190
         },
         {
-          "text": "data",
-          "weight": 1186
-        },
-        {
           "text": "extinção",
           "weight": 1172
+        },
+        {
+          "text": "der",
+          "weight": 1164
+        },
+        {
+          "text": "conversão",
+          "weight": 1153
         }
       ],
       "dicas": {

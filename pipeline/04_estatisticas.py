@@ -444,9 +444,11 @@ def gerar_relatorio(
         "que", "quem", "são", "se", "sem", "ser", "seu", "seus", "sua",
         "suas", "só", "também", "te", "tem", "ter", "tu", "tua", "um",
         "uma", "uns", "umas", "você", "vos",
-        # Tokens de anonimização e pontuação
+        # Tokens de anonimização (com e sem colchetes — strip() remove [])
         "[nome_pessoa]", "[nome_ocultado]", "[cpf]", "[cnpj]", "[npu]",
         "[email]", "[telefone]", "[conta-digito]", "[endereço_completo]", "[data]",
+        "nome_pessoa", "nome_ocultado", "cpf", "cnpj", "npu",
+        "email", "telefone", "conta-digito", "endereço_completo", "data",
         # Preposições/artigos compostos e conectivos
         "nº", "n°", "art", "art.", "inc", "inc.", "cf", "§", "ii", "iii",
         "iv", "vi", "vii", "viii", "ix", "sob",
