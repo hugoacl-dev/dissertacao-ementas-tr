@@ -342,7 +342,12 @@ def _anonimizar_registros(
             stats.descartados_pos_anon += 1
             continue
 
-        exemplos.append(formatar_exemplo_gemini(fund, ementa))
+        exemplo = formatar_exemplo_gemini(fund, ementa)
+        # Preserva data_cadastro temporariamente para viabilizar o split
+        # cronológico em _dividir_e_gravar(). O campo é removido antes da
+        # gravação JSONL (ver _dividir_e_gravar, filtro de data_cadastro).
+        exemplo["data_cadastro"] = item.get("data_cadastro", "")
+        exemplos.append(exemplo)
 
         if i % 5_000 == 0:
             log.info("%d/%d registros anonimizados...", i, len(registros))
@@ -389,6 +394,15 @@ def _dividir_e_gravar(
         (1 - test_size) * 100,
         len(dataset_teste),
         test_size * 100,
+    )
+
+    # Validação: confirmar que o treino contém as decisões mais antigas
+    # e o teste as mais recentes (sem sobreposição temporal).
+    treino_ultima_data = dataset_treino[-1].get("data_cadastro", "?") if dataset_treino else "?"
+    teste_primeira_data = dataset_teste[0].get("data_cadastro", "?") if dataset_teste else "?"
+    log.info(
+        "Validação cronológica: treino até %s | teste a partir de %s",
+        treino_ultima_data, teste_primeira_data,
     )
 
     for path, dataset in [(train_path, dataset_treino), (test_path, dataset_teste)]:

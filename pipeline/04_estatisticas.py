@@ -443,7 +443,7 @@ def gerar_relatorio(
         f"Para conformidade com a LGPD, dados pessoais (CPF, CNPJ, nomes, endereços) foram "
         f"substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado "
         f"foi dividido em treino ({len(treino):,} registros, 90%) e teste ({len(teste):,} registros, "
-        f"10%) com split estratificado (seed=42), garantindo reprodutibilidade."
+        f"10%) por critério cronológico (data_cadastro), evitando temporal leakage."
     ).replace(",", ".")
 
     razao_media = razao_stats.get("media", 0)
@@ -517,7 +517,7 @@ def gerar_relatorio(
         "treino": len(treino),
         "teste": len(teste),
         "split_ratio": "90/10",
-        "random_seed": 42,
+        "split_criterio": "cronológico (data_cadastro)",
         "categorias_pii": [
             "CPF", "CNPJ", "NPU", "CONTA-DIGITO",
             "EMAIL", "TELEFONE",
@@ -600,8 +600,8 @@ def gerar_relatorio(
             "fase2_higienizacao": fase2,
             "fase3_anonimizacao": fase3,
             "fase4_estatisticas": fase4,
-            "fase5_finetuning": {"nome": "Fine-Tuning", "status": "pendente", "script": "pipeline/05_finetuning.py"},
-            "fase6_baseline": {"nome": "Baseline Zero-Shot", "status": "pendente", "script": "pipeline/06_baseline.py"},
+            "fase5_finetuning": {"nome": "Fine-Tuning", "status": "pendente", "scripts": ["pipeline/05_finetuning_gemini.py", "pipeline/05_finetuning_qwen.py"]},
+            "fase6_baseline": {"nome": "Baseline Zero-Shot", "status": "pendente", "scripts": ["pipeline/06_baseline_gemini.py", "pipeline/06_baseline_qwen.py"]},
             "fase7_avaliacao": {"nome": "Avaliação", "status": "pendente", "script": "Apresentacao_Dissertacao_Colab.ipynb"},
         },
     }

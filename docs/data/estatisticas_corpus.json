@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-19T11:16:30",
+    "gerado_em": "2026-03-19T11:24:07",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "Hugo Andrade Correia Lima Filho",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 122
+    "pipeline_total_segundos": 121
   },
   "fases": {
     "fase1_ingestao": {
@@ -68,7 +68,7 @@
         },
         {
           "nome": "dados_limpos.json",
-          "tamanho_mb": 148.1,
+          "tamanho_mb": 149.6,
           "tipo": "saida",
           "conteudo": "{id, fundamentação, ementa} limpos"
         }
@@ -77,7 +77,7 @@
     "fase3_anonimizacao": {
       "nome": "Anonimização (LGPD)",
       "descricao": "Substituição de dados pessoais por tokens genéricos e formatação para fine-tuning.",
-      "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.093 registros. 90%) e teste (3.232 registros. 10%) com split estratificado (seed=42). garantindo reprodutibilidade.",
+      "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.093 registros. 90%) e teste (3.232 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
       "duracao_segundos": 51,
@@ -86,7 +86,7 @@
       "treino": 29093,
       "teste": 3232,
       "split_ratio": "90/10",
-      "random_seed": 42,
+      "split_criterio": "cronológico (data_cadastro)",
       "categorias_pii": [
         "CPF",
         "CNPJ",
@@ -101,19 +101,19 @@
       "artefatos": [
         {
           "nome": "dados_limpos.json",
-          "tamanho_mb": 148.1,
+          "tamanho_mb": 149.6,
           "tipo": "entrada",
           "conteudo": "{id, fundamentação, ementa} limpos"
         },
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 144.3,
+          "tamanho_mb": 144.8,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"
         },
         {
           "nome": "dataset_teste.jsonl",
-          "tamanho_mb": 15.7,
+          "tamanho_mb": 15.2,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 10%"
         }
@@ -125,7 +125,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 16,
+      "duracao_segundos": 15,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
@@ -247,7 +247,7 @@
       "artefatos": [
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 144.3,
+          "tamanho_mb": 144.8,
           "tipo": "entrada",
           "conteudo": "{contents: [{role, parts}]} anonimizado"
         },
@@ -262,12 +262,18 @@
     "fase5_finetuning": {
       "nome": "Fine-Tuning",
       "status": "pendente",
-      "script": "pipeline/05_finetuning.py"
+      "scripts": [
+        "pipeline/05_finetuning_gemini.py",
+        "pipeline/05_finetuning_qwen.py"
+      ]
     },
     "fase6_baseline": {
       "nome": "Baseline Zero-Shot",
       "status": "pendente",
-      "script": "pipeline/06_baseline.py"
+      "scripts": [
+        "pipeline/06_baseline_gemini.py",
+        "pipeline/06_baseline_qwen.py"
+      ]
     },
     "fase7_avaliacao": {
       "nome": "Avaliação",
