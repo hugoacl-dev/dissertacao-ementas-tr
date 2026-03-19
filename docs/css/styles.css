@@ -122,9 +122,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 2rem;
   margin-bottom: 1.5rem;
 }
+.hero__logos img:first-child { height: 72px; }
+.hero__logos img:last-child  { height: 56px; }
 .hero__logo {
   height: 70px;
   width: auto;
