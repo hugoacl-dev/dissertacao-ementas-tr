@@ -364,17 +364,17 @@ function renderBoxPlot(f4) {
           },
           datalabels: {
             display: true,
-            color: ctx => ctx.datasetIndex === 1 ? '#fff' : c.text,
+            color: c.text,
             font: { size: 11, weight: '700' },
             anchor: ctx => {
               if (ctx.datasetIndex === 0) return 'start';
               if (ctx.datasetIndex === 2) return 'end';
-              return 'center';
+              return 'end';
             },
             align: ctx => {
               if (ctx.datasetIndex === 0) return 'bottom';
               if (ctx.datasetIndex === 2) return 'top';
-              return 'center';
+              return 'top';
             },
             formatter: (v, ctx) => {
               if (ctx.datasetIndex === 0) return `P5: ${Math.round(v[0])}`;
