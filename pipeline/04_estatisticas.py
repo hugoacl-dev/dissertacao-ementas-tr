@@ -414,6 +414,69 @@ def gerar_relatorio(
     hist_fund = _histograma(fundamentos_palavras, 200)
     hist_ementa = _histograma(ementas_palavras, 10)
 
+    # --- Scatter data (amostragem para performance no navegador) ---
+    log.info("Gerando dados de scatter (compressão)...")
+    scatter_full = [
+        {"x": fundamentos_palavras[i], "y": ementas_palavras[i]}
+        for i in range(len(fundamentos_palavras))
+    ]
+    # Amostrar ~2000 pontos uniformemente
+    import random as _rng
+    _rng.seed(42)  # reprodutível (apenas para amostragem visual, não afeta dados)
+    scatter_sample_size = min(2000, len(scatter_full))
+    scatter_data = sorted(
+        _rng.sample(scatter_full, scatter_sample_size),
+        key=lambda p: p["x"],
+    )
+    log.info("  Scatter: %d pontos amostrados de %d.", len(scatter_data), len(scatter_full))
+
+    # --- Word Cloud (top-100 termos das ementas, sem stop words) ---
+    log.info("Gerando dados de word cloud...")
+    _STOP_WORDS_PT = {
+        "a", "à", "ao", "aos", "as", "às", "até", "com", "como", "da", "das",
+        "de", "del", "dem", "des", "do", "dos", "e", "é", "ela", "elas",
+        "ele", "eles", "em", "entre", "era", "essa", "essas", "esse", "esses",
+        "esta", "estar", "estas", "este", "estes", "eu", "foi", "for",
+        "foram", "há", "isso", "isto", "já", "lhe", "lhes", "lo", "mas",
+        "me", "mesmo", "meu", "minha", "muito", "na", "nas", "não", "nem",
+        "no", "nos", "nós", "num", "numa", "o", "os", "ou", "para",
+        "pela", "pelas", "pelo", "pelos", "por", "qual", "quando",
+        "que", "quem", "são", "se", "sem", "ser", "seu", "seus", "sua",
+        "suas", "só", "também", "te", "tem", "ter", "tu", "tua", "um",
+        "uma", "uns", "umas", "você", "vos",
+        # Tokens de anonimização e pontuação
+        "[nome_pessoa]", "[nome_ocultado]", "[cpf]", "[cnpj]", "[npu]",
+        "[email]", "[telefone]", "[conta-digito]", "[endereço_completo]", "[data]",
+        # Preposições/artigos compostos e conectivos
+        "nº", "n°", "art", "art.", "inc", "inc.", "cf", "§", "ii", "iii",
+        "iv", "vi", "vii", "viii", "ix", "sob",
+    }
+    from collections import Counter as _Counter
+    word_counts: dict[str, int] = _Counter()
+    for _, ementa in pares_texto:
+        palavras = ementa.lower().split()
+        for p in palavras:
+            # Remove pontuação grudada
+            p_clean = p.strip(".,;:!?()[]{}\"'/—–-")
+            if len(p_clean) >= 3 and p_clean not in _STOP_WORDS_PT:
+                word_counts[p_clean] += 1
+    wordcloud_data = [
+        {"text": word, "weight": count}
+        for word, count in word_counts.most_common(100)
+    ]
+    log.info("  Word cloud: top-%d termos.", len(wordcloud_data))
+
+    # --- PII Stats (lidas do JSON auxiliar da Fase 3) ---
+    pii_stats_path = Path("data/.anonimizacao_stats.json")
+    pii_contagem: dict = {}
+    if pii_stats_path.exists():
+        try:
+            with pii_stats_path.open("r") as f:
+                pii_contagem = json.load(f)
+            log.info("  PII stats carregadas: %s", pii_contagem)
+        except (json.JSONDecodeError, OSError):
+            log.warning("Não foi possível ler PII stats.")
+
     # --- Artefatos completos por fase ---
     db_path = Path("data/banco_sistema_judicial.sqlite")
     dump_path = Path("dump_sistema_judicial.sql")
@@ -524,6 +587,7 @@ def gerar_relatorio(
             "NOME_OCULTADO", "NOME_PESSOA",
             "ENDEREÇO_COMPLETO",
         ],
+        "pii_contagem": pii_contagem,
         "artefatos": [
             {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa} limpos"},
             {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "saida", "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"},
@@ -579,6 +643,8 @@ def gerar_relatorio(
         "vocabulario": vocabulario,
         "histograma_fundamentacao": hist_fund,
         "histograma_ementa": hist_ementa,
+        "scatter_compressao": scatter_data,
+        "wordcloud": wordcloud_data,
         "dicas": dicas,
         "artefatos": [
             {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "entrada", "conteudo": "{contents: [{role, parts}]} anonimizado"},
