@@ -363,15 +363,23 @@ function renderBoxPlot(f4) {
             }
           },
           datalabels: {
-            display: ctx => ctx.datasetIndex <= 2,
-            anchor: ctx => ctx.datasetIndex === 1 ? 'center' : 'end',
-            align: ctx => ctx.datasetIndex === 0 ? 'bottom' : ctx.datasetIndex === 2 ? 'top' : 'center',
+            display: true,
             color: ctx => ctx.datasetIndex === 1 ? '#fff' : c.text,
-            font: { size: 12, weight: '700' },
+            font: { size: 11, weight: '700' },
+            anchor: ctx => {
+              if (ctx.datasetIndex === 0) return 'start';
+              if (ctx.datasetIndex === 2) return 'end';
+              return 'center';
+            },
+            align: ctx => {
+              if (ctx.datasetIndex === 0) return 'bottom';
+              if (ctx.datasetIndex === 2) return 'top';
+              return 'center';
+            },
             formatter: (v, ctx) => {
               if (ctx.datasetIndex === 0) return `P5: ${Math.round(v[0])}`;
               if (ctx.datasetIndex === 2) return `P95: ${Math.round(v[1])}`;
-              return `med: ${Math.round(d.mediana)}`;
+              return `P25: ${Math.round(v[0])}  ·  med: ${Math.round(d.mediana)}  ·  P75: ${Math.round(v[1])}`;
             },
           },
         },
@@ -396,25 +404,84 @@ function renderScatterCompression(f4) {
   if (!canvas || !f4?.scatter_compressao) return;
   const c = getChartColors();
 
+  const pts = f4.scatter_compressao;
+
+  // ── Regressão linear (mínimos quadrados) ──
+  const n = pts.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+  for (const p of pts) {
+    sumX  += p.x;
+    sumY  += p.y;
+    sumXY += p.x * p.y;
+    sumX2 += p.x * p.x;
+    sumY2 += p.y * p.y;
+  }
+  const slope     = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+
+  // R²
+  const meanY = sumY / n;
+  let ssTot = 0, ssRes = 0;
+  for (const p of pts) {
+    const pred = slope * p.x + intercept;
+    ssTot += (p.y - meanY) ** 2;
+    ssRes += (p.y - pred) ** 2;
+  }
+  const r2 = 1 - ssRes / ssTot;
+
+  // Pontos extremos da linha de tendência
+  const xMin = Math.min(...pts.map(p => p.x));
+  const xMax = Math.max(...pts.map(p => p.x));
+  const trendData = [
+    { x: xMin, y: slope * xMin + intercept },
+    { x: xMax, y: slope * xMax + intercept },
+  ];
+
   new Chart(canvas, {
     type: 'scatter',
     data: {
-      datasets: [{
-        label: 'Pares (fund. × ementa)',
-        data: f4.scatter_compressao,
-        backgroundColor: c.accent + '44',
-        borderColor: c.accent + '88',
-        borderWidth: 1,
-        pointRadius: 2.5,
-        pointHoverRadius: 5,
-      }],
+      datasets: [
+        {
+          label: 'Pares (fund. × ementa)',
+          data: pts,
+          backgroundColor: c.accent + '44',
+          borderColor: c.accent + '88',
+          borderWidth: 1,
+          pointRadius: 2.5,
+          pointHoverRadius: 5,
+          order: 2,
+        },
+        {
+          label: `Tendência linear (R² = ${r2.toFixed(3)})`,
+          data: trendData,
+          type: 'line',
+          borderColor: c.accent3,
+          borderWidth: 2.5,
+          borderDash: [8, 4],
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false,
+          order: 1,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            color: c.text,
+            font: { size: 12, weight: '600' },
+            usePointStyle: true,
+            pointStyle: 'line',
+            padding: 20,
+          },
+        },
         tooltip: {
+          filter: ctx => ctx.datasetIndex === 0,
           callbacks: {
             label: ctx => `Fundamentação: ${ctx.raw.x} palavras · Ementa: ${ctx.raw.y} palavras · Razão: ${(ctx.raw.x / ctx.raw.y).toFixed(1)}:1`,
           }

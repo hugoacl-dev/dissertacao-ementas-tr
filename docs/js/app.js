@@ -357,7 +357,7 @@ function render(data) {
     const boxCard = el('div', 'card card--wide');
     boxCard.innerHTML = `
       <div class="card__label">Box-Plot Comparativo <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa (em palavras)</span></div>
-      <p class="card__hint">Cada painel usa sua própria escala para revelar a dispersão interna. A barra central (colorida) cobre a faixa intercuartílica (P25–P75), os segmentos translúcidos estendem-se de P5 a P95. A mediana é exibida no centro.</p>
+      <p class="card__hint">Cada painel usa sua própria escala. A barra central (colorida) mostra onde estão 50% dos textos; as áreas mais claras cobrem 90% do total. Os valores de P25, mediana e P75 estão indicados no gráfico.</p>
       <div class="boxplot-grid">
         <div class="boxplot-panel"><div class="boxplot-panel__title">Fundamentação</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-fund"></canvas></div></div>
         <div class="boxplot-panel"><div class="boxplot-panel__title">Ementa</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-ementa"></canvas></div></div>
@@ -386,7 +386,7 @@ function render(data) {
     if (f4.scatter_compressao) {
       const scatterCard = el('div', 'card card--wide');
       scatterCard.innerHTML = `
-        <div class="card__label">Scatter — Razão de Compressão <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${f4.scatter_compressao.length.toLocaleString('pt-BR')} pares</span></div>
+        <div class="card__label">Dispersão dos Dados (Scatter Plot) <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${f4.scatter_compressao.length.toLocaleString('pt-BR')} pares</span></div>
         <p class="card__hint">Cada ponto representa um par fundamentação–ementa. O eixo X mostra o comprimento da fundamentação e o Y o da ementa. A concentração no canto inferior esquerdo com dispersão horizontal confirma a compressão extrema da tarefa.</p>
         <div class="chart-container chart-container--tall"><canvas id="chart-scatter"></canvas></div>`;
       cards.appendChild(scatterCard);
