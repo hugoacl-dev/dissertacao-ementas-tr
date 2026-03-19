@@ -289,7 +289,7 @@ function render(data) {
       const piiChartCard = el('div', 'card card--wide');
       piiChartCard.innerHTML = `
         <div class="card__label">Tokens de Dados Pessoais Substituídos <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— conformidade LGPD</span></div>
-        <p class="card__hint">Cada barra mostra a quantidade de ocorrências de cada tipo de dado pessoal que foi substituída por um token neutro durante a anonimização. O alto volume de nomes confirma a necessidade da camada de proteção.</p>
+        <p class="card__hint">Nomes precedidos de título (Dr., autora, réu…) são capturados na primeira passagem. Na segunda passagem (<em>back-reference</em>), fragmentos de 2+ palavras desses nomes são buscados no restante do texto para cobrir re-menções parciais como "Maria Silva". A soma dos dois tipos totaliza ${(f3.pii_contagem.NOME_OCULTADO + f3.pii_contagem.NOME_PESSOA).toLocaleString('pt-BR')} substituições de nomes.</p>
         <div class="chart-container chart-container--tall"><canvas id="chart-pii"></canvas></div>`;
       cards.appendChild(piiChartCard);
     }
