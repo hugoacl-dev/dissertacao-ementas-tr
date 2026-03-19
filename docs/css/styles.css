@@ -133,6 +133,10 @@ body {
   transition: opacity 0.3s;
 }
 .hero__logo:hover { opacity: 1; }
+
+/* Dark mode: logos com texto escuro precisam ser clareados */
+.hero__logo { filter: brightness(0) invert(1); }
+[data-theme="light"] .hero__logo { filter: none; }
 .hero__badge {
   display: inline-block;
   padding: 0.35rem 1.1rem;
