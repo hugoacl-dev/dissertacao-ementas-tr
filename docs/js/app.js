@@ -302,24 +302,6 @@ function render(data) {
   if (f4) main.appendChild(buildPhase(4, f4, () => {
     const cards = el('div', 'cards');
 
-    cards.append(
-      metricCard('Retenção Global', `${f4.funil.taxa_retencao_global}%`, `${fmt(f4.funil.dump_postgresql)} → ${fmt(f4.funil.dataset_final_fase3)}`, 'green'),
-      metricCard('Compressão Média', `${f4.razao_compressao.media}:1`, 'forte compressão', 'accent'),
-      metricCard('Palavras (Fund.)', fmt(f4.fundamentacao.total_palavras), `média: ${fmt(f4.fundamentacao.media)} palavras`, 'purple'),
-      metricCard('Palavras (Ementa)', fmt(f4.ementa.total_palavras), `média: ${fmt(f4.ementa.media)} palavras`, 'orange'),
-    );
-
-    // Vocabulary cards
-    if (f4.vocabulario) {
-      const v = f4.vocabulario;
-      cards.append(
-        metricCard('Vocabulário Total', fmt(v.total_unico), 'palavras únicas no corpus', 'accent'),
-        metricCard('Vocab. Fundamentação', fmt(v.fundamentacao), '', 'purple'),
-        metricCard('Vocab. Ementa', fmt(v.ementa), '', 'orange'),
-        metricCard('Sobreposição', fmt(v.sobreposicao), `${(v.sobreposicao / v.total_unico * 100).toFixed(1)}% do vocabulário total`, 'green'),
-      );
-    }
-
     // Helper: build a hint paragraph from dicas
     const dicas = f4.dicas || {};
     function hintBlock(key) {
@@ -327,12 +309,29 @@ function render(data) {
       return `<p class="card__hint">${dicas[key]}</p>`;
     }
 
-    // Funnel chart
+    // ── 1. PANORAMA — KPIs de destaque ──
+    cards.append(
+      metricCard('Retenção Global', `${f4.funil.taxa_retencao_global}%`, `${fmt(f4.funil.dump_postgresql)} → ${fmt(f4.funil.dataset_final_fase3)}`, 'green'),
+      metricCard('Compressão Média', `${f4.razao_compressao.media}:1`, 'forte compressão', 'accent'),
+      metricCard('Palavras (Fund.)', fmt(f4.fundamentacao.total_palavras), `média: ${fmt(f4.fundamentacao.media)} palavras`, 'purple'),
+      metricCard('Palavras (Ementa)', fmt(f4.ementa.total_palavras), `média: ${fmt(f4.ementa.media)} palavras`, 'orange'),
+    );
+
+    // ── 2. ORIGEM — Como chegamos aqui ──
     const funnelCard = el('div', 'card card--wide');
     funnelCard.innerHTML = `<div class="card__label">Funil de Attrition</div>${hintBlock('funil')}<div class="chart-container"><canvas id="chart-funnel"></canvas></div>`;
     cards.appendChild(funnelCard);
 
-    // Distribution comparison table
+    if (f4.periodo_temporal && f4.periodo_temporal.distribuicao_por_ano) {
+      const tempCard = el('div', 'card card--wide');
+      tempCard.innerHTML = `
+        <div class="card__label">Processos por Ano <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— ${f4.periodo_temporal.data_mais_antiga} a ${f4.periodo_temporal.data_mais_recente}</span></div>
+        ${hintBlock('temporal')}
+        <div class="chart-container"><canvas id="chart-temporal"></canvas></div>`;
+      cards.appendChild(tempCard);
+    }
+
+    // ── 3. ESTRUTURA — Distribuições de comprimento ──
     const distCard = el('div', 'card card--wide');
     distCard.innerHTML = `
       <div class="card__label">Distribuição de Comprimento <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— em palavras (split por espaço)</span></div>
@@ -354,7 +353,46 @@ function render(data) {
       </table>`;
     cards.appendChild(distCard);
 
-    // Novel n-grams gauges
+    // Box-plot: visualização dos mesmos percentis
+    const boxCard = el('div', 'card card--wide');
+    boxCard.innerHTML = `
+      <div class="card__label">Box-Plot Comparativo <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa (em palavras)</span></div>
+      <p class="card__hint">Cada painel usa sua própria escala para revelar a dispersão interna. A barra central (colorida) cobre a faixa intercuartílica (P25–P75), os segmentos translúcidos estendem-se de P5 a P95. A mediana é exibida no centro.</p>
+      <div class="boxplot-grid">
+        <div class="boxplot-panel"><div class="boxplot-panel__title">Fundamentação</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-fund"></canvas></div></div>
+        <div class="boxplot-panel"><div class="boxplot-panel__title">Ementa</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-ementa"></canvas></div></div>
+      </div>`;
+    cards.appendChild(boxCard);
+
+    if (f4.histograma_ementa) {
+      const histECard = el('div', 'card card--wide');
+      histECard.innerHTML = `
+        <div class="card__label">Histograma — Comprimento das Ementas <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(em palavras)</span></div>
+        <p class="card__hint">As ementas concentram-se em poucas dezenas de palavras. Compare com o histograma das fundamentações abaixo para visualizar a compressão extrema.</p>
+        <div class="chart-container"><canvas id="chart-histogram-ementa"></canvas></div>`;
+      cards.appendChild(histECard);
+    }
+
+    if (f4.histograma_fundamentacao) {
+      const histCard = el('div', 'card card--wide');
+      histCard.innerHTML = `
+        <div class="card__label">Histograma — Comprimento das Fundamentações <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(em palavras)</span></div>
+        ${hintBlock('histograma')}
+        <div class="chart-container"><canvas id="chart-histogram"></canvas></div>`;
+      cards.appendChild(histCard);
+    }
+
+    // ── 4. COMPRESSÃO — Relação fundamentação × ementa ──
+    if (f4.scatter_compressao) {
+      const scatterCard = el('div', 'card card--wide');
+      scatterCard.innerHTML = `
+        <div class="card__label">Scatter — Razão de Compressão <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${f4.scatter_compressao.length.toLocaleString('pt-BR')} pares</span></div>
+        <p class="card__hint">Cada ponto representa um par fundamentação–ementa. O eixo X mostra o comprimento da fundamentação e o Y o da ementa. A concentração no canto inferior esquerdo com dispersão horizontal confirma a compressão extrema da tarefa.</p>
+        <div class="chart-container chart-container--tall"><canvas id="chart-scatter"></canvas></div>`;
+      cards.appendChild(scatterCard);
+    }
+
+    // ── 5. ABSTRATIVIDADE — Novel n-grams ──
     if (f4.novel_ngrams) {
       const ngCard = el('div', 'card card--wide');
       ngCard.innerHTML = `
@@ -368,58 +406,17 @@ function render(data) {
       cards.appendChild(ngCard);
     }
 
-    // Histogram - Ementa (shorter texts first)
-    if (f4.histograma_ementa) {
-      const histECard = el('div', 'card card--wide');
-      histECard.innerHTML = `
-        <div class="card__label">Histograma — Comprimento das Ementas <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(em palavras)</span></div>
-        <p class="card__hint">As ementas concentram-se em poucas dezenas de palavras. Compare com o histograma das fundamentações abaixo para visualizar a compressão extrema.</p>
-        <div class="chart-container"><canvas id="chart-histogram-ementa"></canvas></div>`;
-      cards.appendChild(histECard);
+    // ── 6. VOCABULÁRIO — Composição e domínio ──
+    if (f4.vocabulario) {
+      const v = f4.vocabulario;
+      cards.append(
+        metricCard('Vocabulário Total', fmt(v.total_unico), 'palavras únicas no corpus', 'accent'),
+        metricCard('Vocab. Fundamentação', fmt(v.fundamentacao), '', 'purple'),
+        metricCard('Vocab. Ementa', fmt(v.ementa), '', 'orange'),
+        metricCard('Sobreposição', fmt(v.sobreposicao), `${(v.sobreposicao / v.total_unico * 100).toFixed(1)}% do vocabulário total`, 'green'),
+      );
     }
 
-    // Histogram - Fundamentação (longer texts)
-    if (f4.histograma_fundamentacao) {
-      const histCard = el('div', 'card card--wide');
-      histCard.innerHTML = `
-        <div class="card__label">Histograma — Comprimento das Fundamentações <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(em palavras)</span></div>
-        ${hintBlock('histograma')}
-        <div class="chart-container"><canvas id="chart-histogram"></canvas></div>`;
-      cards.appendChild(histCard);
-    }
-
-    // Temporal distribution
-    if (f4.periodo_temporal && f4.periodo_temporal.distribuicao_por_ano) {
-      const tempCard = el('div', 'card card--wide');
-      tempCard.innerHTML = `
-        <div class="card__label">Processos por Ano <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— ${f4.periodo_temporal.data_mais_antiga} a ${f4.periodo_temporal.data_mais_recente}</span></div>
-        ${hintBlock('temporal')}
-        <div class="chart-container"><canvas id="chart-temporal"></canvas></div>`;
-      cards.appendChild(tempCard);
-    }
-
-    // Box-plot comparativo — dois painéis lado a lado com escalas independentes
-    const boxCard = el('div', 'card card--wide');
-    boxCard.innerHTML = `
-      <div class="card__label">Box-Plot Comparativo <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa (em palavras)</span></div>
-      <p class="card__hint">Cada painel usa sua própria escala para revelar a dispersão interna. A barra central (colorida) cobre a faixa intercuartílica (P25–P75), os segmentos translúcidos estendem-se de P5 a P95. A mediana é exibida no centro.</p>
-      <div class="boxplot-grid">
-        <div class="boxplot-panel"><div class="boxplot-panel__title">Fundamentação</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-fund"></canvas></div></div>
-        <div class="boxplot-panel"><div class="boxplot-panel__title">Ementa</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-ementa"></canvas></div></div>
-      </div>`;
-    cards.appendChild(boxCard);
-
-    // Scatter de compressão
-    if (f4.scatter_compressao) {
-      const scatterCard = el('div', 'card card--wide');
-      scatterCard.innerHTML = `
-        <div class="card__label">Scatter — Razão de Compressão <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${f4.scatter_compressao.length.toLocaleString('pt-BR')} pares</span></div>
-        <p class="card__hint">Cada ponto representa um par fundamentação–ementa. O eixo X mostra o comprimento da fundamentação e o Y o da ementa. A concentração no canto inferior esquerdo com dispersão horizontal confirma a compressão extrema da tarefa.</p>
-        <div class="chart-container chart-container--tall"><canvas id="chart-scatter"></canvas></div>`;
-      cards.appendChild(scatterCard);
-    }
-
-    // Nuvem de palavras
     if (f4.wordcloud) {
       const wcCard = el('div', 'card card--wide');
       wcCard.innerHTML = `
@@ -429,7 +426,6 @@ function render(data) {
       cards.appendChild(wcCard);
     }
 
-    // Sobreposição de vocabulário
     if (f4.vocabulario) {
       const vocabCard = el('div', 'card card--wide');
       vocabCard.innerHTML = `
