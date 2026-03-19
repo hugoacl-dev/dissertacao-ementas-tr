@@ -4,7 +4,8 @@
 Converte o dump binário PostgreSQL (custom format) do sistema sistema judicial em:
   - Um banco SQLite local (data/banco_sistema_judicial.sqlite) para consultas futuras.
   - Um arquivo JSON compacto (data/dados_brutos.json) com os pares
-    {id, fundamentacao, ementa} válidos, como entrada para a Fase 2.
+    {id, fundamentacao, ementa, data_cadastro} válidos, como entrada para a Fase 2.
+    O campo data_cadastro é preservado para viabilizar a divisão cronológica na Fase 3.
 
 Dependência externa: pg_restore (instalável via `brew install postgresql@16`)
 Executar a partir da raiz do projeto: python3 pipeline/01_ingestao.py
@@ -17,7 +18,7 @@ import sqlite3
 import subprocess
 import sys
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Generator, Iterator
 

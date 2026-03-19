@@ -242,7 +242,12 @@ def _limpar_registro(
         return None
 
     stats.exportados += 1
-    return {"id": item.get("id"), "fundamentacao": fundamentacao, "ementa": ementa}
+    return {
+        "id": item.get("id"),
+        "fundamentacao": fundamentacao,
+        "ementa": ementa,
+        "data_cadastro": item.get("data_cadastro", ""),
+    }
 
 
 def processar(input_path: Path = INPUT_PATH, output_path: Path = OUTPUT_PATH) -> CleaningStats:
