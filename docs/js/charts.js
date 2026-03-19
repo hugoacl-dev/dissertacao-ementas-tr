@@ -544,29 +544,40 @@ function renderVocabOverlap(f4) {
   const c = getChartColors();
 
   const v = f4.vocabulario;
+  const fundSharedPct = +(v.sobreposicao / v.fundamentacao * 100).toFixed(1);
+  const fundExcPct = +(100 - fundSharedPct).toFixed(1);
+  const emeSharedPct = +(v.sobreposicao / v.ementa * 100).toFixed(1);
+  const emeExcPct = +(100 - emeSharedPct).toFixed(1);
+
   const fundExclusive = v.fundamentacao - v.sobreposicao;
   const ementaExclusive = v.ementa - v.sobreposicao;
 
   new Chart(canvas, {
     type: 'bar',
     data: {
-      labels: ['Fundamentação', 'Ementa'],
+      labels: [
+        `Fundamentação (${v.fundamentacao.toLocaleString('pt-BR')} termos)`,
+        `Ementa (${v.ementa.toLocaleString('pt-BR')} termos)`,
+      ],
       datasets: [
         {
-          label: 'Exclusivo',
-          data: [fundExclusive, ementaExclusive],
-          backgroundColor: [c.accent + '88', c.accent4 + '88'],
-          borderColor: [c.accent, c.accent4],
+          label: 'Compartilhado com a outra',
+          data: [fundSharedPct, emeSharedPct],
+          backgroundColor: c.accent3 + 'bb',
+          borderColor: c.accent3,
           borderWidth: 2,
           borderRadius: 6,
+          // Store absolute values for tooltip
+          _abs: [v.sobreposicao, v.sobreposicao],
         },
         {
-          label: 'Compartilhado',
-          data: [v.sobreposicao, v.sobreposicao],
-          backgroundColor: [c.accent3 + '88', c.accent3 + '88'],
-          borderColor: [c.accent3, c.accent3],
+          label: 'Vocabulário exclusivo',
+          data: [fundExcPct, emeExcPct],
+          backgroundColor: c.accent + '77',
+          borderColor: c.accent,
           borderWidth: 2,
           borderRadius: 6,
+          _abs: [fundExclusive, ementaExclusive],
         },
       ],
     },
@@ -575,32 +586,48 @@ function renderVocabOverlap(f4) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'bottom', labels: { color: c.text, font: { size: 11 } } },
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            color: c.text,
+            font: { size: 12, weight: '600' },
+            usePointStyle: true,
+            pointStyle: 'rectRounded',
+            padding: 20,
+          },
+        },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR')} palavras únicas`,
+            label: ctx => {
+              const abs = ctx.dataset._abs?.[ctx.dataIndex] ?? 0;
+              return `${ctx.dataset.label}: ${ctx.raw}% (${abs.toLocaleString('pt-BR')} palavras)`;
+            }
           }
         },
         datalabels: {
           anchor: 'center',
           align: 'center',
           color: '#fff',
-          font: { size: 11, weight: '700' },
-          formatter: v => v.toLocaleString('pt-BR'),
-          display: ctx => ctx.raw > 1500,
+          font: { size: 13, weight: '800' },
+          formatter: (val, ctx) => {
+            const abs = ctx.dataset._abs?.[ctx.dataIndex] ?? 0;
+            return val >= 10 ? `${val}%\n(${abs.toLocaleString('pt-BR')})` : '';
+          },
         },
       },
       scales: {
         x: {
           stacked: true,
+          max: 100,
           grid: { color: c.grid },
-          ticks: { color: c.text, callback: v => (v / 1000).toFixed(0) + 'k' },
-          title: { display: true, text: 'Palavras únicas', color: c.text, font: { size: 11, weight: '600' } },
+          ticks: { color: c.text, callback: v => v + '%' },
+          title: { display: true, text: 'Proporção do vocabulário', color: c.text, font: { size: 11, weight: '600' } },
         },
         y: {
           stacked: true,
           grid: { display: false },
-          ticks: { color: c.text, font: { size: 13, weight: '700' } },
+          ticks: { color: c.text, font: { size: 12, weight: '700' } },
         },
       },
     },
