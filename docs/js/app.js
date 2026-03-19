@@ -431,7 +431,7 @@ function render(data) {
       const vocabCard = el('div', 'card card--wide');
       vocabCard.innerHTML = `
         <div class="card__label">Sobreposição de Vocabulário <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa</span></div>
-        <p class="card__hint">${(f4.vocabulario.sobreposicao / f4.vocabulario.ementa * 100).toFixed(1)}% do vocabulário das ementas também aparece nas fundamentações, indicando potencial extrativo. A parcela exclusiva dos ${(f4.vocabulario.fundamentacao - f4.vocabulario.sobreposicao).toLocaleString('pt-BR')} tokens da fundamentação representa conhecimento jurídico contextual não destilado na ementa.</p>
+        <p class="card__hint">Embora ${(f4.vocabulario.sobreposicao / f4.vocabulario.ementa * 100).toFixed(1)}% do vocabulário das ementas apareça nas fundamentações, isso não implica viabilidade extrativa: os novel trigrams de 86,6% mostram que as ementas <strong>recombinam</strong> esse vocabulário compartilhado em sequências inteiramente novas. O modelo não precisa inventar palavras — precisa aprender a reorganizá-las. Isso é precisamente o que a sumarização abstrativa faz.</p>
         <div class="chart-container"><canvas id="chart-vocab"></canvas></div>`;
       cards.appendChild(vocabCard);
     }
