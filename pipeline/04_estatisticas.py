@@ -532,7 +532,7 @@ def gerar_relatorio(
         "taxa_retencao": taxa_ret_f1,
         "fonte": "Sistema Judicial / PostgreSQL",
         "artefatos": [
-            {"nome": "dump_sistema_judicial.sql", "tamanho_mb": _file_size_mb(dump_path), "tipo": "entrada", "conteudo": "Dump binário PostgreSQL (custom format)"},
+            {"nome": "dump.sql", "tamanho_mb": _file_size_mb(dump_path), "tipo": "entrada", "conteudo": "Dump binário PostgreSQL (custom format)"},
             {"nome": "dados_brutos.json", "tamanho_mb": _file_size_mb(brutos_path), "tipo": "saida", "conteudo": "{id, fundamentação, ementa}"},
         ],
     }
