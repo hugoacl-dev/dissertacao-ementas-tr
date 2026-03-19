@@ -429,6 +429,18 @@ body {
   height: 300px;
   width: 100%;
 }
+.chart-container--tall {
+  height: 400px;
+}
+
+/* ===== WORD CLOUD WRAPPER ===== */
+.wordcloud-container {
+  position: relative;
+  height: 380px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
 
 /* ===== TAGS ===== */
 .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }

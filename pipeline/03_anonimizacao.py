@@ -470,6 +470,26 @@ def gerar_datasets(
         )
 
     _dividir_e_gravar(exemplos, train_path, test_path, test_size)
+
+    # Persistir contagens PII para consumo pelo dashboard (04_estatisticas.py)
+    pii_stats_path = Path("data/.anonimizacao_stats.json")
+    pii_payload = {
+        "CPF": stats.cpfs,
+        "CNPJ": stats.cnpjs,
+        "NPU": stats.npus,
+        "CONTA_DIGITO": stats.contas,
+        "EMAIL": stats.emails,
+        "TELEFONE": stats.telefones,
+        "NOME_OCULTADO": stats.nomes_honorificos,
+        "NOME_PESSOA": stats.nomes_proprios,
+        "ENDERECO_COMPLETO": stats.logradouros,
+        "total": stats.total,
+        "descartados_pos_anon": stats.descartados_pos_anon,
+    }
+    with pii_stats_path.open("w", encoding="utf-8") as f:
+        json.dump(pii_payload, f, ensure_ascii=False, indent=2)
+    log.info("Stats PII salvas em %s", pii_stats_path)
+
     log.info("=== Fase 3 finalizada com sucesso. ===")
     return stats
 

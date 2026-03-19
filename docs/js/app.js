@@ -19,7 +19,7 @@ function applyTheme(theme) {
   localStorage.setItem('dashboard-theme', theme);
 
   if (window._chartsRendered && window._cachedF4) {
-    rerenderCharts(window._cachedF4);
+    rerenderCharts(window._cachedF4, window._cachedF3);
   }
 }
 
@@ -283,6 +283,17 @@ function render(data) {
       piiCard.appendChild(tags);
       cards.appendChild(piiCard);
     }
+
+    // PII token counts chart
+    if (f3.pii_contagem) {
+      const piiChartCard = el('div', 'card card--wide');
+      piiChartCard.innerHTML = `
+        <div class="card__label">Tokens de Dados Pessoais Substituídos <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— conformidade LGPD</span></div>
+        <p class="card__hint">Cada barra mostra a quantidade de ocorrências de cada tipo de dado pessoal que foi substituída por um token neutro durante a anonimização. O alto volume de nomes confirma a necessidade da camada de proteção.</p>
+        <div class="chart-container chart-container--tall"><canvas id="chart-pii"></canvas></div>`;
+      cards.appendChild(piiChartCard);
+    }
+
     return cards;
   }));
 
@@ -387,6 +398,44 @@ function render(data) {
       cards.appendChild(tempCard);
     }
 
+    // Box-plot comparativo
+    const boxCard = el('div', 'card card--wide');
+    boxCard.innerHTML = `
+      <div class="card__label">Box-Plot Comparativo <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa (em palavras)</span></div>
+      <p class="card__hint">Compara visualmente a dispersão de comprimento: a barra central (IQR) cobre P25–P75, os segmentos externos P5–P25 e P75–P95. A mediana é exibida no centro. Nota-se a escala dramaticamente diferente entre fundamentação e ementa.</p>
+      <div class="chart-container"><canvas id="chart-boxplot"></canvas></div>`;
+    cards.appendChild(boxCard);
+
+    // Scatter de compressão
+    if (f4.scatter_compressao) {
+      const scatterCard = el('div', 'card card--wide');
+      scatterCard.innerHTML = `
+        <div class="card__label">Scatter — Razão de Compressão <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${f4.scatter_compressao.length.toLocaleString('pt-BR')} pares</span></div>
+        <p class="card__hint">Cada ponto representa um par fundamentação–ementa. O eixo X mostra o comprimento da fundamentação e o Y o da ementa. A concentração no canto inferior esquerdo com dispersão horizontal confirma a compressão extrema da tarefa.</p>
+        <div class="chart-container chart-container--tall"><canvas id="chart-scatter"></canvas></div>`;
+      cards.appendChild(scatterCard);
+    }
+
+    // Nuvem de palavras
+    if (f4.wordcloud) {
+      const wcCard = el('div', 'card card--wide');
+      wcCard.innerHTML = `
+        <div class="card__label">Nuvem de Palavras — Ementas <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— top-100 termos mais frequentes</span></div>
+        <p class="card__hint">Termos mais frequentes nas ementas do corpus, com stop words e tokens de anonimização removidos. O tamanho é proporcional à frequência. Reflete o vocabulário jurídico que o modelo precisa dominar.</p>
+        <div class="wordcloud-container"><canvas id="chart-wordcloud"></canvas></div>`;
+      cards.appendChild(wcCard);
+    }
+
+    // Sobreposição de vocabulário
+    if (f4.vocabulario) {
+      const vocabCard = el('div', 'card card--wide');
+      vocabCard.innerHTML = `
+        <div class="card__label">Sobreposição de Vocabulário <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa</span></div>
+        <p class="card__hint">${(f4.vocabulario.sobreposicao / f4.vocabulario.ementa * 100).toFixed(1)}% do vocabulário das ementas também aparece nas fundamentações, indicando potencial extrativo. A parcela exclusiva dos ${(f4.vocabulario.fundamentacao - f4.vocabulario.sobreposicao).toLocaleString('pt-BR')} tokens da fundamentação representa conhecimento jurídico contextual não destilado na ementa.</p>
+        <div class="chart-container"><canvas id="chart-vocab"></canvas></div>`;
+      cards.appendChild(vocabCard);
+    }
+
     return cards;
   }));
 
@@ -405,8 +454,9 @@ function render(data) {
     }
   });
 
-  // Cache f4 and render charts
+  // Cache f4/f3 and render charts
   window._cachedF4 = f4;
+  window._cachedF3 = f3;
   window._chartsRendered = true;
 
   requestAnimationFrame(() => {
@@ -415,6 +465,11 @@ function render(data) {
     renderTemporalChart(f4);
     renderHistogramChart(f4);
     renderHistogramEmentaChart(f4);
+    renderBoxPlot(f4);
+    renderScatterCompression(f4);
+    renderPiiChart(f3);
+    renderWordCloud(f4);
+    renderVocabOverlap(f4);
     observeStickyHeaders();
   });
 }

@@ -31,13 +31,18 @@ function destroyAllCharts() {
 /**
  * Re-renderiza todos os gráficos com cores do tema atual
  */
-function rerenderCharts(f4) {
+function rerenderCharts(f4, f3) {
   destroyAllCharts();
   renderFunnelChart(f4);
   renderGauges(f4);
   renderTemporalChart(f4);
   renderHistogramChart(f4);
   renderHistogramEmentaChart(f4);
+  renderBoxPlot(f4);
+  renderScatterCompression(f4);
+  renderPiiChart(f3);
+  renderWordCloud(f4);
+  renderVocabOverlap(f4);
 }
 
 /* ===== Funil de Attrition ===== */
@@ -289,6 +294,313 @@ function renderHistogramEmentaChart(f4) {
           title: { display: true, text: 'Nº de ementas', color: c.text, font: { size: 11, weight: '600' } },
           grid: { color: c.grid },
           ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
+/* ===== Box-Plot Comparativo (Fundamentação vs. Ementa) ===== */
+function renderBoxPlot(f4) {
+  const canvas = document.getElementById('chart-boxplot');
+  if (!canvas || !f4?.fundamentacao || !f4?.ementa) return;
+  const c = getChartColors();
+
+  // Simula box-plot com barras flutuantes (IQR = P25-P75)
+  // e barras finas para whiskers (P5-P25 e P75-P95)
+  const fund = f4.fundamentacao;
+  const eme = f4.ementa;
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: ['Fundamentação', 'Ementa'],
+      datasets: [
+        {
+          label: 'P5 — P25',
+          data: [[fund.p5, fund.p25], [eme.p5, eme.p25]],
+          backgroundColor: c.accent + '30',
+          borderColor: c.accent + '60',
+          borderWidth: 1,
+          borderRadius: 2,
+          barPercentage: 0.6,
+        },
+        {
+          label: 'P25 — P75 (IQR)',
+          data: [[fund.p25, fund.p75], [eme.p25, eme.p75]],
+          backgroundColor: [c.accent + 'aa', c.accent4 + 'aa'],
+          borderColor: [c.accent, c.accent4],
+          borderWidth: 2,
+          borderRadius: 6,
+          barPercentage: 0.6,
+        },
+        {
+          label: 'P75 — P95',
+          data: [[fund.p75, fund.p95], [eme.p75, eme.p95]],
+          backgroundColor: c.accent + '30',
+          borderColor: c.accent + '60',
+          borderWidth: 1,
+          borderRadius: 2,
+          barPercentage: 0.6,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: c.text, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const range = ctx.raw;
+              return `${ctx.dataset.label}: ${Math.round(range[0])} — ${Math.round(range[1])} palavras`;
+            }
+          }
+        },
+        datalabels: {
+          display: ctx => ctx.datasetIndex === 1,
+          anchor: 'center',
+          align: 'center',
+          color: '#fff',
+          font: { size: 12, weight: '700' },
+          formatter: (v, ctx) => {
+            const med = ctx.dataIndex === 0 ? fund.mediana : eme.mediana;
+            return `med: ${Math.round(med)}`;
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: c.grid },
+          ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
+          title: { display: true, text: 'Palavras', color: c.text, font: { size: 11, weight: '600' } },
+        },
+        y: {
+          stacked: false,
+          grid: { display: false },
+          ticks: { color: c.text, font: { size: 13, weight: '700' } },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
+/* ===== Scatter de Compressão ===== */
+function renderScatterCompression(f4) {
+  const canvas = document.getElementById('chart-scatter');
+  if (!canvas || !f4?.scatter_compressao) return;
+  const c = getChartColors();
+
+  new Chart(canvas, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Pares (fund. × ementa)',
+        data: f4.scatter_compressao,
+        backgroundColor: c.accent + '44',
+        borderColor: c.accent + '88',
+        borderWidth: 1,
+        pointRadius: 2.5,
+        pointHoverRadius: 5,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `Fundamentação: ${ctx.raw.x} palavras · Ementa: ${ctx.raw.y} palavras · Razão: ${(ctx.raw.x / ctx.raw.y).toFixed(1)}:1`,
+          }
+        },
+        datalabels: { display: false },
+      },
+      scales: {
+        x: {
+          grid: { color: c.grid },
+          ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
+          title: { display: true, text: 'Palavras na fundamentação', color: c.text, font: { size: 11, weight: '600' } },
+        },
+        y: {
+          grid: { color: c.grid },
+          ticks: { color: c.text },
+          title: { display: true, text: 'Palavras na ementa', color: c.text, font: { size: 11, weight: '600' } },
+        },
+      },
+    },
+  });
+}
+
+/* ===== Top PII Tokens (Barras Horizontais) ===== */
+function renderPiiChart(f3) {
+  const canvas = document.getElementById('chart-pii');
+  if (!canvas || !f3?.pii_contagem) return;
+  const c = getChartColors();
+
+  const pii = f3.pii_contagem;
+  // Filtrar 'total' e 'descartados_pos_anon', ordenar por contagem
+  const entries = Object.entries(pii)
+    .filter(([k]) => k !== 'total' && k !== 'descartados_pos_anon')
+    .sort((a, b) => b[1] - a[1]);
+
+  const labels = entries.map(([k]) => `[${k}]`);
+  const values = entries.map(([, v]) => v);
+
+  const colors = [c.accent, c.accent2, c.accent3, c.accent4,
+                  c.accent + 'cc', c.accent2 + 'cc', c.accent3 + 'cc',
+                  c.accent4 + 'cc', c.accent + '99'];
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.slice(0, values.length),
+        borderColor: colors.slice(0, values.length).map(co => co.replace(/[0-9a-f]{2}$/i, 'ff')),
+        borderWidth: 1,
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.raw.toLocaleString('pt-BR')} substituições` } },
+        datalabels: {
+          anchor: 'end',
+          align(ctx) {
+            const max = Math.max(...ctx.dataset.data);
+            return ctx.dataset.data[ctx.dataIndex] < max * 0.15 ? 'right' : 'left';
+          },
+          color: c.label,
+          font: { size: 12, weight: '700', family: 'Inter' },
+          formatter: v => v.toLocaleString('pt-BR'),
+          padding: { right: 8, left: 4 },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: c.grid },
+          ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: c.text, font: { size: 12, weight: '600', family: 'monospace' } },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
+/* ===== Word Cloud ===== */
+function renderWordCloud(f4) {
+  const canvas = document.getElementById('chart-wordcloud');
+  if (!canvas || !f4?.wordcloud || !window.WordCloud) return;
+  const c = getChartColors();
+
+  const colors = [c.accent, c.accent2, c.accent3, c.accent4];
+  const maxWeight = f4.wordcloud[0]?.weight || 1;
+
+  // wordcloud2.js expects [[word, size], ...]
+  const list = f4.wordcloud.map(w => [w.text, w.weight]);
+
+  // Clear previous render
+  const ctx2d = canvas.getContext('2d');
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Set canvas size based on container
+  const container = canvas.parentElement;
+  canvas.width = container.offsetWidth || 600;
+  canvas.height = container.offsetHeight || 350;
+
+  WordCloud(canvas, {
+    list,
+    gridSize: 8,
+    weightFactor: size => Math.max(12, (size / maxWeight) * 72),
+    fontFamily: 'Inter, sans-serif',
+    fontWeight: '700',
+    color: () => colors[Math.floor(Math.random() * colors.length)],
+    rotateRatio: 0.3,
+    rotationSteps: 2,
+    backgroundColor: 'transparent',
+    drawOutOfBound: false,
+    shrinkToFit: true,
+  });
+}
+
+/* ===== Sobreposição de Vocabulário ===== */
+function renderVocabOverlap(f4) {
+  const canvas = document.getElementById('chart-vocab');
+  if (!canvas || !f4?.vocabulario) return;
+  const c = getChartColors();
+
+  const v = f4.vocabulario;
+  const fundExclusive = v.fundamentacao - v.sobreposicao;
+  const ementaExclusive = v.ementa - v.sobreposicao;
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: ['Fundamentação', 'Ementa'],
+      datasets: [
+        {
+          label: 'Exclusivo',
+          data: [fundExclusive, ementaExclusive],
+          backgroundColor: [c.accent + '88', c.accent4 + '88'],
+          borderColor: [c.accent, c.accent4],
+          borderWidth: 2,
+          borderRadius: 6,
+        },
+        {
+          label: 'Compartilhado',
+          data: [v.sobreposicao, v.sobreposicao],
+          backgroundColor: [c.accent3 + '88', c.accent3 + '88'],
+          borderColor: [c.accent3, c.accent3],
+          borderWidth: 2,
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: c.text, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR')} palavras únicas`,
+          }
+        },
+        datalabels: {
+          anchor: 'center',
+          align: 'center',
+          color: '#fff',
+          font: { size: 11, weight: '700' },
+          formatter: v => v.toLocaleString('pt-BR'),
+          display: ctx => ctx.raw > 1500,
+        },
+      },
+      scales: {
+        x: {
+          stacked: true,
+          grid: { color: c.grid },
+          ticks: { color: c.text, callback: v => (v / 1000).toFixed(0) + 'k' },
+          title: { display: true, text: 'Palavras únicas', color: c.text, font: { size: 11, weight: '600' } },
+        },
+        y: {
+          stacked: true,
+          grid: { display: false },
+          ticks: { color: c.text, font: { size: 13, weight: '700' } },
         },
       },
     },
