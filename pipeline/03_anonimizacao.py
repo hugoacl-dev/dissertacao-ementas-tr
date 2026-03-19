@@ -233,8 +233,9 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
         4. E-mail → [EMAIL]
         5. Telefone → [TELEFONE]
         6. Nomes após honorífico → [NOME_OCULTADO]
-        7. Nomes próprios isolados (3+ palavras) → [NOME_PESSOA]
-        8. Logradouros com âncora numérica → [ENDEREÇO_COMPLETO]
+        7. Back-reference: fragmentos de 2+ palavras dos nomes já capturados → [NOME_PESSOA]
+        8. Nomes próprios isolados (3+ palavras) → [NOME_PESSOA]
+        9. Logradouros com âncora numérica → [ENDEREÇO_COMPLETO]
 
     Nota LGPD: cidades, CEPs e razões sociais (PJ) NÃO são anonimizados
     pois não constituem dados pessoais de pessoa natural (Art. 5º, I).
@@ -266,10 +267,42 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
     texto = _RE_CONTA.sub("[CONTA-DIGITO]", texto)
     texto = _RE_EMAIL.sub("[EMAIL]", texto)
     texto = _RE_TELEFONE.sub("[TELEFONE]", texto)
+
+    # --- Etapa 6: Nomes com honorífico (captura + coleta para back-ref) ---
+    # Antes de substituir, coletar os nomes completos para segunda passagem.
+    nomes_coletados: set[str] = set()
+    for m in _RE_NOME_HONORIFICO.finditer(texto):
+        # O grupo 0 é "título Nome Sobrenome"; removemos o título (grupo 1).
+        nome_completo = m.group(0)
+        titulo = m.group(1)
+        # Extrair só a parte do nome (sem o título)
+        nome_sem_titulo = nome_completo[len(titulo):].strip()
+        if nome_sem_titulo:
+            nomes_coletados.add(nome_sem_titulo)
+
     texto = _RE_NOME_HONORIFICO.sub(r"\1 [NOME_OCULTADO]", texto)
 
-    # Nomes próprios com exclusão de termos jurídicos via callback.
-    # Contagem pós-sub para refletir apenas substituições efetivas.
+    # --- Etapa 7: Back-reference — fragmentos de 2+ palavras dos nomes ---
+    # Gera substrings de 2+ palavras consecutivas de cada nome coletado.
+    # Ex.: "Maria Silva Santos" → {"Maria Silva", "Silva Santos"}
+    fragmentos: set[str] = set()
+    for nome in nomes_coletados:
+        partes = nome.split()
+        if len(partes) >= 2:
+            # Gerar todas as janelas de 2+ palavras consecutivas
+            for tamanho in range(2, len(partes) + 1):
+                for inicio in range(len(partes) - tamanho + 1):
+                    fragmento = " ".join(partes[inicio:inicio + tamanho])
+                    fragmentos.add(fragmento)
+
+    # Substituir fragmentos (mais longos primeiro para evitar substituição parcial)
+    nomes_backref_antes = texto.count("[NOME_PESSOA]")
+    for fragmento in sorted(fragmentos, key=len, reverse=True):
+        texto = texto.replace(fragmento, "[NOME_PESSOA]")
+    if stats:
+        stats.nomes_proprios += texto.count("[NOME_PESSOA]") - nomes_backref_antes
+
+    # --- Etapa 8: Nomes próprios isolados (3+ palavras, regex original) ---
     nomes_antes = texto.count("[NOME_PESSOA]")
     texto = _RE_NOME_PROPRIO.sub(_substituir_nome_proprio, texto)
     if stats:
