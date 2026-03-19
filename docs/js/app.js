@@ -398,12 +398,15 @@ function render(data) {
       cards.appendChild(tempCard);
     }
 
-    // Box-plot comparativo
+    // Box-plot comparativo — dois painéis lado a lado com escalas independentes
     const boxCard = el('div', 'card card--wide');
     boxCard.innerHTML = `
       <div class="card__label">Box-Plot Comparativo <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— Fundamentação vs. Ementa (em palavras)</span></div>
-      <p class="card__hint">Compara visualmente a dispersão de comprimento: a barra central (IQR) cobre P25–P75, os segmentos externos P5–P25 e P75–P95. A mediana é exibida no centro. Nota-se a escala dramaticamente diferente entre fundamentação e ementa.</p>
-      <div class="chart-container"><canvas id="chart-boxplot"></canvas></div>`;
+      <p class="card__hint">Cada painel usa sua própria escala para revelar a dispersão interna. A barra central (colorida) cobre a faixa intercuartílica (P25–P75), os segmentos translúcidos estendem-se de P5 a P95. A mediana é exibida no centro.</p>
+      <div class="boxplot-grid">
+        <div class="boxplot-panel"><div class="boxplot-panel__title">Fundamentação</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-fund"></canvas></div></div>
+        <div class="boxplot-panel"><div class="boxplot-panel__title">Ementa</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-ementa"></canvas></div></div>
+      </div>`;
     cards.appendChild(boxCard);
 
     // Scatter de compressão

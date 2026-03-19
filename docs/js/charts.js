@@ -301,93 +301,94 @@ function renderHistogramEmentaChart(f4) {
   });
 }
 
-/* ===== Box-Plot Comparativo (Fundamentação vs. Ementa) ===== */
+/* ===== Box-Plot Comparativo (dois painéis independentes) ===== */
 function renderBoxPlot(f4) {
-  const canvas = document.getElementById('chart-boxplot');
-  if (!canvas || !f4?.fundamentacao || !f4?.ementa) return;
-  const c = getChartColors();
+  if (!f4?.fundamentacao || !f4?.ementa) return;
 
-  // Simula box-plot com barras flutuantes (IQR = P25-P75)
-  // e barras finas para whiskers (P5-P25 e P75-P95)
-  const fund = f4.fundamentacao;
-  const eme = f4.ementa;
+  const configs = [
+    { id: 'chart-boxplot-fund', data: f4.fundamentacao, label: 'Fundamentação', colorKey: 'accent' },
+    { id: 'chart-boxplot-ementa', data: f4.ementa, label: 'Ementa', colorKey: 'accent4' },
+  ];
 
-  new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: ['Fundamentação', 'Ementa'],
-      datasets: [
-        {
-          label: 'P5 — P25',
-          data: [[fund.p5, fund.p25], [eme.p5, eme.p25]],
-          backgroundColor: c.accent + '30',
-          borderColor: c.accent + '60',
-          borderWidth: 1,
-          borderRadius: 2,
-          barPercentage: 0.6,
-        },
-        {
-          label: 'P25 — P75 (IQR)',
-          data: [[fund.p25, fund.p75], [eme.p25, eme.p75]],
-          backgroundColor: [c.accent + 'aa', c.accent4 + 'aa'],
-          borderColor: [c.accent, c.accent4],
-          borderWidth: 2,
-          borderRadius: 6,
-          barPercentage: 0.6,
-        },
-        {
-          label: 'P75 — P95',
-          data: [[fund.p75, fund.p95], [eme.p75, eme.p95]],
-          backgroundColor: c.accent + '30',
-          borderColor: c.accent + '60',
-          borderWidth: 1,
-          borderRadius: 2,
-          barPercentage: 0.6,
-        },
-      ],
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'bottom', labels: { color: c.text, font: { size: 11 } } },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const range = ctx.raw;
-              return `${ctx.dataset.label}: ${Math.round(range[0])} — ${Math.round(range[1])} palavras`;
+  configs.forEach(cfg => {
+    const canvas = document.getElementById(cfg.id);
+    if (!canvas) return;
+    const c = getChartColors();
+    const d = cfg.data;
+    const color = c[cfg.colorKey];
+
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: [cfg.label],
+        datasets: [
+          {
+            label: 'P5 — P25',
+            data: [[d.p5, d.p25]],
+            backgroundColor: color + '25',
+            borderColor: color + '55',
+            borderWidth: 1,
+            barPercentage: 0.7,
+          },
+          {
+            label: 'P25 — P75 (IQR)',
+            data: [[d.p25, d.p75]],
+            backgroundColor: color + 'bb',
+            borderColor: color,
+            borderWidth: 2,
+            borderRadius: 6,
+            barPercentage: 0.7,
+          },
+          {
+            label: 'P75 — P95',
+            data: [[d.p75, d.p95]],
+            backgroundColor: color + '25',
+            borderColor: color + '55',
+            borderWidth: 1,
+            barPercentage: 0.7,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const r = ctx.raw;
+                return `${ctx.dataset.label}: ${Math.round(r[0])} — ${Math.round(r[1])} palavras`;
+              }
             }
-          }
+          },
+          datalabels: {
+            display: ctx => ctx.datasetIndex <= 2,
+            anchor: ctx => ctx.datasetIndex === 1 ? 'center' : 'end',
+            align: ctx => ctx.datasetIndex === 0 ? 'bottom' : ctx.datasetIndex === 2 ? 'top' : 'center',
+            color: ctx => ctx.datasetIndex === 1 ? '#fff' : c.text,
+            font: { size: 12, weight: '700' },
+            formatter: (v, ctx) => {
+              if (ctx.datasetIndex === 0) return `P5: ${Math.round(v[0])}`;
+              if (ctx.datasetIndex === 2) return `P95: ${Math.round(v[1])}`;
+              return `med: ${Math.round(d.mediana)}`;
+            },
+          },
         },
-        datalabels: {
-          display: ctx => ctx.datasetIndex === 1,
-          anchor: 'center',
-          align: 'center',
-          color: '#fff',
-          font: { size: 12, weight: '700' },
-          formatter: (v, ctx) => {
-            const med = ctx.dataIndex === 0 ? fund.mediana : eme.mediana;
-            return `med: ${Math.round(med)}`;
+        scales: {
+          x: { display: false },
+          y: {
+            grid: { color: c.grid },
+            ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
+            title: { display: true, text: 'Palavras', color: c.text, font: { size: 11, weight: '600' } },
           },
         },
       },
-      scales: {
-        x: {
-          grid: { color: c.grid },
-          ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
-          title: { display: true, text: 'Palavras', color: c.text, font: { size: 11, weight: '600' } },
-        },
-        y: {
-          stacked: false,
-          grid: { display: false },
-          ticks: { color: c.text, font: { size: 13, weight: '700' } },
-        },
-      },
-    },
-    plugins: [ChartDataLabels],
+      plugins: [ChartDataLabels],
+    });
   });
 }
+
 
 /* ===== Scatter de Compressão ===== */
 function renderScatterCompression(f4) {
