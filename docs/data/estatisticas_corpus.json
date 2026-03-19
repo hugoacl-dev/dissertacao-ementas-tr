@@ -1,24 +1,24 @@
 {
   "meta": {
-    "gerado_em": "2026-03-19T13:58:23",
+    "gerado_em": "2026-03-19T14:07:21",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 131
+    "pipeline_total_segundos": 135
   },
   "fases": {
     "fase1_ingestao": {
       "nome": "Ingestão",
-      "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema sistema judicial.",
-      "narrativa": "O sistema sistema judicial (juizado especial federal) armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
+      "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema judicial.",
+      "narrativa": "O sistema judicial armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
       "status": "concluida",
       "script": "pipeline/01_ingestao.py",
-      "duracao_segundos": 4,
+      "duracao_segundos": 5,
       "registros_dump": 32478,
       "registros_exportados": 32377,
       "perda": 101,
       "taxa_retencao": 99.7,
-      "fonte": "sistema judicial / PostgreSQL",
+      "fonte": "Sistema Judicial / PostgreSQL",
       "artefatos": [
         {
           "nome": "dump_sistema_judicial.sql",
@@ -40,7 +40,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 50 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
-      "duracao_segundos": 40,
+      "duracao_segundos": 41,
       "registros_entrada": 32377,
       "registros_saida": 32327,
       "perda": 50,
@@ -80,7 +80,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.093 registros. 90%) e teste (3.232 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": 54,
+      "duracao_segundos": 59,
       "registros_entrada": 32327,
       "registros_saida": 32325,
       "treino": 29093,
@@ -138,7 +138,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 20,
+      "duracao_segundos": 17,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
@@ -8659,7 +8659,7 @@
         "distribuicao": "A fundamentação tem mediana de 540 palavras enquanto a ementa tem apenas 27, uma razão de ~20:1. Essa assimetria extrema define a complexidade da tarefa de sumarização.",
         "novel_ngrams": "Novel n-grams medem quanto do texto da ementa NÃO aparece na fundamentação. Valores altos (87.2% de trigrams novos) confirmam que os juízes reformulam significativamente o texto. É sumarização abstrativa, não extrativa.",
         "histograma": "A maioria das fundamentações concentra-se entre 0-199 e 400-599 palavras, mas a cauda longa revela casos de alta complexidade com textos muito extensos.",
-        "temporal": "Quantidade de processos recebidos pelas relatorias da juizado especial no sistema sistema judicial a cada ano, abrangendo o período de 2024 a 2026."
+        "temporal": "Quantidade de processos registrados no sistema a cada ano, abrangendo o período de 2024 a 2026."
       },
       "artefatos": [
         {
