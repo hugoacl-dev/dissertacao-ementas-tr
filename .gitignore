@@ -1,7 +1,6 @@
 # Dados gerados pelo pipeline (pesados, não versionados)
 /data/
 !docs/data/
-dump_sistema_judicial.sql
 
 # Python
 __pycache__/
@@ -28,4 +27,4 @@ NOTAS_PESQUISA.md
 PLANO_ARQUITETURAL.md
 fluxo_fase*.md
 fluxo_geral.md
-dump_tr_one.sql
+dump_sistema_judicial.sql
