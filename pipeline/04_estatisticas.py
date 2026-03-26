@@ -475,15 +475,27 @@ def gerar_relatorio(
     for _, ementa in pares_texto:
         # Extrair área do prefixo da ementa (antes do primeiro '.')
         prefixo = ementa.split(".")[0].strip().upper()
-        if "PREVIDENCI" in prefixo:
+
+        # --- Camada 1: keywords de área explícita ---
+        if "PREVIDENCI" in prefixo or "REVIDENCIÁRIO" in prefixo:
             materia_counter["Previdenciário"] += 1
-        elif any(k in prefixo for k in ("ASSISTENCIAL", "AMPARO", "BPC", "BENEFÍCIO ASSISTENCIAL")):
+        elif any(k in prefixo for k in (
+            "ASSISTENCIAL", "AMPARO", "BPC",
+            "BENEFÍCIO ASSISTENCIAL", "ASSISTÊNCIA SOCIAL",
+            "BENEFÍCIO DE PRESTAÇÃO CONTINUADA",
+        )):
             materia_counter["Assistencial"] += 1
         elif "SEGURIDADE" in prefixo:
             materia_counter["Seguridade Social"] += 1
-        elif "PROCESSUAL" in prefixo:
+        elif any(k in prefixo for k in (
+            "PROCESSUAL", "AGRAVO", "ADEQUAÇÃO",
+            "RECURSO ORDINÁRIO", "RECURSO INOMINADO",
+            "QUESTÃO DE ORDEM", "RETORNO DOS AUTOS",
+        )):
             materia_counter["Processual"] += 1
-        elif "ADMINISTRATIV" in prefixo:
+        elif any(k in prefixo for k in (
+            "ADMINISTRATIV", "SERVIDOR PÚBLICO", "SAÚDE",
+        )):
             materia_counter["Administrativo"] += 1
         elif "FGTS" in prefixo:
             materia_counter["FGTS"] += 1
@@ -497,6 +509,17 @@ def gerar_relatorio(
             materia_counter["Criminal"] += 1
         elif "CONSTITUCIONAL" in prefixo:
             materia_counter["Constitucional"] += 1
+        elif any(k in prefixo for k in (
+            "FINANCIAMENTO HABITACIONAL", "SISTEMA FINANCEIRO",
+        )):
+            materia_counter["Financeiro/Habitacional"] += 1
+        # --- Camada 2: prefixos que indicam benefício previdenciário ---
+        elif any(k in prefixo for k in (
+            "APOSENTADORIA", "PENSÃO POR MORTE", "AUXÍLIO",
+            "SALÁRIO-MATERNIDADE", "REVISÃO DA RMI",
+            "BENEFÍCIO POR INCAPACIDADE",
+        )):
+            materia_counter["Previdenciário"] += 1
         else:
             materia_counter["Outros"] += 1
 
