@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-26T14:25:06",
+    "gerado_em": "2026-03-26T14:59:02",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
@@ -8658,31 +8658,27 @@
       "distribuicao_materias": [
         {
           "materia": "Previdenciário",
-          "contagem": 15078
+          "contagem": 15729
         },
         {
           "materia": "Seguridade Social",
           "contagem": 5412
         },
         {
-          "materia": "Assistencial",
-          "contagem": 3367
+          "materia": "Processual",
+          "contagem": 3476
         },
         {
-          "materia": "Processual",
-          "contagem": 2828
+          "materia": "Assistencial",
+          "contagem": 3428
         },
         {
           "materia": "Administrativo",
-          "contagem": 1551
-        },
-        {
-          "materia": "Outros",
-          "contagem": 1551
+          "contagem": 1581
         },
         {
           "materia": "Embargos",
-          "contagem": 919
+          "contagem": 917
         },
         {
           "materia": "FGTS",
@@ -8690,11 +8686,15 @@
         },
         {
           "materia": "Civil",
-          "contagem": 614
+          "contagem": 613
         },
         {
           "materia": "Tributário",
           "contagem": 185
+        },
+        {
+          "materia": "Outros",
+          "contagem": 164
         }
       ],
       "dicas": {
