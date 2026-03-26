@@ -29,9 +29,11 @@ log = logging.getLogger(__name__)
 INPUT_PATH = Path("data/dados_brutos.json")
 OUTPUT_PATH = Path("data/dados_limpos.json")
 
-# Comprimento mínimo aceitável (em caracteres) após limpeza.
-MIN_FUNDAMENTACAO_LEN: int = 50
-MIN_EMENTA_LEN: int = 20
+# Comprimento mínimo aceitável (em palavras) após limpeza.
+# Usar palavras em vez de caracteres torna o limiar mais robusto e
+# interpretável — independente do comprimento médio dos termos.
+MIN_FUNDAMENTACAO_PALAVRAS: int = 10
+MIN_EMENTA_PALAVRAS: int = 5
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +155,7 @@ class CleaningStats:
 
     total_entrada: int = 0
     descartados_vazios: int = 0
+    descartados_identicos: int = 0
     descartados_curtos: int = 0
     exportados: int = 0
 
@@ -237,7 +240,15 @@ def _limpar_registro(
         stats.descartados_vazios += 1
         return None
 
-    if len(fundamentacao) < MIN_FUNDAMENTACAO_LEN or len(ementa) < MIN_EMENTA_LEN:
+    # Registro corrompido: sistema gravou o mesmo conteúdo nos dois campos.
+    # Esses pares distorcem métricas (ROUGE = 1.0 trivialmente).
+    if fundamentacao.strip() == ementa.strip():
+        stats.descartados_identicos += 1
+        return None
+
+    n_palavras_fund = len(fundamentacao.split())
+    n_palavras_emen = len(ementa.split())
+    if n_palavras_fund < MIN_FUNDAMENTACAO_PALAVRAS or n_palavras_emen < MIN_EMENTA_PALAVRAS:
         stats.descartados_curtos += 1
         return None
 
@@ -286,11 +297,13 @@ def processar(input_path: Path = INPUT_PATH, output_path: Path = OUTPUT_PATH) ->
 
     log.info(
         "Saneamento concluído. Entrada: %d | Exportados: %d (%.1f%%) | "
-        "Descartados (vazios): %d | Descartados (muito curtos): %d",
+        "Descartados (vazios): %d | Descartados (idênticos): %d | "
+        "Descartados (muito curtos): %d",
         stats.total_entrada,
         stats.exportados,
         stats.taxa_retencao,
         stats.descartados_vazios,
+        stats.descartados_identicos,
         stats.descartados_curtos,
     )
 
