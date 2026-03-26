@@ -641,6 +641,7 @@ def gerar_relatorio(
             "ENDEREÇO_COMPLETO",
         ],
         "pii_contagem": pii_contagem,
+        "system_prompt": Path("pipeline/system_prompt.txt").read_text(encoding="utf-8").strip(),
         "artefatos": [
             {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa} limpos"},
             {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "saida", "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"},

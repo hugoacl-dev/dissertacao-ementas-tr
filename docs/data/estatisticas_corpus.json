@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-26T14:00:14",
+    "gerado_em": "2026-03-26T14:25:06",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 129
+    "pipeline_total_segundos": 139
   },
   "fases": {
     "fase1_ingestao": {
@@ -40,7 +40,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 65 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
-      "duracao_segundos": 38,
+      "duracao_segundos": 39,
       "registros_entrada": 32377,
       "registros_saida": 32312,
       "perda": 65,
@@ -80,7 +80,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.081 registros. 90%) e teste (3.231 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": 58,
+      "duracao_segundos": 62,
       "registros_entrada": 32312,
       "registros_saida": 32312,
       "treino": 29081,
@@ -111,6 +111,7 @@
         "total": 233316,
         "descartados_pos_anon": 0
       },
+      "system_prompt": "Você é o relator de uma Turma Recursal de Juizado Especial Federal. Sua tarefa é redigir a ementa do acórdão a partir do voto a seguir. A ementa deve ser um resumo curto, objetivo e autossuficiente do que foi decidido, no formato condensado utilizado pelas Turmas Recursais: área do direito, tema, fundamento determinante e resultado do julgamento. Responda exclusivamente com o texto da ementa, sem explicações adicionais.",
       "artefatos": [
         {
           "nome": "dados_limpos.json",
@@ -120,13 +121,13 @@
         },
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 144.7,
+          "tamanho_mb": 147.6,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"
         },
         {
           "nome": "dataset_teste.jsonl",
-          "tamanho_mb": 15.2,
+          "tamanho_mb": 15.6,
           "tipo": "saida",
           "conteudo": "{contents: [{role, parts}]} anonimizado · 10%"
         }
@@ -138,7 +139,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 15,
+      "duracao_segundos": 18,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
@@ -8706,7 +8707,7 @@
       "artefatos": [
         {
           "nome": "dataset_treino.jsonl",
-          "tamanho_mb": 144.7,
+          "tamanho_mb": 147.6,
           "tipo": "entrada",
           "conteudo": "{contents: [{role, parts}]} anonimizado"
         },

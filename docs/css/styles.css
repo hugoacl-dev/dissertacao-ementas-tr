@@ -509,6 +509,20 @@ body {
   font-weight: 700;
 }
 
+/* ===== SYSTEM PROMPT BLOCKQUOTE ===== */
+.system-prompt-quote {
+  margin: 0.6rem 0 0;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--accent-2);
+  background: var(--tag-bg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: var(--text-primary);
+  font-style: italic;
+  font-weight: 450;
+}
+
 /* ===== GAUGE GRID ===== */
 .gauge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .gauge-item { text-align: center; }
