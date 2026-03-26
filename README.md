@@ -13,9 +13,9 @@ Desenvolver e validar estatisticamente um pipeline computacional completo para a
 
 ## Corpus
 
-- **32.325 pares** {fundamentação, ementa} extraídos do sistema judicial
-- Razão de compressão média: **23,9:1** (660 palavras → 30 palavras)
-- Novel n-grams: **38,3%** de unigramas e **86,6%** de trigramas inéditos, confirmando a natureza **genuinamente abstrativa** das ementas
+- **32.312 pares** {fundamentação, ementa} extraídos do sistema judicial
+- Razão de compressão média: **23,8:1** (660 palavras → 30 palavras)
+- Novel n-grams: **38,9%** de unigramas e **87,2%** de trigramas inéditos, confirmando a natureza **genuinamente abstrativa** das ementas
 
 ## Pipeline
 
@@ -24,7 +24,7 @@ O projeto é dividido em **7 fases**. As Fases 1–4 são sequenciais; após a F
 | Fase | Script(s) | Descrição |
 |---:|---|---|
 | 1 | `pipeline/01_ingestao.py` | Ingestão do dump PostgreSQL e exportação dos pares válidos com `data_cadastro` para divisão cronológica |
-| 2 | `pipeline/02_higienizacao.py` | Remoção de ruído estrutural via Regex (HTML, IDs PJe, carimbos DJe, assinaturas). Datas e conteúdo de mérito são preservados |
+| 2 | `pipeline/02_higienizacao.py` | Remoção de ruído estrutural via Regex (HTML, IDs PJe, carimbos DJe, assinaturas). Exclusão de registros corrompidos (fund. idêntica à ementa). Datas e conteúdo de mérito são preservados |
 | 3 | `pipeline/03_anonimizacao.py` | Anonimização LGPD: CPF, CNPJ, NPU, e-mail, telefone, nomes de partes privadas → tokens genéricos. Agentes públicos preservados (Art. 93, IX CF). **Split cronológico** 90/10 |
 | — | `pipeline/audit.py` | Auditoria pós-Fase 3: verifica ausência de dados pessoais residuais (7 categorias) |
 | 4 | `pipeline/04_estatisticas.py` | Estatísticas descritivas: funil de attrition, distribuições, novel n-grams |
