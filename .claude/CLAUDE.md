@@ -43,7 +43,8 @@ pesquisa/                 # ⚠️ GITIGNORED — documentação de pesquisa
   NOTAS_PESQUISA.md       # Log empírico de execução e justificativas
   documento_compartilhado.md # Pre-projeto completo da dissertação
   fluxos/                 # Diagramas Mermaid de cada fase
-  referencias/            # Biblioteca Zotero (PDFs e snapshots)
+  REFERENCIAS.md          # Índice bibliográfico completo (fonte canônica: Zotero local)
+  orientacoes/            # Reuniões com os orientadores e passos definidos
 ```
 
 > ⚠️ `data/` e `pesquisa/` existem **apenas localmente** (gitignored). Se não encontrar esses diretórios, solicite ao usuário que os forneça.
@@ -88,8 +89,8 @@ Leia as regras em `.claude/rules/` **antes** de qualquer modificação:
 
 ## Documentação detalhada
 
-Para contexto aprofundado, consulte (em ordem de prioridade):
-1. `pesquisa/PLANO_ARQUITETURAL.md` — Arquitetura técnica de cada fase
-2. `pesquisa/NOTAS_PESQUISA.md` — Log empírico e justificativas metodológicas
-3. `pesquisa/documento_compartilhado.md` — Pre-projeto completo (seções 1–6, referências)
-4. `pesquisa/fluxos/` — Diagramas Mermaid de cada fase
+1. `pesquisa/REFERENCIAS.md` — Índice bibliográfico com classificação e notas de relevância (fonte canônica: Zotero)
+2. `pesquisa/PLANO_ARQUITETURAL.md` — Arquitetura técnica de cada fase
+3. `pesquisa/NOTAS_PESQUISA.md` — Log empírico e justificativas metodológicas
+4. `pesquisa/documento_compartilhado.md` — Pre-projeto completo (seções 1–6, referências)
+5. `pesquisa/fluxos/` — Diagramas Mermaid de cada fase
