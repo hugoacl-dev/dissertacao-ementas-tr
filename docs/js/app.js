@@ -406,7 +406,17 @@ function render(data) {
       cards.appendChild(ngCard);
     }
 
-    // ── 6. VOCABULÁRIO — Composição e domínio ──
+    // ── 6. COMPOSIÇÃO TEMÁTICA — Áreas do direito ──
+    if (f4.distribuicao_materias) {
+      const matCard = el('div', 'card card--wide');
+      matCard.innerHTML = `
+        <div class="card__label">Composição Temática do Corpus <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— área do direito por ementa</span></div>
+        <p class="card__hint">Distribuição das ementas por área do direito, extraída do prefixo de cada ementa. O corpus é predominantemente previdenciário e assistencial, mas inclui matérias diversas (administrativo, processual, FGTS, tributário, civil), refletindo a competência ampla dos Juizados Especiais Federais.</p>
+        <div class="chart-container chart-container--tall"><canvas id="chart-materias"></canvas></div>`;
+      cards.appendChild(matCard);
+    }
+
+    // ── 7. VOCABULÁRIO — Composição e domínio ──
     if (f4.vocabulario) {
       const v = f4.vocabulario;
       cards.append(
@@ -459,16 +469,7 @@ function render(data) {
   window._chartsRendered = true;
 
   requestAnimationFrame(() => {
-    renderFunnelChart(f4);
-    renderGauges(f4);
-    renderTemporalChart(f4);
-    renderHistogramChart(f4);
-    renderHistogramEmentaChart(f4);
-    renderBoxPlot(f4);
-    renderScatterCompression(f4);
-    renderPiiChart(f3);
-    renderWordCloud(f4);
-    renderVocabOverlap(f4);
+    rerenderCharts(f4, f3);
     observeStickyHeaders();
   });
 }

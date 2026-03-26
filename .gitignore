@@ -28,3 +28,7 @@ PLANO_ARQUITETURAL.md
 fluxo_fase*.md
 fluxo_geral.md
 dump_sistema_judicial.sql
+
+# Claude Code (configs locais — não versionar)
+CLAUDE.local.md
+.claude/settings.local.json

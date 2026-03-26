@@ -468,6 +468,57 @@ def gerar_relatorio(
     ]
     log.info("  Word cloud: top-%d termos.", len(wordcloud_data))
 
+    # --- Distribuição temática por área do direito ---
+    log.info("Calculando distribuição temática (matérias)...")
+    materia_counter: Counter = Counter()
+
+    for _, ementa in pares_texto:
+        # Extrair área do prefixo da ementa (antes do primeiro '.')
+        prefixo = ementa.split(".")[0].strip().upper()
+        if "PREVIDENCI" in prefixo:
+            materia_counter["Previdenciário"] += 1
+        elif any(k in prefixo for k in ("ASSISTENCIAL", "AMPARO", "BPC", "BENEFÍCIO ASSISTENCIAL")):
+            materia_counter["Assistencial"] += 1
+        elif "SEGURIDADE" in prefixo:
+            materia_counter["Seguridade Social"] += 1
+        elif "PROCESSUAL" in prefixo:
+            materia_counter["Processual"] += 1
+        elif "ADMINISTRATIV" in prefixo:
+            materia_counter["Administrativo"] += 1
+        elif "FGTS" in prefixo:
+            materia_counter["FGTS"] += 1
+        elif "EMBARGO" in prefixo:
+            materia_counter["Embargos"] += 1
+        elif "CIVIL" in prefixo:
+            materia_counter["Civil"] += 1
+        elif "TRIBUTÁRI" in prefixo or "FISCAL" in prefixo:
+            materia_counter["Tributário"] += 1
+        elif "PENAL" in prefixo or "CRIMINAL" in prefixo:
+            materia_counter["Criminal"] += 1
+        elif "CONSTITUCIONAL" in prefixo:
+            materia_counter["Constitucional"] += 1
+        else:
+            materia_counter["Outros"] += 1
+
+    # Top N + agrupar o restante em "Outros"
+    _TOP_N = 10
+    materias_top = materia_counter.most_common(_TOP_N)
+    outros_total = sum(c for _, c in materia_counter.most_common()[_TOP_N:])
+    if outros_total > 0:
+        # Merge com "Outros" se já existir
+        materias_dict = dict(materias_top)
+        materias_dict["Outros"] = materias_dict.get("Outros", 0) + outros_total
+        distribuicao_materias = [
+            {"materia": k, "contagem": v}
+            for k, v in sorted(materias_dict.items(), key=lambda x: x[1], reverse=True)
+        ]
+    else:
+        distribuicao_materias = [
+            {"materia": k, "contagem": v} for k, v in materias_top
+        ]
+
+    log.info("  Matérias: %s", {d["materia"]: d["contagem"] for d in distribuicao_materias[:5]})
+
     # --- PII Stats (lidas do JSON auxiliar da Fase 3) ---
     pii_stats_path = Path("data/.anonimizacao_stats.json")
     pii_contagem: dict = {}
@@ -647,6 +698,7 @@ def gerar_relatorio(
         "histograma_ementa": hist_ementa,
         "scatter_compressao": scatter_data,
         "wordcloud": wordcloud_data,
+        "distribuicao_materias": distribuicao_materias,
         "dicas": dicas,
         "artefatos": [
             {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "entrada", "conteudo": "{contents: [{role, parts}]} anonimizado"},

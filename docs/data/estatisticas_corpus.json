@@ -1,10 +1,10 @@
 {
   "meta": {
-    "gerado_em": "2026-03-26T03:07:47",
+    "gerado_em": "2026-03-26T14:00:14",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "Hugo Andrade Correia Lima Filho",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 128
+    "pipeline_total_segundos": 129
   },
   "fases": {
     "fase1_ingestao": {
@@ -13,7 +13,7 @@
       "narrativa": "O sistema judicial armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
       "status": "concluida",
       "script": "pipeline/01_ingestao.py",
-      "duracao_segundos": 3,
+      "duracao_segundos": 5,
       "registros_dump": 32478,
       "registros_exportados": 32377,
       "perda": 101,
@@ -40,7 +40,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 65 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
-      "duracao_segundos": 39,
+      "duracao_segundos": 38,
       "registros_entrada": 32377,
       "registros_saida": 32312,
       "perda": 65,
@@ -8652,6 +8652,48 @@
         {
           "text": "conversão",
           "weight": 1152
+        }
+      ],
+      "distribuicao_materias": [
+        {
+          "materia": "Previdenciário",
+          "contagem": 15078
+        },
+        {
+          "materia": "Seguridade Social",
+          "contagem": 5412
+        },
+        {
+          "materia": "Assistencial",
+          "contagem": 3367
+        },
+        {
+          "materia": "Processual",
+          "contagem": 2828
+        },
+        {
+          "materia": "Administrativo",
+          "contagem": 1551
+        },
+        {
+          "materia": "Outros",
+          "contagem": 1551
+        },
+        {
+          "materia": "Embargos",
+          "contagem": 919
+        },
+        {
+          "materia": "FGTS",
+          "contagem": 807
+        },
+        {
+          "materia": "Civil",
+          "contagem": 614
+        },
+        {
+          "materia": "Tributário",
+          "contagem": 185
         }
       ],
       "dicas": {

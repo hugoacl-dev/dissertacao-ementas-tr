@@ -43,6 +43,7 @@ function rerenderCharts(f4, f3) {
   renderPiiChart(f3);
   renderWordCloud(f4);
   renderVocabOverlap(f4);
+  renderMateriaChart(f4);
 }
 
 /* ===== Funil de Attrition ===== */
@@ -716,3 +717,78 @@ function renderVocabOverlap(f4) {
     plugins: [ChartDataLabels],
   });
 }
+
+/* ===== Distribuição Temática (Matérias) ===== */
+function renderMateriaChart(f4) {
+  const canvas = document.getElementById('chart-materias');
+  if (!canvas || !f4?.distribuicao_materias) return;
+  const c = getChartColors();
+
+  const items = f4.distribuicao_materias;
+  const labels = items.map(d => d.materia);
+  const values = items.map(d => d.contagem);
+  const total = values.reduce((a, b) => a + b, 0);
+
+  const colors = [
+    c.accent, c.accent2, c.accent3, c.accent4,
+    c.accent + 'cc', c.accent2 + 'cc', c.accent3 + 'cc',
+    c.accent4 + 'cc', c.accent + '99', c.accent2 + '99',
+    c.accent3 + '99',
+  ];
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.slice(0, values.length),
+        borderColor: colors.slice(0, values.length).map(co => co.replace(/[0-9a-f]{2}$/i, 'ff')),
+        borderWidth: 1,
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const pct = (ctx.raw / total * 100).toFixed(1);
+              return `${ctx.raw.toLocaleString('pt-BR')} ementas (${pct}%)`;
+            }
+          }
+        },
+        datalabels: {
+          anchor: 'end',
+          align(ctx) {
+            const max = Math.max(...ctx.dataset.data);
+            return ctx.dataset.data[ctx.dataIndex] < max * 0.15 ? 'right' : 'left';
+          },
+          color: c.label,
+          font: { size: 12, weight: '700', family: 'Inter' },
+          formatter: v => {
+            const pct = (v / total * 100).toFixed(1);
+            return `${v.toLocaleString('pt-BR')} (${pct}%)`;
+          },
+          padding: { right: 8, left: 4 },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: c.grid },
+          ticks: { color: c.text, callback: v => v.toLocaleString('pt-BR') },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: c.text, font: { size: 12, weight: '600' } },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
