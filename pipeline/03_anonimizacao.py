@@ -56,13 +56,10 @@ TEST_SIZE: float = 0.10  # 10% para avaliação da banca; 90% para fine-tuning
 MIN_FUND_ANON_LEN: int = 50
 MIN_EMENTA_ANON_LEN: int = 20
 
-# Instrução de sistema embutida no prompt do usuário (ver nota no cabeçalho)
-_INSTRUCAO_SISTEMA = (
-    "Você é um assistente jurídico experiente que auxilia juízes a escreverem "
-    "Ementas Judiciais, que são resumos curtos, estruturados e objetivos do que "
-    "foi decidido numa fundamentação (voto). Ao ser fornecida a fundamentação de um "
-    "Recurso, você deve responder única e exclusivamente com o texto da Ementa correspondente."
-)
+# Instrução de sistema carregada de arquivo externo para facilitar edição
+# e reutilização nas Fases 5, 6 e 7 (ver nota no cabeçalho sobre role "system").
+_SYSTEM_PROMPT_PATH = Path(__file__).parent / "system_prompt.txt"
+_INSTRUCAO_SISTEMA = _SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
 # ---------------------------------------------------------------------------

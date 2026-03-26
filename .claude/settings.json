@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(python3 pipeline/*)",
+      "Bash(bash pipeline/run_all.sh)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(ls *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$(git branch --show-current)\" != \"main\" ] && [ \"$(git branch --show-current)\" != \"master\" ] || { echo '{\"block\": true, \"message\": \"Não edite diretamente na main/master. Crie uma feature branch.\"}' >&2; exit 2; }",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
