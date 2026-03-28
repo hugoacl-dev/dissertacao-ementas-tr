@@ -1,7 +1,7 @@
 # Dependências do pipeline — Dissertação Ementas TR
 #
 # Fases 1–4 (ingestão, higienização, anonimização, estatísticas):
-#   Usam apenas a biblioteca padrão do Python (≥ 3.10). Sem dependências externas.
+pandas>=2.2.0
 #
 # Fase 5a (fine-tuning Gemini 2.5 Flash via Vertex AI):
 google-cloud-aiplatform>=1.40.0

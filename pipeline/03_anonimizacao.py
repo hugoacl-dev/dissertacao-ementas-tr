@@ -33,6 +33,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import pandas as pd
+
 
 # ---------------------------------------------------------------------------
 # Configuração
@@ -351,47 +353,57 @@ def formatar_exemplo_gemini(fundamentacao: str, ementa: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _carregar_registros(path: Path) -> list[dict]:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+def _carregar_registros(path: Path) -> pd.DataFrame:
+    """Carrega `dados_limpos.json` em um DataFrame pandas."""
+    return pd.read_json(path, orient="records", dtype=False)
 
 
 def _anonimizar_registros(
-    registros: list[dict],
-) -> tuple[list[dict], AnonimizationStats]:
-    """Anonimiza todos os registros e retorna os exemplos formatados + stats."""
+    df: pd.DataFrame,
+) -> tuple[pd.DataFrame, AnonimizationStats]:
+    """Anonimiza todos os registros via apply() e retorna o DataFrame + stats."""
     stats = AnonimizationStats()
-    exemplos: list[dict] = []
 
-    for i, item in enumerate(registros, start=1):
-        fund = anonimizar_texto(item["fundamentacao"], stats)
-        ementa = anonimizar_texto(item["ementa"], stats)
+    def _processar_linha(row: pd.Series) -> pd.Series:
+        fund   = anonimizar_texto(row["fundamentacao"], stats)
+        ementa = anonimizar_texto(row["ementa"], stats)
 
-        # [C14] Descarta registros destruídos pela anonimização.
+        # [C14] Descarta registros destruidos pela anonimizacao.
         if len(fund) < MIN_FUND_ANON_LEN or len(ementa) < MIN_EMENTA_ANON_LEN:
             stats.descartados_pos_anon += 1
-            continue
+            return pd.Series({"fundamentacao": None, "ementa": None})
 
         exemplo = formatar_exemplo_gemini(fund, ementa)
-        # Preserva data_cadastro temporariamente para viabilizar o split
-        # cronológico em _dividir_e_gravar(). O campo é removido antes da
-        # gravação JSONL (ver _dividir_e_gravar, filtro de data_cadastro).
-        exemplo["data_cadastro"] = item.get("data_cadastro", "")
-        exemplos.append(exemplo)
+        exemplo["data_cadastro"] = row.get("data_cadastro", "")
+        return pd.Series({"exemplo": exemplo})
 
+    # apply() e filtro de nulos pós-anon
+    resultado = df[["fundamentacao", "ementa", "data_cadastro"]].apply(
+        lambda row: _processar_linha(row), axis=1
+    )
+
+    # Reconstruir DataFrame de exemplos descartando os linhas marcadas como None
+    exemplos_list: list[dict] = []
+    for i, (_, row) in enumerate(resultado.iterrows(), start=1):
+        ex = row.get("exemplo") if hasattr(row, "get") else None
+        if ex is not None:
+            exemplos_list.append(ex)
         if i % 5_000 == 0:
-            log.info("%d/%d registros anonimizados...", i, len(registros))
+            log.info("%d/%d registros anonimizados...", i, len(df))
 
-    return exemplos, stats
+    return pd.DataFrame({"exemplo": exemplos_list}), stats
 
 
 def _dividir_e_gravar(
-    exemplos: list[dict],
+    df_exemplos: pd.DataFrame,
     train_path: Path,
     test_path: Path,
     test_size: float,
 ) -> tuple[int, int]:
     """Divide cronologicamente e grava os datasets de treino e teste.
+
+    Usa pandas sort_values() para ordenar por data_cadastro e iloc[] para
+    o split cronológico, substituindo o sorted() manual anterior.
 
     A divisão é feita por 'data_cadastro' (campo preservado desde a Fase 1):
     as decisões mais antigas vão para treino e as mais recentes para teste.
@@ -400,50 +412,49 @@ def _dividir_e_gravar(
 
     Referência: SLDS (Rolshoven et al., 2025).
 
-    ATENÇÃO: não é feito shuffle. A ordem temporal é preservada durante
-    o treinamento, mas a API de tuning embaralha internamente se necessário.
-
     Returns:
         Tupla (qtd_treino, qtd_teste).
     """
-    # Ordenação cronológica crescente pelo campo 'data_cadastro'.
-    # Registros sem data_cadastro são colocados no início (tratados como antigos).
-    exemplos_ordenados = sorted(
-        exemplos,
-        key=lambda x: x.get("data_cadastro", "") or "",
+    # Extrair data_cadastro de cada exemplo para sor
+    datas = pd.Series(
+        [ex.get("data_cadastro", "") or "" for ex in df_exemplos["exemplo"]],
+        name="data_cadastro",
     )
+    df_com_data = df_exemplos.copy()
+    df_com_data["_data_cadastro"] = datas
 
-    qtd_teste = int(len(exemplos_ordenados) * test_size)
-    # As decisões MAIS RECENTES (final da lista ordenada) vão para teste.
-    dataset_treino = exemplos_ordenados[:-qtd_teste] if qtd_teste > 0 else exemplos_ordenados
-    dataset_teste = exemplos_ordenados[-qtd_teste:] if qtd_teste > 0 else []
+    # Ordenar cronologicamente (registros sem data ficam no início — tratados como antigos)
+    df_ordenado = df_com_data.sort_values("_data_cadastro", kind="stable").reset_index(drop=True)
+
+    qtd_total = len(df_ordenado)
+    qtd_teste = int(qtd_total * test_size)
+
+    df_treino = df_ordenado.iloc[:-qtd_teste] if qtd_teste > 0 else df_ordenado
+    df_teste  = df_ordenado.iloc[-qtd_teste:] if qtd_teste > 0 else df_ordenado.iloc[0:0]
 
     log.info(
         "Divisão CRONOLÓGICA: %d para TREINO (%.0f%%) | %d para TESTE (%.0f%%)",
-        len(dataset_treino),
-        (1 - test_size) * 100,
-        len(dataset_teste),
-        test_size * 100,
+        len(df_treino), (1 - test_size) * 100,
+        len(df_teste),  test_size * 100,
     )
 
-    # Validação: confirmar que o treino contém as decisões mais antigas
-    # e o teste as mais recentes (sem sobreposição temporal).
-    treino_ultima_data = dataset_treino[-1].get("data_cadastro", "?") if dataset_treino else "?"
-    teste_primeira_data = dataset_teste[0].get("data_cadastro", "?") if dataset_teste else "?"
+    # Validação cronológica
+    treino_ultima = df_treino["_data_cadastro"].iloc[-1] if len(df_treino) else "?"
+    teste_primeira = df_teste["_data_cadastro"].iloc[0]  if len(df_teste)  else "?"
     log.info(
         "Validação cronológica: treino até %s | teste a partir de %s",
-        treino_ultima_data, teste_primeira_data,
+        treino_ultima, teste_primeira,
     )
 
-    for path, dataset in [(train_path, dataset_treino), (test_path, dataset_teste)]:
-        log.info("Gravando %s (%d exemplos)...", path, len(dataset))
+    for path, df_split in [(train_path, df_treino), (test_path, df_teste)]:
+        log.info("Gravando %s (%d exemplos)...", path, len(df_split))
         with path.open("w", encoding="utf-8") as f:
-            for ex in dataset:
+            for ex in df_split["exemplo"]:
                 # Remove data_cadastro antes de gravar — não é campo do JSONL de treino.
                 ex_sem_data = {k: v for k, v in ex.items() if k != "data_cadastro"}
                 f.write(json.dumps(ex_sem_data, ensure_ascii=False, separators=(",", ":")) + "\n")
 
-    return len(dataset_treino), len(dataset_teste)
+    return len(df_treino), len(df_teste)
 
 
 def gerar_datasets(
@@ -469,11 +480,11 @@ def gerar_datasets(
 
     log.info("=== Fase 3: Anonimização (LGPD) e Formatação JSONL ===")
     log.info("Lendo %s ...", input_path)
-    registros = _carregar_registros(input_path)
-    log.info("%d registros carregados.", len(registros))
+    df = _carregar_registros(input_path)
+    log.info("%d registros carregados.", len(df))
 
     log.info("Aplicando anonimização LGPD...")
-    exemplos, stats = _anonimizar_registros(registros)
+    df_exemplos, stats = _anonimizar_registros(df)
 
     log.info(
         "Anonimização concluída. Total de tokens de dados pessoais substituídos: %d "
@@ -499,7 +510,7 @@ def gerar_datasets(
             MIN_EMENTA_ANON_LEN,
         )
 
-    _dividir_e_gravar(exemplos, train_path, test_path, test_size)
+    _dividir_e_gravar(df_exemplos, train_path, test_path, test_size)
 
     # Persistir contagens PII para consumo pelo dashboard (04_estatisticas.py)
     pii_stats_path = Path("data/.anonimizacao_stats.json")
