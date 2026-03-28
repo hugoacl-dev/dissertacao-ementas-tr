@@ -12,13 +12,13 @@ Executar a partir da raiz do projeto: python3 pipeline/02_higienizacao.py
 from __future__ import annotations
 
 import html
-import json
 import logging
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
+
+import pandas as pd
 
 # ---------------------------------------------------------------------------
 # Configuração
@@ -208,61 +208,12 @@ def limpar_texto(texto: str | None) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _iterar_registros(path: Path) -> Iterator[dict]:
-    """Lê o JSON de entrada linha a linha de forma lazy (evita carregar tudo)."""
-    with path.open("r", encoding="utf-8") as f:
-        registros = json.load(f)
-    yield from registros
-
-
-def _limpar_registro(
-    item: dict,
-    stats: CleaningStats,
-) -> dict | None:
-    """Aplica limpeza a um único registro e atualiza os contadores.
-
-    Returns:
-        Dicionário limpo ou None se o registro deve ser descartado.
-    """
-    stats.total_entrada += 1
-
-    fundamentacao_raw = item.get("fundamentacao", "")
-    ementa_raw = item.get("ementa", "")
-
-    if not fundamentacao_raw or not ementa_raw:
-        stats.descartados_vazios += 1
-        return None
-
-    fundamentacao = limpar_texto(fundamentacao_raw)
-    ementa = limpar_texto(ementa_raw)
-
-    if not fundamentacao or not ementa:
-        stats.descartados_vazios += 1
-        return None
-
-    # Registro corrompido: sistema gravou o mesmo conteúdo nos dois campos.
-    # Esses pares distorcem métricas (ROUGE = 1.0 trivialmente).
-    if fundamentacao.strip() == ementa.strip():
-        stats.descartados_identicos += 1
-        return None
-
-    n_palavras_fund = len(fundamentacao.split())
-    n_palavras_emen = len(ementa.split())
-    if n_palavras_fund < MIN_FUNDAMENTACAO_PALAVRAS or n_palavras_emen < MIN_EMENTA_PALAVRAS:
-        stats.descartados_curtos += 1
-        return None
-
-    stats.exportados += 1
-    return {
-        "id": item.get("id"),
-        "fundamentacao": fundamentacao,
-        "ementa": ementa,
-        "data_cadastro": item.get("data_cadastro", ""),
-    }
-
-
 def processar(input_path: Path = INPUT_PATH, output_path: Path = OUTPUT_PATH) -> CleaningStats:
     """Pipeline da Fase 2: limpeza de todos os registros brutos.
+
+    Usa pandas para I/O e aplicação vetorizada da limpeza. A função
+    `limpar_texto` e os padrões regex permanecem inalterados — o ganho
+    está na eliminação dos loops manuais e nos contadores por máscara.
 
     Args:
         input_path: Caminho para `dados_brutos.json`.
@@ -280,20 +231,40 @@ def processar(input_path: Path = INPUT_PATH, output_path: Path = OUTPUT_PATH) ->
     log.info("=== Fase 2: Saneamento e Higienização (Regex) ===")
     log.info("Lendo registros de %s ...", input_path)
 
-    stats = CleaningStats()
-    dados_limpos: list[dict] = []
+    df = pd.read_json(input_path, orient="records", dtype=False)
+    stats = CleaningStats(total_entrada=len(df))
+    log.info("%d registros carregados.", len(df))
 
-    for item in _iterar_registros(input_path):
-        registro_limpo = _limpar_registro(item, stats)
-        if registro_limpo:
-            dados_limpos.append(registro_limpo)
+    # --- Descartar registros com fundamentacao ou ementa vazios ---
+    mascara_vazios = df["fundamentacao"].isna() | (df["fundamentacao"] == "") \
+                   | df["ementa"].isna()        | (df["ementa"] == "")
+    stats.descartados_vazios += int(mascara_vazios.sum())
+    df = df[~mascara_vazios].copy()
 
-        if stats.total_entrada % 5_000 == 0:
-            log.info(
-                "%d registros processados | Exportados até agora: %d",
-                stats.total_entrada,
-                stats.exportados,
-            )
+    # --- Aplicar limpeza de texto (row-wise — regex não se vetoriza) ---
+    log.info("Aplicando limpeza de texto...")
+    df["fundamentacao"] = df["fundamentacao"].apply(limpar_texto)
+    df["ementa"]        = df["ementa"].apply(limpar_texto)
+
+    # --- Descartar registros que ficaram vazios após a limpeza ---
+    mascara_pos_limpeza = (df["fundamentacao"] == "") | (df["ementa"] == "")
+    stats.descartados_vazios += int(mascara_pos_limpeza.sum())
+    df = df[~mascara_pos_limpeza].copy()
+
+    # --- Descartar registros idênticos (fundamentacao == ementa) ---
+    mascara_identicos = df["fundamentacao"].str.strip() == df["ementa"].str.strip()
+    stats.descartados_identicos = int(mascara_identicos.sum())
+    df = df[~mascara_identicos].copy()
+
+    # --- Filtro por comprimento mínimo em palavras ---
+    n_palavras_fund  = df["fundamentacao"].str.split().str.len()
+    n_palavras_ementa = df["ementa"].str.split().str.len()
+    mascara_curtos   = (n_palavras_fund < MIN_FUNDAMENTACAO_PALAVRAS) \
+                     | (n_palavras_ementa < MIN_EMENTA_PALAVRAS)
+    stats.descartados_curtos = int(mascara_curtos.sum())
+    df = df[~mascara_curtos].copy()
+
+    stats.exportados = len(df)
 
     log.info(
         "Saneamento concluído. Entrada: %d | Exportados: %d (%.1f%%) | "
@@ -307,9 +278,14 @@ def processar(input_path: Path = INPUT_PATH, output_path: Path = OUTPUT_PATH) ->
         stats.descartados_curtos,
     )
 
-    log.info("Gravando %d registros limpos em %s ...", len(dados_limpos), output_path)
-    with output_path.open("w", encoding="utf-8") as f:
-        json.dump(dados_limpos, f, ensure_ascii=False, separators=(",", ":"))
+    log.info("Gravando %d registros limpos em %s ...", len(df), output_path)
+    # orient="records" + force_ascii=False produz JSON compacto idêntico ao anterior
+    df.to_json(
+        output_path,
+        orient="records",
+        force_ascii=False,
+        indent=None,
+    )
 
     log.info("=== Fase 2 finalizada com sucesso. ===")
     return stats

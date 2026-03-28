@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Generator, Iterator
 
+import pandas as pd
+
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
@@ -284,18 +286,18 @@ def exportar_json(registros: list[RegistroProcesso], path: Path) -> None:
     Inclui o campo 'data_cadastro' para viabilizar a divisão cronológica
     treino/teste na Fase 3 (03_anonimizacao.py).
     """
-    payload = [
-        {
-            "id": r.id,
-            "fundamentacao": r.fundamentacao,
-            "ementa": r.ementa,
-            "data_cadastro": r.data_cadastro,
-        }
-        for r in registros
-    ]
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-    log.info("JSON exportado para %s (%s registros).", path, len(payload))
+    pd.DataFrame(
+        [
+            {
+                "id": r.id,
+                "fundamentacao": r.fundamentacao,
+                "ementa": r.ementa,
+                "data_cadastro": r.data_cadastro,
+            }
+            for r in registros
+        ]
+    ).to_json(path, orient="records", force_ascii=False, indent=None)
+    log.info("JSON exportado para %s (%s registros).", path, len(registros))
 
 
 
