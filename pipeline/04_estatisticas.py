@@ -97,6 +97,12 @@ def _extrair_texto_do_jsonl(obj: dict) -> tuple[str, str]:
 # Distribuições estatísticas (pandas/numpy)
 # ---------------------------------------------------------------------------
 
+# Nota sobre ddof=0 (desvio padrão populacional):
+# O corpus de 32.312 pares constitui a população completa de votos-ementa
+# da TR/JFPB no período coberto (2024-04 a 2026-02), não uma amostra
+# aleatória de uma população maior. Usa-se ddof=0 (denominador N) para
+# desvio padrão e coeficiente de variação.
+
 
 def _distribuicao(serie: pd.Series) -> dict[str, Any]:
     """Calcula estatísticas descritivas de uma Series numérica.
@@ -114,17 +120,26 @@ def _distribuicao(serie: pd.Series) -> dict[str, Any]:
     if serie.empty:
         return {
             "contagem": 0, "media": 0.0, "mediana": 0.0, "desvio_padrao": 0.0,
+            "assimetria": 0.0, "curtose": 0.0, "coeficiente_variacao_pct": None,
             "min": 0, "max": 0, "p5": 0.0, "p25": 0.0, "p75": 0.0, "p95": 0.0,
             "total_palavras": 0,
         }
 
     quantis = serie.quantile(_PERCENTIS)  # pandas interpola linearmente por padrão
 
+    std = float(serie.std(ddof=0))
+    media = float(serie.mean())
+    raw_skew = serie.skew()
+    raw_kurt = serie.kurtosis()
+
     return {
         "contagem":      int(len(serie)),
-        "media":         round(float(serie.mean()), 1),
+        "media":         round(media, 1),
         "mediana":       round(float(serie.median()), 1),
-        "desvio_padrao": round(float(serie.std(ddof=0)), 1),  # ddof=0 → desvio populacional
+        "desvio_padrao": round(std, 1),                       # ddof=0 → população completa
+        "assimetria":    round(float(0.0 if pd.isna(raw_skew) else raw_skew), 2),
+        "curtose":       round(float(0.0 if pd.isna(raw_kurt) else raw_kurt), 2),
+        "coeficiente_variacao_pct": round(std / media * 100, 1) if media != 0 else None,
         "min":           int(serie.min()),
         "max":           int(serie.max()),
         "p5":            round(float(quantis[0.05]), 1),
@@ -430,6 +445,11 @@ def _imprimir_distribuicao(nome: str, dist: dict) -> None:
         "    Percentis: P5=%.1f | P25=%.1f | P75=%.1f | P95=%.1f",
         dist["p5"], dist["p25"], dist["p75"], dist["p95"],
     )
+    log.info(
+        "    Assimetria=%.2f | Curtose=%.2f | CV=%.1f%%",
+        dist["assimetria"], dist["curtose"],
+        dist.get("coeficiente_variacao_pct") or 0.0,
+    )
     log.info("    Total de palavras: %s", f"{dist['total_palavras']:,}")
 
 
@@ -568,7 +588,10 @@ def gerar_relatorio(
         {"x": int(row.n_fund), "y": int(row.n_ementa)}
         for row in df_scatter.itertuples(index=False)
     ]
-    log.info("  Scatter: %d pontos amostrados de %d.", len(scatter_data), len(df))
+    # Correlação de Spearman (rank + Pearson nos ranks, sem scipy)
+    spearman_rho = float(df["n_fund"].rank().corr(df["n_ementa"].rank()))
+    log.info("  Scatter: %d pontos amostrados de %d | Spearman ρ = %.4f",
+             len(scatter_data), len(df), spearman_rho)
 
     # --- Word Cloud ---
     log.info("Gerando dados de word cloud...")
@@ -747,7 +770,12 @@ def gerar_relatorio(
         "vocabulario": vocabulario,
         "histograma_fundamentacao": hist_fund,
         "histograma_ementa": hist_ementa,
-        "scatter_compressao": scatter_data,
+        "scatter_compressao": {
+            "pontos": scatter_data,
+            "n_amostra": len(scatter_data),
+            "n_total": len(df),
+            "spearman_rho": round(spearman_rho, 4),
+        },
         "wordcloud": wordcloud_data,
         "distribuicao_materias": distribuicao_materias,
         "dicas": dicas,
