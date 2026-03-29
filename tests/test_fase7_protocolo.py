@@ -5,21 +5,36 @@ import json
 import pytest
 
 from pipeline.fase7.protocolo import (
+    CASOS_AVALIACAO_HUMANA,
+    CASOS_POR_ESTRATO_AVALIACAO_HUMANA,
     CONDICOES_EXPERIMENTAIS,
     CRITERIOS_AVALIACAO_HUMANA,
     DIMENSOES_JUIZ,
+    MODELO_JUIZ_API_PADRAO,
+    SEED_AMOSTRAGEM_AVALIACAO_HUMANA,
+    SEED_CEGAMENTO_AVALIACAO_HUMANA,
     VERSAO_PROTOCOLO_FASE7,
     calcular_score_global_llm_judge,
     gerar_manifesto_fase7,
     ler_prompt_llm_judge,
+    schema_registro_avaliacao_judge,
     schema_registro_caso_avaliacao,
     schema_registro_predicao,
     schema_resposta_llm_judge,
+    validar_registro_avaliacao_judge,
     validar_registro_caso_avaliacao,
     validar_registro_predicao,
     validar_resposta_llm_judge,
 )
-from pipeline.core.project_paths import FASE7_PREDICAO_PATHS, FASE7_PROTOCOLO_PATH, LLM_JUDGE_PROMPT_PATH
+from pipeline.core.project_paths import (
+    FASE7_AVALIACAO_JUDGE_BRUTA_PATH,
+    FASE7_AVALIACAO_JUDGE_MANIFEST_PATH,
+    FASE7_GABARITO_CEGAMENTO_HUMANO_PATH,
+    FASE7_PREDICAO_MANIFEST_PATHS,
+    FASE7_PREDICAO_PATHS,
+    FASE7_PROTOCOLO_PATH,
+    LLM_JUDGE_PROMPT_PATH,
+)
 
 
 def test_prompt_judge_versionado_existe_e_define_regras_essenciais() -> None:
@@ -42,9 +57,11 @@ def test_schema_resposta_judge_explica_dimensoes_sem_score_global() -> None:
 def test_schemas_de_caso_e_predicao_exigem_campos_esperados() -> None:
     schema_caso = schema_registro_caso_avaliacao()
     schema_predicao = schema_registro_predicao()
+    schema_avaliacao_judge = schema_registro_avaliacao_judge()
 
     assert schema_caso["required"] == ["caso_id", "indice_teste", "fundamentacao", "ementa_referencia"]
     assert schema_predicao["required"] == ["caso_id", "condicao_id", "ementa_gerada"]
+    assert schema_avaliacao_judge["required"] == ["caso_id", "condicao_id", "avaliacao"]
 
 
 def test_validar_resposta_judge_aceita_payload_valido() -> None:
@@ -78,6 +95,19 @@ def test_validar_registro_predicao_aceita_payload_valido() -> None:
     }
 
     assert validar_registro_predicao(payload, condicao_id_esperada="gemini_ft") == payload
+
+
+def test_validar_registro_avaliacao_judge_aceita_payload_valido() -> None:
+    payload = {
+        "caso_id": "teste_00000",
+        "condicao_id": "gemini_ft",
+        "avaliacao": {
+            dimensao: {"score": 4, "justificativa": "Adequado ao caso."}
+            for dimensao in DIMENSOES_JUIZ
+        },
+    }
+
+    assert validar_registro_avaliacao_judge(payload, condicao_id_esperada="gemini_ft") == payload
 
 
 def test_validar_resposta_judge_rejeita_score_fora_da_faixa() -> None:
@@ -118,11 +148,21 @@ def test_manifesto_fase7_tem_contrato_estavel() -> None:
 
     assert manifesto["versao_protocolo"] == VERSAO_PROTOCOLO_FASE7
     assert manifesto["llm_judge"]["prompt_path"] == str(LLM_JUDGE_PROMPT_PATH)
+    assert manifesto["llm_judge"]["modelo_api_padrao"] == MODELO_JUIZ_API_PADRAO
     assert manifesto["artefatos"]["manifesto"] == str(FASE7_PROTOCOLO_PATH)
     assert manifesto["schema_caso_avaliacao"]["required"] == ["caso_id", "indice_teste", "fundamentacao", "ementa_referencia"]
     assert manifesto["schema_predicao"]["required"] == ["caso_id", "condicao_id", "ementa_gerada"]
     assert manifesto["avaliacao_humana"]["criterios"] == list(CRITERIOS_AVALIACAO_HUMANA)
+    assert manifesto["avaliacao_humana"]["casos_amostrados"] == CASOS_AVALIACAO_HUMANA
+    assert manifesto["avaliacao_humana"]["casos_por_estrato"] == CASOS_POR_ESTRATO_AVALIACAO_HUMANA
+    assert manifesto["avaliacao_humana"]["seed_amostragem"] == SEED_AMOSTRAGEM_AVALIACAO_HUMANA
+    assert manifesto["avaliacao_humana"]["seed_cegamento"] == SEED_CEGAMENTO_AVALIACAO_HUMANA
+    assert manifesto["avaliacao_humana"]["pacote_cego_separado_do_gabarito"] is True
     assert sorted(manifesto["artefatos"]["predicoes"]) == sorted(FASE7_PREDICAO_PATHS)
+    assert sorted(manifesto["artefatos"]["manifestos_predicoes"]) == sorted(FASE7_PREDICAO_MANIFEST_PATHS)
+    assert manifesto["artefatos"]["avaliacao_llm_judge_bruta"] == str(FASE7_AVALIACAO_JUDGE_BRUTA_PATH)
+    assert manifesto["artefatos"]["avaliacao_llm_judge_manifesto"] == str(FASE7_AVALIACAO_JUDGE_MANIFEST_PATH)
+    assert manifesto["artefatos"]["gabarito_cegamento_humano"] == str(FASE7_GABARITO_CEGAMENTO_HUMANO_PATH)
     assert [item["id"] for item in manifesto["condicoes_experimentais"]] == [
         item["id"] for item in CONDICOES_EXPERIMENTAIS
     ]

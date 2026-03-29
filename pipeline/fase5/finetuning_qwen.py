@@ -8,6 +8,7 @@ persistência de manifesto e checkpoint final.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import logging
 import sys
 from pathlib import Path
@@ -19,7 +20,12 @@ from pipeline.fase5.tuning_utils import (
     escrever_manifesto_tuning,
     gerar_nome_experimento,
 )
-from pipeline.core.project_paths import DATASET_TREINO_PATH, FASE5_QWEN_CHECKPOINT_DIR, FASE5_QWEN_MANIFEST_PATH
+from pipeline.core.project_paths import (
+    DATASET_TREINO_PATH,
+    FASE5_QWEN_CHECKPOINT_DIR,
+    FASE5_QWEN_MANIFEST_PATH,
+    SYSTEM_PROMPT_PATH,
+)
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +70,7 @@ def executar_finetuning_qwen(
 ) -> Path:
     """Prepara e opcionalmente executa o fine-tuning LoRA do Qwen."""
     amostras = preparar_dataset_qwen(dataset_path)
+    system_prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
     effective_batch_size = calcular_batch_size_efetivo(
         per_device_train_batch_size=per_device_train_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
@@ -74,6 +81,8 @@ def executar_finetuning_qwen(
         "plataforma": "unsloth_trl",
         "model_id": model_id,
         "dataset_path_local": str(dataset_path),
+        "system_prompt_path": str(SYSTEM_PROMPT_PATH),
+        "system_prompt_sha256": hashlib.sha256(system_prompt.encode("utf-8")).hexdigest(),
         "output_dir": str(output_dir),
         "max_seq_length": max_seq_length,
         "lora_rank": lora_rank,

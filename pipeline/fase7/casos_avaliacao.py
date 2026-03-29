@@ -14,8 +14,15 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.core.artefato_utils import escrever_jsonl_atomico
-from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
-from pipeline.core.project_paths import DATASET_TESTE_PATH, FASE7_CASOS_AVALIACAO_PATH
+from pipeline.core.jsonl_utils import (
+    extrair_fundamentacao_e_ementa,
+    validar_prompt_canonico_do_registro,
+)
+from pipeline.core.project_paths import (
+    DATASET_TESTE_PATH,
+    FASE7_CASOS_AVALIACAO_PATH,
+    SYSTEM_PROMPT_PATH,
+)
 
 from .protocolo import validar_registro_caso_avaliacao
 
@@ -47,9 +54,15 @@ def gerar_casos_avaliacao(
 ) -> Path:
     """Gera o arquivo `casos_avaliacao.jsonl` a partir do conjunto de teste."""
     registros = _ler_jsonl(dataset_teste_path)
+    prompt_canonico = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
     casos: list[dict[str, Any]] = []
 
     for indice_teste, registro in enumerate(registros):
+        validar_prompt_canonico_do_registro(
+            registro,
+            prompt_canonico=prompt_canonico,
+            contexto=f"de teste no índice {indice_teste}",
+        )
         fundamentacao, ementa_referencia = extrair_fundamentacao_e_ementa(registro)
         caso = validar_registro_caso_avaliacao(
             {

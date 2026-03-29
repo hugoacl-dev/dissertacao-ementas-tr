@@ -31,9 +31,9 @@ O projeto é dividido em **7 fases**. As Fases 1–4 são sequenciais; após a F
 | 4 | `pipeline.fase1_4.fase04_estatisticas` | Estatísticas descritivas: funil de attrition, distribuições, novel n-grams |
 | 5 | `pipeline.fase5.finetuning_gemini` | Fine-tuning supervisionado (SFT) do **Gemini 2.5 Flash** via API do Vertex AI, com manifesto local e modo de preparação prévia do job |
 | 5 | `pipeline.fase5.finetuning_qwen` | Fine-tuning (LoRA via Unsloth) do **Qwen 2.5 14B** em GPU RunPod A100 80GB, com manifesto local e modo de preparação prévia do treino |
-| 6 | `pipeline.fase6.baseline_gemini` | Baseline zero-shot do Gemini 2.5 Flash para comparação |
-| 6 | `pipeline.fase6.baseline_qwen` | Baseline zero-shot do Qwen 2.5 14B para comparação |
-| 7 | `pipeline.fase7.casos_avaliacao` + `pipeline.fase7.protocolo` + `pipeline.fase7.metricas` + `pipeline.fase7.estatisticas` + Notebook Colab | Geração dos casos-base, protocolo versionado, consolidação de métricas e inferência estatística pareada das 4 condições experimentais: ROUGE + **BERTScore F1** + LLM-as-a-Judge + avaliação humana *(em desenvolvimento)* |
+| 6 | `pipeline.fase6.baseline_gemini` | Runner canônico de inferência do Gemini 2.5 Flash, com retomada incremental, manifesto de execução e suporte às condições `gemini_zero_shot` e `gemini_ft` |
+| 6 | `pipeline.fase6.baseline_qwen` | Runner canônico de inferência do Qwen 2.5 14B, com retomada incremental, manifesto de execução e suporte às condições `qwen_zero_shot` e `qwen_ft` (incluindo checkpoint LoRA local) |
+| 7 | `pipeline.fase7.casos_avaliacao` + `pipeline.fase7.protocolo` + `pipeline.fase7.avaliacao_judge` + `pipeline.fase7.avaliacao_humana` + `pipeline.fase7.metricas` + `pipeline.fase7.estatisticas` | Geração dos casos-base, protocolo versionado, executor canônico do LLM-as-a-Judge, amostragem/relatório da avaliação humana, consolidação de métricas e inferência estatística pareada das 4 condições experimentais |
 
 ### Execução
 
@@ -70,8 +70,23 @@ python3 -m pipeline.fase6.baseline_gemini
 # Executar baseline zero-shot do Qwen
 python3 -m pipeline.fase6.baseline_qwen --model-id Qwen/Qwen2.5-14B-Instruct
 
+# Gerar predições fine-tuned do Gemini usando o modelo ajustado da Fase 5
+python3 -m pipeline.fase6.baseline_gemini --condicao-id gemini_ft --model-id "$(cat data/fase5/modelo_gemini_nome.txt)"
+
+# Gerar predições fine-tuned do Qwen usando o checkpoint LoRA local da Fase 5
+python3 -m pipeline.fase6.baseline_qwen --condicao-id qwen_ft --model-id data/fase5/modelo_qwen_checkpoint
+
 # Gerar o manifesto versionado da Fase 7
 python3 -m pipeline.fase7.protocolo
+
+# Executar o LLM-as-a-Judge e persistir avaliacao_llm_judge.jsonl
+python3 -m pipeline.fase7.avaliacao_judge
+
+# Preparar a amostra cega, o gabarito separado e o CSV da avaliação humana
+python3 -m pipeline.fase7.avaliacao_humana --modo preparar
+
+# Consolidar a planilha preenchida da avaliação humana
+python3 -m pipeline.fase7.avaliacao_humana --modo analisar
 
 # Consolidar ROUGE, BERTScore e scores do juiz em metricas_automaticas.csv
 python3 -m pipeline.fase7.metricas
@@ -105,6 +120,8 @@ Infraestrutura já versionada no repositório:
 - Helper compartilhado das predições: `pipeline/fase7/predicoes_utils.py`
 - Prompt do juiz: `pipeline/prompts/llm_judge_prompt.txt`
 - Contratos e manifesto da Fase 7: `pipeline/fase7/protocolo.py`
+- Executor canônico do LLM-as-a-Judge: `pipeline/fase7/avaliacao_judge.py`
+- Amostragem cega, gabarito separado e relatório da avaliação humana: `pipeline/fase7/avaliacao_humana.py`
 - Consolidação das métricas da Fase 7: `pipeline/fase7/metricas.py`
 - Núcleo estatístico da Fase 7: `pipeline/fase7/estatisticas.py`
 - Tabela consolidada esperada de entrada: `data/fase7/metricas_automaticas.csv`
@@ -122,9 +139,11 @@ Infraestrutura já versionada no repositório:
 | `pipeline/fase5/finetuning_gemini.py` | Preparação e submissão do SFT do Gemini, com manifesto em `data/fase5/gemini_sft_manifest.json` |
 | `pipeline/fase5/finetuning_qwen.py` | Preparação e execução do SFT LoRA do Qwen, com manifesto em `data/fase5/qwen_sft_manifest.json` |
 | `pipeline/fase5/tuning_utils.py` | Carregamento do dataset conversacional, nomes de experimento e persistência dos manifestos da Fase 5 |
-| `pipeline/fase6/baseline_gemini.py` | Geração das predições `gemini_zero_shot.jsonl` via Vertex AI |
-| `pipeline/fase6/baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` via `transformers` |
+| `pipeline/fase6/baseline_gemini.py` | Geração das predições `gemini_zero_shot.jsonl` e `gemini_ft.jsonl`, com manifesto por condição em `data/fase7/predicoes/*.manifest.json` |
+| `pipeline/fase6/baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` e `qwen_ft.jsonl`, com suporte a checkpoint LoRA local e manifesto por condição |
 | `pipeline/fase7/casos_avaliacao.py` | Geração de `data/fase7/casos_avaliacao.jsonl` a partir de `data/dataset_teste.jsonl` |
+| `pipeline/fase7/avaliacao_judge.py` | Execução incremental do DeepSeek V3 / `deepseek-chat` com persistência normalizada em `data/fase7/avaliacao_llm_judge.jsonl` e artefato bruto em `data/fase7/avaliacao_llm_judge_bruta.jsonl` |
+| `pipeline/fase7/avaliacao_humana.py` | Geração da amostra estratificada cega (`amostra_humana.json`), gabarito separado (`gabarito_cegamento_humano.json`), template `avaliacao_humana.csv` e relatório humano consolidado |
 | `pipeline/fase7/predicoes_utils.py` | Leitura, retomada incremental e persistência canônica das predições |
 | `pipeline/prompts/llm_judge_prompt.txt` | Prompt versionado do LLM-as-a-Judge |
 | `pipeline/fase7/protocolo.py` | Geração do manifesto e contratos mínimos dos artefatos da Fase 7 |

@@ -27,9 +27,9 @@ from .protocolo import (
     CONDICOES_EXPERIMENTAIS,
     DIMENSOES_JUIZ,
     calcular_score_global_llm_judge,
+    validar_registro_avaliacao_judge,
     validar_registro_caso_avaliacao,
     validar_registro_predicao,
-    validar_resposta_llm_judge,
 )
 
 log = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ def carregar_todas_predicoes(
 
 def carregar_avaliacoes_judge(path: Path = FASE7_AVALIACAO_JUDGE_PATH) -> pd.DataFrame:
     """Carrega e valida as saídas do LLM-as-a-Judge."""
-    registros = _ler_jsonl(path)
+    registros = [validar_registro_avaliacao_judge(registro) for registro in _ler_jsonl(path)]
     df = pd.DataFrame(registros)
     faltantes = [coluna for coluna in COLUNAS_AVALIACAO_JUDGE if coluna not in df.columns]
     if faltantes:
@@ -121,8 +121,6 @@ def carregar_avaliacoes_judge(path: Path = FASE7_AVALIACAO_JUDGE_PATH) -> pd.Dat
     invalidas = sorted(set(tabela["condicao_id"]) - condicoes_validas)
     if invalidas:
         raise ValueError(f"Avaliações do juiz com condição inválida: {invalidas}")
-
-    tabela["avaliacao"] = tabela["avaliacao"].apply(validar_resposta_llm_judge)
     return tabela.sort_values(["condicao_id", "caso_id"]).reset_index(drop=True)
 
 

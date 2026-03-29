@@ -18,9 +18,14 @@ from pipeline.core.project_paths import (
     FASE7_AMOSTRA_HUMANA_PATH,
     FASE7_AVALIACAO_HUMANA_PATH,
     FASE7_AVALIACAO_JUDGE_PATH,
+    FASE7_AVALIACAO_JUDGE_BRUTA_PATH,
+    FASE7_AVALIACAO_JUDGE_MANIFEST_PATH,
     FASE7_CASOS_AVALIACAO_PATH,
+    FASE7_GABARITO_CEGAMENTO_HUMANO_PATH,
     FASE7_METRICAS_AUTOMATICAS_PATH,
+    FASE7_PREDICAO_MANIFEST_PATHS,
     FASE7_PREDICAO_PATHS,
+    FASE7_RELATORIO_AVALIACAO_HUMANA_PATH,
     FASE7_PROTOCOLO_PATH,
     FASE7_RELATORIO_ESTATISTICO_PATH,
     LLM_JUDGE_PROMPT_PATH,
@@ -30,6 +35,7 @@ log = logging.getLogger(__name__)
 
 VERSAO_PROTOCOLO_FASE7 = "2026-03-29"
 MODELO_JUIZ = "DeepSeek V3"
+MODELO_JUIZ_API_PADRAO = "deepseek-chat"
 
 DIMENSOES_JUIZ = (
     "pertinencia_tematica",
@@ -45,6 +51,13 @@ CRITERIOS_AVALIACAO_HUMANA = (
     "concisao",
     "fluencia",
 )
+
+SEED_AMOSTRAGEM_AVALIACAO_HUMANA = 20260329
+SEED_CEGAMENTO_AVALIACAO_HUMANA = 20260329
+ESTRATIFICACAO_AVALIACAO_HUMANA = "quartis_comprimento_fundamentacao"
+CASOS_AVALIACAO_HUMANA = 40
+CASOS_POR_ESTRATO_AVALIACAO_HUMANA = 10
+AVALIADORES_AVALIACAO_HUMANA = 2
 
 CONDICOES_EXPERIMENTAIS = (
     {
@@ -131,6 +144,20 @@ def schema_registro_predicao() -> dict[str, Any]:
             "caso_id": {"type": "string", "minLength": 1},
             "condicao_id": {"type": "string", "minLength": 1},
             "ementa_gerada": {"type": "string", "minLength": 1},
+        },
+    }
+
+
+def schema_registro_avaliacao_judge() -> dict[str, Any]:
+    """Retorna o schema canônico de uma avaliação do LLM-as-a-Judge."""
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["caso_id", "condicao_id", "avaliacao"],
+        "properties": {
+            "caso_id": {"type": "string", "minLength": 1},
+            "condicao_id": {"type": "string", "minLength": 1},
+            "avaliacao": schema_resposta_llm_judge(),
         },
     }
 
@@ -243,6 +270,42 @@ def validar_registro_predicao(
     }
 
 
+def validar_registro_avaliacao_judge(
+    payload: dict[str, Any],
+    *,
+    condicao_id_esperada: str | None = None,
+) -> dict[str, Any]:
+    """Valida um registro persistido do LLM-as-a-Judge."""
+    if not isinstance(payload, dict):
+        raise ValueError("A avaliação do juiz deve ser um objeto JSON.")
+    if set(payload) != {"caso_id", "condicao_id", "avaliacao"}:
+        raise ValueError(
+            "A avaliação do juiz deve conter apenas `caso_id`, `condicao_id` e `avaliacao`."
+        )
+
+    caso_id = payload.get("caso_id")
+    condicao_id = payload.get("condicao_id")
+    avaliacao = payload.get("avaliacao")
+    condicoes_validas = {item["id"] for item in CONDICOES_EXPERIMENTAIS}
+
+    if not isinstance(caso_id, str) or not caso_id.strip():
+        raise ValueError("`caso_id` da avaliação do juiz deve ser texto não vazio.")
+    if not isinstance(condicao_id, str) or not condicao_id.strip():
+        raise ValueError("`condicao_id` da avaliação do juiz deve ser texto não vazio.")
+    if condicao_id not in condicoes_validas:
+        raise ValueError(f"`condicao_id` inválido na avaliação do juiz: {condicao_id}")
+    if condicao_id_esperada is not None and condicao_id != condicao_id_esperada:
+        raise ValueError(
+            f"`condicao_id` divergente do arquivo esperado: {condicao_id} != {condicao_id_esperada}"
+        )
+
+    return {
+        "caso_id": caso_id.strip(),
+        "condicao_id": condicao_id,
+        "avaliacao": validar_resposta_llm_judge(avaliacao),
+    }
+
+
 def calcular_score_global_llm_judge(
     payload: dict[str, dict[str, Any]],
 ) -> float:
@@ -257,10 +320,17 @@ def contrato_artefatos_fase7() -> dict[str, Any]:
         "manifesto": str(FASE7_PROTOCOLO_PATH),
         "casos_avaliacao": str(FASE7_CASOS_AVALIACAO_PATH),
         "predicoes": {nome: str(path) for nome, path in FASE7_PREDICAO_PATHS.items()},
+        "manifestos_predicoes": {
+            nome: str(path) for nome, path in FASE7_PREDICAO_MANIFEST_PATHS.items()
+        },
         "metricas_automaticas": str(FASE7_METRICAS_AUTOMATICAS_PATH),
         "avaliacao_llm_judge": str(FASE7_AVALIACAO_JUDGE_PATH),
+        "avaliacao_llm_judge_bruta": str(FASE7_AVALIACAO_JUDGE_BRUTA_PATH),
+        "avaliacao_llm_judge_manifesto": str(FASE7_AVALIACAO_JUDGE_MANIFEST_PATH),
         "amostra_humana": str(FASE7_AMOSTRA_HUMANA_PATH),
+        "gabarito_cegamento_humano": str(FASE7_GABARITO_CEGAMENTO_HUMANO_PATH),
         "avaliacao_humana": str(FASE7_AVALIACAO_HUMANA_PATH),
+        "relatorio_avaliacao_humana": str(FASE7_RELATORIO_AVALIACAO_HUMANA_PATH),
         "relatorio_estatistico": str(FASE7_RELATORIO_ESTATISTICO_PATH),
     }
 
@@ -277,19 +347,26 @@ def gerar_manifesto_fase7() -> dict[str, Any]:
         "condicoes_experimentais": list(CONDICOES_EXPERIMENTAIS),
         "llm_judge": {
             "modelo": MODELO_JUIZ,
+            "modelo_api_padrao": MODELO_JUIZ_API_PADRAO,
             "prompt_path": str(LLM_JUDGE_PROMPT_PATH),
             "prompt_sha256": calcular_sha256_texto(prompt),
             "schema_resposta": schema_resposta_llm_judge(),
+            "schema_registro": schema_registro_avaliacao_judge(),
             "dimensoes": list(DIMENSOES_JUIZ),
             "score_global": "media_aritmetica_simples",
         },
         "schema_caso_avaliacao": schema_registro_caso_avaliacao(),
         "schema_predicao": schema_registro_predicao(),
         "avaliacao_humana": {
-            "casos_amostrados": 40,
-            "avaliadores": 2,
+            "casos_amostrados": CASOS_AVALIACAO_HUMANA,
+            "casos_por_estrato": CASOS_POR_ESTRATO_AVALIACAO_HUMANA,
+            "avaliadores": AVALIADORES_AVALIACAO_HUMANA,
             "criterios": list(CRITERIOS_AVALIACAO_HUMANA),
             "escala": "likert_1_5",
+            "estratificacao": ESTRATIFICACAO_AVALIACAO_HUMANA,
+            "seed_amostragem": SEED_AMOSTRAGEM_AVALIACAO_HUMANA,
+            "seed_cegamento": SEED_CEGAMENTO_AVALIACAO_HUMANA,
+            "pacote_cego_separado_do_gabarito": True,
             "cegamento": "ordem_aleatoria_sem_identificacao_de_modelo",
             "concordancia": "weighted_cohen_kappa_quadratico_por_criterio",
         },

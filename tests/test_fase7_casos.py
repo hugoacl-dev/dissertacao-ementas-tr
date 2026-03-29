@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from pipeline.fase7.casos_avaliacao import gerar_casos_avaliacao
+from pipeline.core.project_paths import SYSTEM_PROMPT_PATH
 
 
 def _escrever_dataset_teste(path: Path, registros: list[dict]) -> None:
@@ -16,6 +17,7 @@ def _escrever_dataset_teste(path: Path, registros: list[dict]) -> None:
 def test_gerar_casos_avaliacao_a_partir_do_dataset_teste(tmp_path) -> None:
     dataset_path = tmp_path / "dataset_teste.jsonl"
     output_path = tmp_path / "casos_avaliacao.jsonl"
+    prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
 
     _escrever_dataset_teste(
         dataset_path,
@@ -27,7 +29,7 @@ def test_gerar_casos_avaliacao_a_partir_do_dataset_teste(tmp_path) -> None:
                         "parts": [
                             {
                                 "text": (
-                                    "prompt do sistema\n\n"
+                                    f"{prompt}\n\n"
                                     "Gere a ementa para a seguinte fundamentação:\n"
                                     "fundamentação A"
                                 )
@@ -44,7 +46,7 @@ def test_gerar_casos_avaliacao_a_partir_do_dataset_teste(tmp_path) -> None:
                         "parts": [
                             {
                                 "text": (
-                                    "prompt do sistema\n\n"
+                                    f"{prompt}\n\n"
                                     "Gere a ementa para a seguinte fundamentação:\n"
                                     "fundamentação B"
                                 )

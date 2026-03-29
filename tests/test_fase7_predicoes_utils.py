@@ -81,3 +81,17 @@ def test_carregar_predicoes_existentes_rejeita_condicao_errada(tmp_path) -> None
 
     with pytest.raises(ValueError, match="divergente"):
         carregar_predicoes_existentes(path, condicao_id="gemini_zero_shot")
+
+
+def test_persistir_predicoes_rejeita_caso_id_duplicado(tmp_path) -> None:
+    path = tmp_path / "predicoes_duplicadas.jsonl"
+
+    with pytest.raises(ValueError, match="duplicadas detectadas"):
+        persistir_predicoes(
+            path,
+            condicao_id="gemini_zero_shot",
+            registros=[
+                {"caso_id": "teste_00000", "condicao_id": "gemini_zero_shot", "ementa_gerada": "a"},
+                {"caso_id": "teste_00000", "condicao_id": "gemini_zero_shot", "ementa_gerada": "b"},
+            ],
+        )
