@@ -352,6 +352,9 @@ function render(data) {
           <tr><td>Média</td><td class="num">${fmt(f4.fundamentacao.media)}</td><td class="num">${fmt(f4.ementa.media)}</td></tr>
           <tr><td>Mediana</td><td class="num">${fmt(f4.fundamentacao.mediana)}</td><td class="num">${fmt(f4.ementa.mediana)}</td></tr>
           <tr><td>Desvio Padrão</td><td class="num">${fmt(f4.fundamentacao.desvio_padrao)}</td><td class="num">${fmt(f4.ementa.desvio_padrao)}</td></tr>
+          <tr><td>Assimetria</td><td class="num">${fmt(f4.fundamentacao.assimetria)}</td><td class="num">${fmt(f4.ementa.assimetria)}</td></tr>
+          <tr><td>Curtose (Fisher)</td><td class="num">${fmt(f4.fundamentacao.curtose)}</td><td class="num">${fmt(f4.ementa.curtose)}</td></tr>
+          <tr><td>CV%</td><td class="num">${f4.fundamentacao.coeficiente_variacao_pct != null ? f4.fundamentacao.coeficiente_variacao_pct + '%' : '—'}</td><td class="num">${f4.ementa.coeficiente_variacao_pct != null ? f4.ementa.coeficiente_variacao_pct + '%' : '—'}</td></tr>
           <tr><td>Mín.</td><td class="num">${fmt(f4.fundamentacao.min)}</td><td class="num">${fmt(f4.ementa.min)}</td></tr>
           <tr><td>P5</td><td class="num">${fmt(f4.fundamentacao.p5)}</td><td class="num">${fmt(f4.ementa.p5)}</td></tr>
           <tr><td>P25</td><td class="num">${fmt(f4.fundamentacao.p25)}</td><td class="num">${fmt(f4.ementa.p25)}</td></tr>
@@ -396,7 +399,7 @@ function render(data) {
     if (f4.scatter_compressao) {
       const scatterCard = el('div', 'card card--wide');
       scatterCard.innerHTML = `
-        <div class="card__label">Dispersão dos Dados (Scatter Plot) <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${f4.scatter_compressao.length.toLocaleString('pt-BR')} pares</span></div>
+        <div class="card__label">Dispersão dos Dados (Scatter Plot) <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— amostra de ${(Array.isArray(f4.scatter_compressao) ? f4.scatter_compressao.length : f4.scatter_compressao.n_amostra).toLocaleString('pt-BR')} pares</span></div>
         <p class="card__hint">Cada ponto representa um par fundamentação–ementa. O eixo X mostra o comprimento da fundamentação e o Y o da ementa. A concentração no canto inferior esquerdo com dispersão horizontal confirma a compressão extrema da tarefa.</p>
         <div class="chart-container chart-container--tall"><canvas id="chart-scatter"></canvas></div>`;
       cards.appendChild(scatterCard);
