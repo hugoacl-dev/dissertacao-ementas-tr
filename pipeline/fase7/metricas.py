@@ -7,6 +7,7 @@ avaliações do LLM-as-a-Judge, produzindo a tabela consolidada
 """
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import sys
@@ -20,7 +21,11 @@ from pipeline.core.project_paths import (
     FASE7_AVALIACAO_JUDGE_PATH,
     FASE7_CASOS_AVALIACAO_PATH,
     FASE7_METRICAS_AUTOMATICAS_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIS_EXECUCAO,
     FASE7_PREDICAO_PATHS,
+    resolver_artefatos_fase7,
+    resolver_predicoes_fase7,
 )
 
 from .protocolo import (
@@ -305,7 +310,23 @@ def main() -> None:
         format="%(asctime)s  %(levelname)-8s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    output_path = escrever_metricas_fase7()
+    parser = argparse.ArgumentParser(description="Consolidação de métricas da Fase 7.")
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
+    parser.add_argument("--casos-path", type=Path, default=None)
+    parser.add_argument("--avaliacao-judge-path", type=Path, default=None)
+    parser.add_argument("--output-path", type=Path, default=None)
+    args = parser.parse_args()
+    artefatos = resolver_artefatos_fase7(args.perfil_execucao)
+    output_path = escrever_metricas_fase7(
+        casos_path=args.casos_path or artefatos["casos_avaliacao_path"],
+        predicao_paths=resolver_predicoes_fase7(args.perfil_execucao),
+        avaliacao_judge_path=args.avaliacao_judge_path or artefatos["avaliacao_judge_path"],
+        output_path=args.output_path or artefatos["metricas_automaticas_path"],
+    )
     log.info("Tabela de métricas da Fase 7 gerada em %s", output_path)
 
 

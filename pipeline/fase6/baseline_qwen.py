@@ -29,6 +29,7 @@ from pipeline.core.project_paths import (
     PERFIL_EXECUCAO_OFICIAL,
     PERFIS_EXECUCAO,
     SYSTEM_PROMPT_PATH,
+    resolver_artefatos_fase7,
     resolver_manifestos_predicoes_fase7,
     resolver_predicoes_fase7,
     validar_perfil_execucao,
@@ -271,7 +272,7 @@ def _parse_args() -> argparse.Namespace:
         choices=PERFIS_EXECUCAO,
         default=PERFIL_EXECUCAO_CLI_PADRAO,
     )
-    parser.add_argument("--casos-path", type=Path, default=FASE7_CASOS_AVALIACAO_PATH)
+    parser.add_argument("--casos-path", type=Path, default=None)
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument("--model-id", default=MODELO_PADRAO)
     parser.add_argument("--condicao-id", default=CONDICAO_ID)
@@ -292,10 +293,11 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    artefatos_fase7 = resolver_artefatos_fase7(args.perfil_execucao)
     predicao_paths = resolver_predicoes_fase7(args.perfil_execucao)
     manifest_paths = resolver_manifestos_predicoes_fase7(args.perfil_execucao)
     output_path = executar_baseline_qwen(
-        casos_path=args.casos_path,
+        casos_path=args.casos_path or artefatos_fase7["casos_avaliacao_path"],
         output_path=args.output_path or predicao_paths[args.condicao_id],
         model_id=args.model_id,
         condicao_id=args.condicao_id,

@@ -7,6 +7,7 @@ multiplicidade, gerando um relatório JSON reproduzível.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import sys
@@ -19,8 +20,11 @@ import pandas as pd
 from pipeline.core.artefato_utils import escrever_json_atomico
 from pipeline.core.project_paths import (
     FASE7_METRICAS_AUTOMATICAS_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIS_EXECUCAO,
     FASE7_PROTOCOLO_PATH,
     FASE7_RELATORIO_ESTATISTICO_PATH,
+    resolver_artefatos_fase7,
 )
 
 from .protocolo import CONDICOES_EXPERIMENTAIS, gerar_manifesto_fase7
@@ -402,16 +406,17 @@ def gerar_relatorio_estatistico(
 
 def escrever_relatorio_estatistico(
     metricas_path: Path = FASE7_METRICAS_AUTOMATICAS_PATH,
+    manifesto_path: Path = FASE7_PROTOCOLO_PATH,
     output_path: Path = FASE7_RELATORIO_ESTATISTICO_PATH,
 ) -> Path:
     """Carrega métricas, gera o relatório e persiste o artefato final."""
-    manifesto = carregar_manifesto_fase7()
+    manifesto = carregar_manifesto_fase7(manifesto_path)
     tabela = carregar_metricas_fase7(metricas_path)
     relatorio = gerar_relatorio_estatistico(
         tabela,
         manifesto,
         metricas_path=metricas_path,
-        manifesto_path=FASE7_PROTOCOLO_PATH,
+        manifesto_path=manifesto_path,
     )
     escrever_json_atomico(output_path, relatorio, indent=2)
     return output_path
@@ -423,7 +428,22 @@ def main() -> None:
         format="%(asctime)s  %(levelname)-8s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    output_path = escrever_relatorio_estatistico()
+    parser = argparse.ArgumentParser(description="Relatório estatístico da Fase 7.")
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
+    parser.add_argument("--metricas-path", type=Path, default=None)
+    parser.add_argument("--manifesto-path", type=Path, default=None)
+    parser.add_argument("--output-path", type=Path, default=None)
+    args = parser.parse_args()
+    artefatos = resolver_artefatos_fase7(args.perfil_execucao)
+    output_path = escrever_relatorio_estatistico(
+        metricas_path=args.metricas_path or artefatos["metricas_automaticas_path"],
+        manifesto_path=args.manifesto_path or artefatos["protocolo_path"],
+        output_path=args.output_path or artefatos["relatorio_estatistico_path"],
+    )
     log.info("Relatório estatístico da Fase 7 gerado em %s", output_path)
 
 

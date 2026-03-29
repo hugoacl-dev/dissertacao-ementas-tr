@@ -23,6 +23,7 @@ from pipeline.core.project_paths import (
     PERFIL_EXECUCAO_OFICIAL,
     SYSTEM_PROMPT_PATH,
     resolver_artefatos_fase5,
+    resolver_artefatos_fase7,
     resolver_manifestos_predicoes_fase7,
     resolver_predicoes_fase7,
     resolver_prefixo_gcs_fase5,
@@ -148,12 +149,14 @@ def test_project_paths_separam_artefatos_exploratorios_e_oficiais() -> None:
 
     artefatos_fase5_expl = resolver_artefatos_fase5(PERFIL_EXECUCAO_EXPLORATORIO)
     artefatos_fase5_of = resolver_artefatos_fase5(PERFIL_EXECUCAO_OFICIAL)
+    artefatos_fase7_expl = resolver_artefatos_fase7(PERFIL_EXECUCAO_EXPLORATORIO)
     predicoes_expl = resolver_predicoes_fase7(PERFIL_EXECUCAO_EXPLORATORIO)
     predicoes_of = resolver_predicoes_fase7(PERFIL_EXECUCAO_OFICIAL)
     manifestos_expl = resolver_manifestos_predicoes_fase7(PERFIL_EXECUCAO_EXPLORATORIO)
 
     assert "exploratorio/fase5" in str(artefatos_fase5_expl["gemini_manifest_path"])
     assert "exploratorio/fase7/predicoes" in str(predicoes_expl["gemini_zero_shot"])
+    assert "exploratorio/fase7" in str(artefatos_fase7_expl["protocolo_path"])
     assert artefatos_fase5_of["gemini_manifest_path"].name == "gemini_sft_manifest.json"
     assert predicoes_of["gemini_zero_shot"].name == "gemini_zero_shot.jsonl"
     assert manifestos_expl["gemini_zero_shot"].name == "gemini_zero_shot.manifest.json"

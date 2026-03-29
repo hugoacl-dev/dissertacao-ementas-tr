@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import argparse
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,10 @@ from pipeline.core.jsonl_utils import (
 from pipeline.core.project_paths import (
     DATASET_TESTE_PATH,
     FASE7_CASOS_AVALIACAO_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIS_EXECUCAO,
     SYSTEM_PROMPT_PATH,
+    resolver_artefatos_fase7,
 )
 
 from .protocolo import validar_registro_caso_avaliacao
@@ -84,7 +88,20 @@ def main() -> None:
         format="%(asctime)s  %(levelname)-8s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    output_path = gerar_casos_avaliacao()
+    parser = argparse.ArgumentParser(description="Geração dos casos-base da Fase 7.")
+    parser.add_argument("--dataset-teste-path", type=Path, default=DATASET_TESTE_PATH)
+    parser.add_argument("--output-path", type=Path, default=None)
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
+    args = parser.parse_args()
+    artefatos_fase7 = resolver_artefatos_fase7(args.perfil_execucao)
+    output_path = gerar_casos_avaliacao(
+        dataset_teste_path=args.dataset_teste_path,
+        output_path=args.output_path or artefatos_fase7["casos_avaliacao_path"],
+    )
     log.info("Casos-base da Fase 7 gerados em %s", output_path)
 
 

@@ -7,6 +7,7 @@ de avaliação.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import logging
 import sys
@@ -29,6 +30,11 @@ from pipeline.core.project_paths import (
     FASE7_PROTOCOLO_PATH,
     FASE7_RELATORIO_ESTATISTICO_PATH,
     LLM_JUDGE_PROMPT_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIL_EXECUCAO_OFICIAL,
+    PERFIS_EXECUCAO,
+    resolver_artefatos_fase7,
+    validar_perfil_execucao,
 )
 
 log = logging.getLogger(__name__)
@@ -314,32 +320,41 @@ def calcular_score_global_llm_judge(
     return sum(scores) / len(scores)
 
 
-def contrato_artefatos_fase7() -> dict[str, Any]:
+def contrato_artefatos_fase7(
+    *,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
+) -> dict[str, Any]:
     """Retorna o contrato mínimo dos artefatos da Fase 7."""
+    artefatos = resolver_artefatos_fase7(validar_perfil_execucao(perfil_execucao))
     return {
-        "manifesto": str(FASE7_PROTOCOLO_PATH),
-        "casos_avaliacao": str(FASE7_CASOS_AVALIACAO_PATH),
-        "predicoes": {nome: str(path) for nome, path in FASE7_PREDICAO_PATHS.items()},
+        "manifesto": str(artefatos["protocolo_path"]),
+        "casos_avaliacao": str(artefatos["casos_avaliacao_path"]),
+        "predicoes": {nome: str(path) for nome, path in artefatos["predicao_paths"].items()},
         "manifestos_predicoes": {
-            nome: str(path) for nome, path in FASE7_PREDICAO_MANIFEST_PATHS.items()
+            nome: str(path) for nome, path in artefatos["predicao_manifest_paths"].items()
         },
-        "metricas_automaticas": str(FASE7_METRICAS_AUTOMATICAS_PATH),
-        "avaliacao_llm_judge": str(FASE7_AVALIACAO_JUDGE_PATH),
-        "avaliacao_llm_judge_bruta": str(FASE7_AVALIACAO_JUDGE_BRUTA_PATH),
-        "avaliacao_llm_judge_manifesto": str(FASE7_AVALIACAO_JUDGE_MANIFEST_PATH),
-        "amostra_humana": str(FASE7_AMOSTRA_HUMANA_PATH),
-        "gabarito_cegamento_humano": str(FASE7_GABARITO_CEGAMENTO_HUMANO_PATH),
-        "avaliacao_humana": str(FASE7_AVALIACAO_HUMANA_PATH),
-        "relatorio_avaliacao_humana": str(FASE7_RELATORIO_AVALIACAO_HUMANA_PATH),
-        "relatorio_estatistico": str(FASE7_RELATORIO_ESTATISTICO_PATH),
+        "metricas_automaticas": str(artefatos["metricas_automaticas_path"]),
+        "avaliacao_llm_judge": str(artefatos["avaliacao_judge_path"]),
+        "avaliacao_llm_judge_bruta": str(artefatos["avaliacao_judge_bruta_path"]),
+        "avaliacao_llm_judge_manifesto": str(artefatos["avaliacao_judge_manifest_path"]),
+        "amostra_humana": str(artefatos["amostra_humana_path"]),
+        "gabarito_cegamento_humano": str(artefatos["gabarito_cegamento_humano_path"]),
+        "avaliacao_humana": str(artefatos["avaliacao_humana_path"]),
+        "relatorio_avaliacao_humana": str(artefatos["relatorio_avaliacao_humana_path"]),
+        "relatorio_estatistico": str(artefatos["relatorio_estatistico_path"]),
     }
 
 
-def gerar_manifesto_fase7() -> dict[str, Any]:
+def gerar_manifesto_fase7(
+    *,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
+) -> dict[str, Any]:
     """Gera o manifesto versionado do protocolo da Fase 7."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
     prompt = ler_prompt_llm_judge()
     return {
         "versao_protocolo": VERSAO_PROTOCOLO_FASE7,
+        "perfil_execucao": perfil_execucao,
         "co_desfechos_primarios": [
             "bertscore_f1",
             "judge_score_global",
@@ -377,13 +392,17 @@ def gerar_manifesto_fase7() -> dict[str, Any]:
             "ajuste_primario": "holm_bonferroni",
             "ajuste_secundario": "benjamini_hochberg",
         },
-        "artefatos": contrato_artefatos_fase7(),
+        "artefatos": contrato_artefatos_fase7(perfil_execucao=perfil_execucao),
     }
 
 
-def escrever_manifesto_fase7(path: Path = FASE7_PROTOCOLO_PATH) -> Path:
+def escrever_manifesto_fase7(
+    path: Path = FASE7_PROTOCOLO_PATH,
+    *,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
+) -> Path:
     """Escreve o manifesto versionado da Fase 7 em disco."""
-    manifesto = gerar_manifesto_fase7()
+    manifesto = gerar_manifesto_fase7(perfil_execucao=perfil_execucao)
     escrever_json_atomico(path, manifesto, indent=2)
     return path
 
@@ -394,7 +413,19 @@ def main() -> None:
         format="%(asctime)s  %(levelname)-8s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    output_path = escrever_manifesto_fase7()
+    parser = argparse.ArgumentParser(description="Manifesto versionado da Fase 7.")
+    parser.add_argument("--output-path", type=Path, default=None)
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
+    args = parser.parse_args()
+    artefatos = resolver_artefatos_fase7(args.perfil_execucao)
+    output_path = escrever_manifesto_fase7(
+        args.output_path or artefatos["protocolo_path"],
+        perfil_execucao=args.perfil_execucao,
+    )
     log.info("Manifesto da Fase 7 gerado em %s", output_path)
 
 

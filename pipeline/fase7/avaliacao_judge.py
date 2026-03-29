@@ -24,7 +24,13 @@ from pipeline.core.project_paths import (
     FASE7_AVALIACAO_JUDGE_PATH,
     FASE7_AVALIACAO_JUDGE_BRUTA_PATH,
     FASE7_CASOS_AVALIACAO_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIL_EXECUCAO_OFICIAL,
+    PERFIS_EXECUCAO,
     FASE7_PREDICAO_PATHS,
+    resolver_artefatos_fase7,
+    resolver_predicoes_fase7,
+    validar_perfil_execucao,
 )
 
 from .metricas import carregar_casos_avaliacao, carregar_predicoes_condicao
@@ -355,8 +361,10 @@ def executar_avaliacao_judge(
     flush_every: int = 20,
     max_retries: int = 3,
     retry_backoff_seconds: float = 2.0,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
 ) -> Path:
     """Executa o LLM-as-a-Judge com retomada incremental."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
     if flush_every <= 0:
         raise ValueError("`flush_every` deve ser inteiro positivo.")
     if limit is not None and limit <= 0:
@@ -387,6 +395,7 @@ def executar_avaliacao_judge(
         pendentes = pendentes[:limit]
 
     manifesto: dict[str, Any] = {
+        "perfil_execucao": perfil_execucao,
         "modelo_juiz_logico": MODELO_JUIZ,
         "model_id_api": model_id,
         "api_base": api_base,
@@ -461,10 +470,15 @@ def executar_avaliacao_judge(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Executor canônico do LLM-as-a-Judge.")
-    parser.add_argument("--casos-path", type=Path, default=FASE7_CASOS_AVALIACAO_PATH)
-    parser.add_argument("--output-path", type=Path, default=FASE7_AVALIACAO_JUDGE_PATH)
-    parser.add_argument("--raw-output-path", type=Path, default=FASE7_AVALIACAO_JUDGE_BRUTA_PATH)
-    parser.add_argument("--manifest-path", type=Path, default=FASE7_AVALIACAO_JUDGE_MANIFEST_PATH)
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
+    parser.add_argument("--casos-path", type=Path, default=None)
+    parser.add_argument("--output-path", type=Path, default=None)
+    parser.add_argument("--raw-output-path", type=Path, default=None)
+    parser.add_argument("--manifest-path", type=Path, default=None)
     parser.add_argument("--model-id", default=MODELO_JUIZ_API_PADRAO)
     parser.add_argument("--api-base", default=API_BASE_PADRAO)
     parser.add_argument("--api-key-env-var", default="DEEPSEEK_API_KEY")
@@ -485,11 +499,13 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    artefatos = resolver_artefatos_fase7(args.perfil_execucao)
     output_path = executar_avaliacao_judge(
-        casos_path=args.casos_path,
-        output_path=args.output_path,
-        raw_output_path=args.raw_output_path,
-        manifest_path=args.manifest_path,
+        casos_path=args.casos_path or artefatos["casos_avaliacao_path"],
+        predicao_paths=resolver_predicoes_fase7(args.perfil_execucao),
+        output_path=args.output_path or artefatos["avaliacao_judge_path"],
+        raw_output_path=args.raw_output_path or artefatos["avaliacao_judge_bruta_path"],
+        manifest_path=args.manifest_path or artefatos["avaliacao_judge_manifest_path"],
         model_id=args.model_id,
         api_base=args.api_base,
         api_key_env_var=args.api_key_env_var,
@@ -500,6 +516,7 @@ def main() -> None:
         flush_every=args.flush_every,
         max_retries=args.max_retries,
         retry_backoff_seconds=args.retry_backoff_seconds,
+        perfil_execucao=args.perfil_execucao,
     )
     log.info("Avaliações do juiz automático persistidas em %s", output_path)
 

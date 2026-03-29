@@ -7,6 +7,7 @@ duplicação entre os scripts das Fases 1–4 e utilitários.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 PIPELINE_DIR = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = PIPELINE_DIR / "prompts"
@@ -143,3 +144,26 @@ def resolver_prefixo_gcs_fase5(perfil_execucao: str) -> str:
     if perfil_execucao == PERFIL_EXECUCAO_OFICIAL:
         return "dissertacao-ementas-tr/fase5"
     return "testes/fase5"
+
+
+def resolver_artefatos_fase7(perfil_execucao: str) -> dict[str, Any]:
+    """Retorna os caminhos canônicos da Fase 7 para um perfil."""
+    fase7_dir = resolver_fase7_dir(perfil_execucao)
+    predicao_paths = resolver_predicoes_fase7(perfil_execucao)
+    predicao_manifest_paths = resolver_manifestos_predicoes_fase7(perfil_execucao)
+    return {
+        "fase7_dir": fase7_dir,
+        "protocolo_path": fase7_dir / "protocolo_avaliacao.json",
+        "casos_avaliacao_path": fase7_dir / "casos_avaliacao.jsonl",
+        "predicao_paths": predicao_paths,
+        "predicao_manifest_paths": predicao_manifest_paths,
+        "metricas_automaticas_path": fase7_dir / "metricas_automaticas.csv",
+        "avaliacao_judge_path": fase7_dir / "avaliacao_llm_judge.jsonl",
+        "avaliacao_judge_bruta_path": fase7_dir / "avaliacao_llm_judge_bruta.jsonl",
+        "avaliacao_judge_manifest_path": fase7_dir / "avaliacao_llm_judge_manifest.json",
+        "amostra_humana_path": fase7_dir / "amostra_humana.json",
+        "gabarito_cegamento_humano_path": fase7_dir / "gabarito_cegamento_humano.json",
+        "avaliacao_humana_path": fase7_dir / "avaliacao_humana.csv",
+        "relatorio_avaliacao_humana_path": fase7_dir / "relatorio_avaliacao_humana.json",
+        "relatorio_estatistico_path": fase7_dir / "relatorio_estatistico.json",
+    }

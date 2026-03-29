@@ -82,6 +82,7 @@ python3 -m pipeline.fase6.baseline_gemini --perfil-execucao oficial --condicao-i
 python3 -m pipeline.fase6.baseline_qwen --perfil-execucao oficial --condicao-id qwen_ft --model-id data/fase5/modelo_qwen_checkpoint
 
 # Gerar o manifesto versionado da Fase 7
+# Por padrão, a CLI grava artefatos exploratórios em data/exploratorio/
 python3 -m pipeline.fase7.protocolo
 
 # Executar o LLM-as-a-Judge e persistir avaliacao_llm_judge.jsonl
@@ -98,11 +99,19 @@ python3 -m pipeline.fase7.metricas
 
 # Gerar o relatório estatístico da Fase 7 a partir da tabela consolidada
 python3 -m pipeline.fase7.estatisticas
+
+# Quando a execução passar a ser oficial, explicite o perfil
+python3 -m pipeline.fase7.casos_avaliacao --perfil-execucao oficial
+python3 -m pipeline.fase7.protocolo --perfil-execucao oficial
+python3 -m pipeline.fase7.avaliacao_judge --perfil-execucao oficial
+python3 -m pipeline.fase7.avaliacao_humana --perfil-execucao oficial --modo preparar
+python3 -m pipeline.fase7.metricas --perfil-execucao oficial
+python3 -m pipeline.fase7.estatisticas --perfil-execucao oficial
 ```
 
 ### Perfis de Execução
 
-As CLIs das Fases 5 e 6 agora distinguem dois perfis:
+As CLIs das Fases 5, 6 e 7 agora distinguem dois perfis:
 
 - `exploratorio` (padrão): artefatos locais em `data/exploratorio/` e, no Gemini SFT, prefixo GCS padrão `testes/fase5`
 - `oficial`: artefatos nos caminhos canônicos `data/fase5/` e `data/fase7/`, a serem usados somente após o congelamento do pipeline, prompt e parâmetros
@@ -156,13 +165,14 @@ Infraestrutura já versionada no repositório:
 | `pipeline/fase6/baseline_gemini.py` | Geração das predições `gemini_zero_shot.jsonl` e `gemini_ft.jsonl`, com perfis `exploratorio`/`oficial`; a CLI usa `data/exploratorio/fase7/predicoes/` por padrão |
 | `pipeline/fase6/baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` e `qwen_ft.jsonl`, com suporte a checkpoint LoRA local e separação entre artefatos exploratórios e oficiais |
 | `pipeline/fase7/casos_avaliacao.py` | Geração de `data/fase7/casos_avaliacao.jsonl` a partir de `data/dataset_teste.jsonl` |
-| `pipeline/fase7/avaliacao_judge.py` | Execução incremental do DeepSeek V3 / `deepseek-chat` com persistência normalizada em `data/fase7/avaliacao_llm_judge.jsonl` e artefato bruto em `data/fase7/avaliacao_llm_judge_bruta.jsonl` |
-| `pipeline/fase7/avaliacao_humana.py` | Geração da amostra estratificada cega (`amostra_humana.json`), gabarito separado (`gabarito_cegamento_humano.json`), template `avaliacao_humana.csv` e relatório humano consolidado |
+| `pipeline/fase7/casos_avaliacao.py` | Geração dos casos-base com perfis `exploratorio`/`oficial`, mantendo os testes em `data/exploratorio/fase7/` por padrão |
+| `pipeline/fase7/avaliacao_judge.py` | Execução incremental do DeepSeek V3 / `deepseek-chat` com separação entre artefatos exploratórios e oficiais |
+| `pipeline/fase7/avaliacao_humana.py` | Geração da amostra estratificada cega (`amostra_humana.json`), gabarito separado (`gabarito_cegamento_humano.json`), template `avaliacao_humana.csv` e relatório humano consolidado, também separados por perfil |
 | `pipeline/fase7/predicoes_utils.py` | Leitura, retomada incremental e persistência canônica das predições |
 | `pipeline/prompts/llm_judge_prompt.txt` | Prompt versionado do LLM-as-a-Judge |
-| `pipeline/fase7/protocolo.py` | Geração do manifesto e contratos mínimos dos artefatos da Fase 7 |
-| `pipeline/fase7/metricas.py` | Consolidação de ROUGE, BERTScore, score global do juiz e dimensões individuais em `data/fase7/metricas_automaticas.csv` |
-| `pipeline/fase7/estatisticas.py` | Inferência estatística pareada e geração de `data/fase7/relatorio_estatistico.json` |
+| `pipeline/fase7/protocolo.py` | Geração do manifesto e contratos mínimos dos artefatos da Fase 7, em perfil exploratório por padrão |
+| `pipeline/fase7/metricas.py` | Consolidação de ROUGE, BERTScore, score global do juiz e dimensões individuais em caminhos separados por perfil |
+| `pipeline/fase7/estatisticas.py` | Inferência estatística pareada e geração do relatório estatístico em caminhos separados por perfil |
 | **Divisão cronológica** | Por `data_cadastro` em `pipeline/fase1_4/fase03_anonimizacao.py` (sem shuffle aleatório) |
 | Versão dos modelos base | Registrada em `modelo_gemini_nome.txt` e `modelo_qwen_checkpoint/` |
 | `.gitignore` | Exclui dados brutos, banco SQLite e documentos privados |

@@ -34,6 +34,8 @@ from pipeline.core.project_paths import (
     FASE7_PREDICAO_PATHS,
     FASE7_PROTOCOLO_PATH,
     LLM_JUDGE_PROMPT_PATH,
+    PERFIL_EXECUCAO_EXPLORATORIO,
+    resolver_artefatos_fase7,
 )
 
 
@@ -147,6 +149,7 @@ def test_manifesto_fase7_tem_contrato_estavel() -> None:
     manifesto = gerar_manifesto_fase7()
 
     assert manifesto["versao_protocolo"] == VERSAO_PROTOCOLO_FASE7
+    assert manifesto["perfil_execucao"] == "oficial"
     assert manifesto["llm_judge"]["prompt_path"] == str(LLM_JUDGE_PROMPT_PATH)
     assert manifesto["llm_judge"]["modelo_api_padrao"] == MODELO_JUIZ_API_PADRAO
     assert manifesto["artefatos"]["manifesto"] == str(FASE7_PROTOCOLO_PATH)
@@ -167,3 +170,14 @@ def test_manifesto_fase7_tem_contrato_estavel() -> None:
         item["id"] for item in CONDICOES_EXPERIMENTAIS
     ]
     json.dumps(manifesto, ensure_ascii=False)
+
+
+def test_manifesto_fase7_pode_ser_gerado_para_perfil_exploratorio() -> None:
+    manifesto = gerar_manifesto_fase7(perfil_execucao=PERFIL_EXECUCAO_EXPLORATORIO)
+    artefatos = resolver_artefatos_fase7(PERFIL_EXECUCAO_EXPLORATORIO)
+
+    assert manifesto["perfil_execucao"] == PERFIL_EXECUCAO_EXPLORATORIO
+    assert manifesto["artefatos"]["manifesto"] == str(artefatos["protocolo_path"])
+    assert manifesto["artefatos"]["casos_avaliacao"] == str(artefatos["casos_avaliacao_path"])
+    assert manifesto["artefatos"]["avaliacao_llm_judge"] == str(artefatos["avaliacao_judge_path"])
+    assert manifesto["artefatos"]["relatorio_estatistico"] == str(artefatos["relatorio_estatistico_path"])

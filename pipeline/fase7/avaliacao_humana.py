@@ -23,8 +23,12 @@ from pipeline.core.project_paths import (
     FASE7_AVALIACAO_HUMANA_PATH,
     FASE7_CASOS_AVALIACAO_PATH,
     FASE7_GABARITO_CEGAMENTO_HUMANO_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIS_EXECUCAO,
     FASE7_PREDICAO_PATHS,
     FASE7_RELATORIO_AVALIACAO_HUMANA_PATH,
+    resolver_artefatos_fase7,
+    resolver_predicoes_fase7,
 )
 
 from .metricas import carregar_casos_avaliacao, carregar_todas_predicoes, consolidar_casos_e_predicoes
@@ -449,12 +453,17 @@ def escrever_relatorio_avaliacao_humana(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Infraestrutura da avaliação humana da Fase 7.")
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
     parser.add_argument("--modo", choices=["preparar", "analisar"], default="preparar")
-    parser.add_argument("--casos-path", type=Path, default=FASE7_CASOS_AVALIACAO_PATH)
-    parser.add_argument("--amostra-path", type=Path, default=FASE7_AMOSTRA_HUMANA_PATH)
-    parser.add_argument("--gabarito-path", type=Path, default=FASE7_GABARITO_CEGAMENTO_HUMANO_PATH)
-    parser.add_argument("--avaliacao-path", type=Path, default=FASE7_AVALIACAO_HUMANA_PATH)
-    parser.add_argument("--output-path", type=Path, default=FASE7_RELATORIO_AVALIACAO_HUMANA_PATH)
+    parser.add_argument("--casos-path", type=Path, default=None)
+    parser.add_argument("--amostra-path", type=Path, default=None)
+    parser.add_argument("--gabarito-path", type=Path, default=None)
+    parser.add_argument("--avaliacao-path", type=Path, default=None)
+    parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument("--seed-amostragem", type=int, default=SEED_AMOSTRAGEM_AVALIACAO_HUMANA)
     parser.add_argument("--seed-cegamento", type=int, default=SEED_CEGAMENTO_AVALIACAO_HUMANA)
     parser.add_argument("--casos-por-estrato", type=int, default=CASOS_POR_ESTRATO_AVALIACAO_HUMANA)
@@ -468,12 +477,14 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    artefatos = resolver_artefatos_fase7(args.perfil_execucao)
     if args.modo == "preparar":
         amostra_path, template_path = preparar_avaliacao_humana(
-            casos_path=args.casos_path,
-            amostra_path=args.amostra_path,
-            gabarito_path=args.gabarito_path,
-            template_path=args.avaliacao_path,
+            casos_path=args.casos_path or artefatos["casos_avaliacao_path"],
+            predicao_paths=resolver_predicoes_fase7(args.perfil_execucao),
+            amostra_path=args.amostra_path or artefatos["amostra_humana_path"],
+            gabarito_path=args.gabarito_path or artefatos["gabarito_cegamento_humano_path"],
+            template_path=args.avaliacao_path or artefatos["avaliacao_humana_path"],
             seed_amostragem=args.seed_amostragem,
             seed_cegamento=args.seed_cegamento,
             casos_por_estrato=args.casos_por_estrato,
@@ -483,10 +494,10 @@ def main() -> None:
         return
 
     output_path = escrever_relatorio_avaliacao_humana(
-        amostra_path=args.amostra_path,
-        gabarito_path=args.gabarito_path,
-        avaliacao_path=args.avaliacao_path,
-        output_path=args.output_path,
+        amostra_path=args.amostra_path or artefatos["amostra_humana_path"],
+        gabarito_path=args.gabarito_path or artefatos["gabarito_cegamento_humano_path"],
+        avaliacao_path=args.avaliacao_path or artefatos["avaliacao_humana_path"],
+        output_path=args.output_path or artefatos["relatorio_avaliacao_humana_path"],
     )
     log.info("Relatório da avaliação humana persistido em %s", output_path)
 
