@@ -220,7 +220,8 @@ class AnonimizationStats:
         )
 
 
-def _count(pattern: re.Pattern[str], texto: str) -> int:
+def _contar_ocorrencias(pattern: re.Pattern[str], texto: str) -> int:
+    """Conta quantas ocorrências de um padrão existem no texto."""
     return len(pattern.findall(texto))
 
 
@@ -253,14 +254,14 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
 
     # Contagem ANTES das substituições (exceto nomes próprios — ver abaixo).
     if stats:
-        stats.cpfs += _count(_RE_CPF, texto)
-        stats.cnpjs += _count(_RE_CNPJ, texto)
-        stats.npus += _count(_RE_NPU, texto)
-        stats.contas += _count(_RE_CONTA, texto)
-        stats.emails += _count(_RE_EMAIL, texto)
-        stats.telefones += _count(_RE_TELEFONE, texto)
-        stats.nomes_honorificos += _count(_RE_NOME_HONORIFICO, texto)
-        stats.logradouros += _count(_RE_LOGRADOURO, texto)
+        stats.cpfs += _contar_ocorrencias(_RE_CPF, texto)
+        stats.cnpjs += _contar_ocorrencias(_RE_CNPJ, texto)
+        stats.npus += _contar_ocorrencias(_RE_NPU, texto)
+        stats.contas += _contar_ocorrencias(_RE_CONTA, texto)
+        stats.emails += _contar_ocorrencias(_RE_EMAIL, texto)
+        stats.telefones += _contar_ocorrencias(_RE_TELEFONE, texto)
+        stats.nomes_honorificos += _contar_ocorrencias(_RE_NOME_HONORIFICO, texto)
+        stats.logradouros += _contar_ocorrencias(_RE_LOGRADOURO, texto)
 
     texto = _RE_CPF.sub("[CPF]", texto)
     texto = _RE_CNPJ.sub("[CNPJ]", texto)
@@ -367,13 +368,13 @@ def _anonimizar_registros(
     stats = AnonimizationStats()
 
     def _processar_linha(row: pd.Series) -> pd.Series:
-        fund   = anonimizar_texto(row["fundamentacao"], stats)
+        fund = anonimizar_texto(row["fundamentacao"], stats)
         ementa = anonimizar_texto(row["ementa"], stats)
 
         # [C14] Descarta registros destruidos pela anonimizacao.
         if len(fund) < MIN_FUND_ANON_LEN or len(ementa) < MIN_EMENTA_ANON_LEN:
             stats.descartados_pos_anon += 1
-            return pd.Series({"fundamentacao": None, "ementa": None})
+            return pd.Series({"exemplo": None})
 
         exemplo = formatar_exemplo_gemini(fund, ementa)
         exemplo["data_cadastro"] = row.get("data_cadastro", "")
@@ -386,8 +387,7 @@ def _anonimizar_registros(
 
     # Reconstruir DataFrame de exemplos descartando os linhas marcadas como None
     exemplos_list: list[dict] = []
-    for i, (_, row) in enumerate(resultado.iterrows(), start=1):
-        ex = row.get("exemplo") if hasattr(row, "get") else None
+    for i, ex in enumerate(resultado["exemplo"], start=1):
         if ex is not None:
             exemplos_list.append(ex)
         if i % 5_000 == 0:

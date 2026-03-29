@@ -72,7 +72,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
 
     # 4. Carimbo DJe + linha inteira — "PROCESSO ELETRÔNICO DJe-s/n DIVULG 23-05-2024"
     (
-        "dје_carimbo_longo",
+        "dje_carimbo_longo",
         re.compile(
             r"(?:Data de Julgamento.*?|PROCESSO ELETRÔNICO.*?DJe[\w\-\s/]*(?:\d{4})?)",
             re.IGNORECASE,
@@ -88,7 +88,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 5b. Carimbo "DIVULG" isolado (remanescentem do DJe sem prefixo completo)
+    # 5b. Carimbo "DIVULG" isolado (remanescente do DJe sem prefixo completo)
     ("divulg_isolado", re.compile(r"\bDIVULG\b", re.IGNORECASE), " "),
 
     # 6a. Ação Civil Pública + DPU (formato completo)
@@ -166,7 +166,10 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 16. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
     (
         "capslock_assinatura",
-        re.compile(r"\.?[ \n\r\t\xa0]*(?:[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]+){2,}[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]*$"),
+        re.compile(
+            r"\.?[ \n\r\t\xa0]*(?:[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]+){2,}"
+            r"[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]*$"
+        ),
         " ",
     ),
 ]

@@ -25,7 +25,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +49,10 @@ TREINO_PATH = Path("data/dataset_treino.jsonl")
 TESTE_PATH  = Path("data/dataset_teste.jsonl")
 OUTPUT_PATH = Path("data/estatisticas_corpus.json")
 INGESTAO_STATS_PATH = Path("data/.ingestao_stats.json")
+TIMING_PATH = Path("data/.pipeline_timing.json")
+PII_STATS_PATH = Path("data/.anonimizacao_stats.json")
+DOCS_DATA_PATH = Path("docs/data")
+SYSTEM_PROMPT_PATH = Path(__file__).parent / "system_prompt.txt"
 
 # Número total de registros lidos do dump (pré-filtro de nulos).
 # Fallback para execuções legadas em que a Fase 1 ainda não persiste stats.
@@ -102,13 +109,12 @@ def _carregar_stats_ingestao(path: Path) -> dict[str, int]:
     return stats
 
 
-def _extrair_texto_do_jsonl(obj: dict) -> tuple[str, str]:
-    """Extrai fundamentação e ementa de um registro JSONL do Gemini.
-
-    O turno 'user' contém a instrução de sistema + fundamentação.
-    O turno 'model' contém a ementa.
-    """
-    return extrair_fundamentacao_e_ementa(obj)
+def _file_size_mb(path: Path) -> float | None:
+    """Retorna o tamanho do arquivo em MB, quando disponível."""
+    try:
+        return round(os.path.getsize(path) / (1024 * 1024), 1)
+    except OSError:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -491,7 +497,7 @@ def gerar_relatorio(
     df_brutos = _carregar_json(brutos_path)
     df_limpos = _carregar_json(limpos_path)
     treino_raw = _carregar_jsonl(treino_path)
-    teste_raw  = _carregar_jsonl(teste_path)
+    teste_raw = _carregar_jsonl(teste_path)
     try:
         ingestao_stats = _carregar_stats_ingestao(INGESTAO_STATS_PATH)
     except (json.JSONDecodeError, OSError, ValueError) as exc:
@@ -501,7 +507,7 @@ def gerar_relatorio(
 
     # --- Extrair textos do JSONL final para um DataFrame ---
     log.info("Extraindo textos do dataset final...")
-    pares = [_extrair_texto_do_jsonl(obj) for obj in treino_raw + teste_raw]
+    pares = [extrair_fundamentacao_e_ementa(obj) for obj in treino_raw + teste_raw]
     df = pd.DataFrame(pares, columns=["fundamentacao", "ementa"])
 
     # Contagem de palavras vetorizada
@@ -557,28 +563,14 @@ def gerar_relatorio(
     # --- Período temporal ---
     log.info("Analisando período temporal...")
     periodo = calcular_periodo_temporal(df_brutos)
-    if "erro" not in periodo:
-        log.info("  Período: %s a %s", periodo["data_mais_antiga"], periodo["data_mais_recente"])
-        log.info("  Distribuição por ano: %s", periodo.get("distribuicao_por_ano", {}))
-    else:
-        log.warning("  %s", periodo["erro"])
-
-    # --- Metadados de tamanho de arquivos ---
-    import os
-    from datetime import datetime
-
-    def _file_size_mb(path: Path) -> float | None:
-        try:
-            return round(os.path.getsize(path) / (1024 * 1024), 1)
-        except OSError:
-            return None
+    log.info("  Período: %s a %s", periodo["data_mais_antiga"], periodo["data_mais_recente"])
+    log.info("  Distribuição por ano: %s", periodo["distribuicao_por_ano"])
 
     # --- Timing do pipeline ---
-    timing_path = Path("data/.pipeline_timing.json")
     timing: dict = {}
-    if timing_path.exists():
+    if TIMING_PATH.exists():
         try:
-            with timing_path.open("r") as f:
+            with TIMING_PATH.open("r") as f:
                 timing = json.load(f)
             log.info("Timing do pipeline carregado: %s", timing)
         except (json.JSONDecodeError, OSError):
@@ -632,11 +624,10 @@ def gerar_relatorio(
     log.info("  Matérias: %s", {d["materia"]: d["contagem"] for d in distribuicao_materias[:5]})
 
     # --- PII Stats ---
-    pii_stats_path = Path("data/.anonimizacao_stats.json")
     pii_contagem: dict = {}
-    if pii_stats_path.exists():
+    if PII_STATS_PATH.exists():
         try:
-            with pii_stats_path.open("r") as f:
+            with PII_STATS_PATH.open("r") as f:
                 pii_contagem = json.load(f)
             log.info("  PII stats carregadas: %s", pii_contagem)
         except (json.JSONDecodeError, OSError):
@@ -778,7 +769,7 @@ def gerar_relatorio(
             "EMAIL", "TELEFONE", "NOME_OCULTADO", "NOME_PESSOA", "ENDEREÇO_COMPLETO",
         ],
         "pii_contagem": pii_contagem,
-        "system_prompt": Path("pipeline/system_prompt.txt").read_text(encoding="utf-8").strip(),
+        "system_prompt": SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip(),
         "artefatos": [
             {"nome": "dados_limpos.json", "tamanho_mb": _file_size_mb(limpos_path), "tipo": "entrada", "conteudo": "{id, fundamentação, ementa} limpos"},
             {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "saida", "conteudo": "{contents: [{role, parts}]} anonimizado · 90%"},
@@ -841,10 +832,8 @@ def gerar_relatorio(
         json.dump(resultado, f, ensure_ascii=False, indent=2)
 
     # Cópia para GitHub Pages
-    import shutil
-    docs_data = Path("docs/data")
-    docs_data.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(output_path, docs_data / output_path.name)
+    DOCS_DATA_PATH.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(output_path, DOCS_DATA_PATH / output_path.name)
 
     log.info("=== Fase 4 finalizada com sucesso. ===")
     return resultado
