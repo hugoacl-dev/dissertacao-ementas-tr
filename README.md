@@ -58,6 +58,9 @@ pytest -q
 # Gerar os casos-base da Fase 7 a partir do dataset de teste
 python3 -m pipeline.fase7.casos_avaliacao
 
+# Atualizar o snapshot de prontidão experimental das Fases 5–7 no dashboard
+python3 -m pipeline.ferramentas.status_fases57
+
 # Preparar o job SFT do Gemini sem submeter ao Vertex AI
 # Por padrão, a CLI grava artefatos exploratórios em data/exploratorio/
 python3 -m pipeline.fase5.finetuning_gemini --project-id SEU_PROJECT_ID --staging-bucket gs://SEU_BUCKET --prepare-only

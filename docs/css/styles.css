@@ -260,6 +260,165 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.phase__status-group {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.status-pill--implementation-done {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--accent);
+}
+
+.status-pill--implementation-partial,
+.status-pill--exploratory-done,
+.status-pill--exploratory-partial {
+  background: rgba(251, 146, 60, 0.14);
+  color: var(--accent-4);
+}
+
+.status-pill--official-done {
+  background: rgba(52, 211, 153, 0.14);
+  color: var(--accent-3);
+}
+
+.status-pill--official-progress {
+  background: rgba(129, 140, 248, 0.14);
+  color: var(--accent-2);
+}
+
+.status-pill--official-pending,
+.status-pill--neutral {
+  background: var(--status-pending-bg);
+  color: var(--text-secondary);
+}
+
+.experimental-overview {
+  margin-bottom: 1.5rem;
+}
+
+.experimental-banner {
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at top right, rgba(251,146,60,0.08), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(56,189,248,0.08), transparent 28%),
+    var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.experimental-banner__eyebrow {
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-4);
+  margin-bottom: 0.55rem;
+}
+
+.experimental-banner__title {
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  line-height: 1.2;
+  margin-bottom: 0.7rem;
+}
+
+.experimental-banner__lead {
+  color: var(--text-secondary);
+  margin-bottom: 0.6rem;
+}
+
+.experimental-banner__note {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.experimental-banner__chips {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.phase--experimental::before {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-4) 100%);
+}
+
+.experimental-callout {
+  border: 1px solid rgba(251,146,60,0.22);
+  background: rgba(251,146,60,0.06);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.experimental-callout__title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-4);
+  margin-bottom: 0.4rem;
+}
+
+.experimental-callout p + p {
+  margin-top: 0.55rem;
+}
+
+.experimental-component {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.experimental-component__meta {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  margin-top: 0.2rem;
+}
+
+.experimental-component__chips {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.experimental-component__text,
+.experimental-component__note {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.experimental-component__note {
+  color: var(--text-muted);
+}
+
+.experimental-component__path {
+  overflow-wrap: anywhere;
+}
+
+.experimental-component__path code {
+  display: inline-block;
+  padding: 0.28rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.12);
+  color: var(--text-secondary);
+}
+
 /* ===== PHASE BODY (structural wrapper) ===== */
 .phase__body {
   padding: 0;

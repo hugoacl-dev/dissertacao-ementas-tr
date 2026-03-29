@@ -1,0 +1,171 @@
+{
+  "meta": {
+    "gerado_em": "2026-03-29T23:29:37+00:00",
+    "fonte_script": "python3 -m pipeline.ferramentas.status_fases57",
+    "titulo": "Prontidão Experimental das Fases 5–7",
+    "aviso_principal": "Implementação concluída e smoke tests exploratórios disponíveis; execução oficial ainda pendente.",
+    "criterio_conservador": "Artefatos antigos sem `perfil_execucao` explícito são ignorados para não sugerir falsamente uma rodada oficial."
+  },
+  "sumario": {
+    "implementacao_status": "concluida",
+    "validacao_exploratoria_status": "validada",
+    "execucao_oficial_status": "pendente",
+    "mensagem": "O painel abaixo mostra prontidão técnica, não resultados científicos consolidados."
+  },
+  "fases": {
+    "fase5": {
+      "numero": 5,
+      "nome": "Fine-Tuning Supervisionado",
+      "descricao": "Infraestrutura de preparação e treinamento dos modelos Gemini e Qwen.",
+      "implementacao_status": "concluida",
+      "validacao_exploratoria_status": "validada",
+      "execucao_oficial_status": "pendente",
+      "aviso_leitor": "Esta seção documenta prontidão técnica e smoke tests. Nenhum modelo oficial foi treinado ainda.",
+      "bloqueio_principal": "Congelamento metodológico e decisão final sobre a rodada oficial.",
+      "componentes": [
+        {
+          "id": "gemini_ft",
+          "rotulo": "Gemini FT",
+          "modelo": "Gemini 2.5 Flash",
+          "ambiente": "Vertex AI",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "real",
+          "evidencia_exploratoria": "prepare-only real com upload do dataset de treino para GCS",
+          "artefato_exploratorio": "data/exploratorio/fase5/gemini_sft_manifest.json",
+          "observacao": "A execução oficial permanece pendente até o congelamento metodológico."
+        },
+        {
+          "id": "qwen_ft",
+          "rotulo": "Qwen FT",
+          "modelo": "Qwen 2.5 14B-Instruct",
+          "ambiente": "RunPod / GPU de 80 GB",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "misto (prepare-only com dataset real; smoke GPU com dataset sintético mínimo)",
+          "evidencia_exploratoria": "prepare-only local + smoke real em RunPod H100 80GB documentado em scripts e runbook",
+          "artefato_exploratorio": "data/exploratorio/fase5/qwen_sft_manifest.json",
+          "observacao": "O treino oficial com JSONL reais ainda não foi executado no perfil oficial."
+        }
+      ]
+    },
+    "fase6": {
+      "numero": 6,
+      "nome": "Inferência e Predições",
+      "descricao": "Runners canônicos das quatro condições experimentais, com retomada incremental e manifests próprios.",
+      "implementacao_status": "concluida",
+      "validacao_exploratoria_status": "validada",
+      "execucao_oficial_status": "pendente",
+      "aviso_leitor": "As predições mostradas no perfil exploratório servem para validação operacional. Não são resultados finais.",
+      "bloqueio_principal": "Rodada oficial ainda não iniciada nas quatro condições.",
+      "componentes": [
+        {
+          "id": "gemini_zero_shot",
+          "rotulo": "Gemini Zero-Shot",
+          "modelo": "Gemini 2.5 Flash",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "sintético (smoke40 canônico)",
+          "evidencia_exploratoria": "40 predições persistidas em smoke exploratório",
+          "artefato_exploratorio": "data/exploratorio/fase7/predicoes/gemini_zero_shot.jsonl",
+          "observacao": "Os artefatos exploratórios atuais servem para validação operacional. O perfil oficial permanece vazio."
+        },
+        {
+          "id": "gemini_ft",
+          "rotulo": "Gemini FT",
+          "modelo": "Gemini 2.5 Flash",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "sintético (smoke40 canônico)",
+          "evidencia_exploratoria": "40 predições persistidas em smoke exploratório",
+          "artefato_exploratorio": "data/exploratorio/fase7/predicoes/gemini_ft.jsonl",
+          "observacao": "Os artefatos exploratórios atuais servem para validação operacional. O perfil oficial permanece vazio."
+        },
+        {
+          "id": "qwen_zero_shot",
+          "rotulo": "Qwen Zero-Shot",
+          "modelo": "Qwen 2.5 14B-Instruct",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "sintético (smoke40 canônico)",
+          "evidencia_exploratoria": "40 predições persistidas em smoke exploratório",
+          "artefato_exploratorio": "data/exploratorio/fase7/predicoes/qwen_zero_shot.jsonl",
+          "observacao": "Os artefatos exploratórios atuais servem para validação operacional. O perfil oficial permanece vazio."
+        },
+        {
+          "id": "qwen_ft",
+          "rotulo": "Qwen FT",
+          "modelo": "Qwen 2.5 14B-Instruct",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "sintético (smoke40 canônico)",
+          "evidencia_exploratoria": "40 predições persistidas em smoke exploratório",
+          "artefato_exploratorio": "data/exploratorio/fase7/predicoes/qwen_ft.jsonl",
+          "observacao": "Os artefatos exploratórios atuais servem para validação operacional. O perfil oficial permanece vazio."
+        }
+      ]
+    },
+    "fase7": {
+      "numero": 7,
+      "nome": "Avaliação Final",
+      "descricao": "Casos-base, protocolo, juiz automático, avaliação humana, métricas e inferência estatística.",
+      "implementacao_status": "concluida",
+      "validacao_exploratoria_status": "validada",
+      "execucao_oficial_status": "pendente",
+      "aviso_leitor": "Os artefatos exploratórios desta fase foram usados apenas para smoke tests sintéticos ou integrações curtas.",
+      "bloqueio_principal": "Execução oficial depende das quatro condições completas e do congelamento do protocolo.",
+      "componentes": [
+        {
+          "id": "casos_protocolo",
+          "rotulo": "Casos-base e protocolo",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "real",
+          "evidencia_exploratoria": "casos-base gerados no perfil exploratório e protocolo versionado persistido",
+          "artefato_exploratorio": "data/exploratorio/fase7/protocolo_avaliacao.json",
+          "observacao": "A rodada oficial só deve começar após o congelamento metodológico."
+        },
+        {
+          "id": "judge",
+          "rotulo": "Juiz automático",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "real (smoke curto)",
+          "evidencia_exploratoria": "20 avaliações persistidas com `deepseek-chat`",
+          "artefato_exploratorio": "data/exploratorio/fase7/avaliacao_llm_judge_smoke40_real_limit10.manifest.json",
+          "observacao": "As avaliações exploratórias do juiz não devem ser tratadas como análise final."
+        },
+        {
+          "id": "humana",
+          "rotulo": "Avaliação humana",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "sintético (smoke40)",
+          "evidencia_exploratoria": "40 casos, 1280 registros",
+          "artefato_exploratorio": "data/exploratorio/fase7/relatorio_avaliacao_humana_smoke40.json",
+          "observacao": "O relatório exploratório disponível é sintético e serve apenas para smoke test da infraestrutura."
+        },
+        {
+          "id": "metricas_estatistica",
+          "rotulo": "Métricas e estatística",
+          "implementacao_status": "concluida",
+          "validacao_exploratoria_status": "validada",
+          "execucao_oficial_status": "pendente",
+          "dataset_exploratorio": "sintético (smoke40)",
+          "evidencia_exploratoria": "1600 linhas em metricas_automaticas_smoke40.csv",
+          "artefato_exploratorio": "data/exploratorio/fase7/metricas_automaticas_smoke40.csv",
+          "observacao": "Os números do smoke sintético não têm valor inferencial para a dissertação."
+        }
+      ]
+    }
+  }
+}

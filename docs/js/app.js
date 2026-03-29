@@ -88,6 +88,202 @@ function formatArtifacts(artefatos) {
   }));
 }
 
+const STATUS_SPECS = {
+  implementacao: {
+    concluida: {
+      short: 'Concluída',
+      long: 'Implementação concluída',
+      pillClass: 'status-pill--implementation-done',
+      valueClass: 'accent',
+      label: 'Implementação',
+    },
+    parcial: {
+      short: 'Parcial',
+      long: 'Implementação parcial',
+      pillClass: 'status-pill--implementation-partial',
+      valueClass: 'orange',
+      label: 'Implementação',
+    },
+    pendente: {
+      short: 'Pendente',
+      long: 'Implementação pendente',
+      pillClass: 'status-pill--neutral',
+      valueClass: 'muted',
+      label: 'Implementação',
+    },
+  },
+  exploratorio: {
+    validada: {
+      short: 'Validada',
+      long: 'Smoke exploratório validado',
+      pillClass: 'status-pill--exploratory-done',
+      valueClass: 'orange',
+      label: 'Exploratório',
+    },
+    parcial: {
+      short: 'Parcial',
+      long: 'Smoke exploratório parcial',
+      pillClass: 'status-pill--exploratory-partial',
+      valueClass: 'orange',
+      label: 'Exploratório',
+    },
+    pendente: {
+      short: 'Pendente',
+      long: 'Smoke exploratório pendente',
+      pillClass: 'status-pill--neutral',
+      valueClass: 'muted',
+      label: 'Exploratório',
+    },
+  },
+  oficial: {
+    concluida: {
+      short: 'Concluída',
+      long: 'Execução oficial concluída',
+      pillClass: 'status-pill--official-done',
+      valueClass: 'green',
+      label: 'Oficial',
+    },
+    em_andamento: {
+      short: 'Em andamento',
+      long: 'Execução oficial em andamento',
+      pillClass: 'status-pill--official-progress',
+      valueClass: 'accent',
+      label: 'Oficial',
+    },
+    pendente: {
+      short: 'Pendente',
+      long: 'Execução oficial pendente',
+      pillClass: 'status-pill--official-pending',
+      valueClass: 'muted',
+      label: 'Oficial',
+    },
+  },
+};
+
+function getStatusSpec(scope, status) {
+  return STATUS_SPECS[scope]?.[status] || {
+    short: status || '—',
+    long: status || '—',
+    pillClass: 'status-pill--neutral',
+    valueClass: 'muted',
+    label: scope,
+  };
+}
+
+function renderStatusPill(scope, status) {
+  const spec = getStatusSpec(scope, status);
+  return `<span class="status-pill ${spec.pillClass}">${spec.label}: ${spec.short}</span>`;
+}
+
+function experimentalStatusCard(scope, status, detail) {
+  const spec = getStatusSpec(scope, status);
+  const card = el('div', 'card');
+  card.innerHTML = `
+    <div class="card__label">${spec.label}</div>
+    <div class="card__value card__value--${spec.valueClass}">${spec.short}</div>
+    ${detail ? `<div class="card__sub">${detail}</div>` : `<div class="card__sub">${spec.long}</div>`}
+  `;
+  return card;
+}
+
+function buildExperimentalOverview(status57) {
+  const section = el('section', 'experimental-overview');
+  const summary = status57.sumario || {};
+  const meta = status57.meta || {};
+
+  section.innerHTML = `
+    <div class="experimental-banner">
+      <div class="experimental-banner__eyebrow">Fases 5–7 · Prontidão Experimental</div>
+      <h2 class="experimental-banner__title">${meta.titulo || 'Prontidão Experimental das Fases 5–7'}</h2>
+      <p class="experimental-banner__lead">${meta.aviso_principal || ''}</p>
+      <p class="experimental-banner__note">${summary.mensagem || ''}</p>
+      <div class="experimental-banner__chips">
+        ${renderStatusPill('implementacao', summary.implementacao_status)}
+        ${renderStatusPill('exploratorio', summary.validacao_exploratoria_status)}
+        ${renderStatusPill('oficial', summary.execucao_oficial_status)}
+      </div>
+    </div>
+  `;
+
+  return section;
+}
+
+function buildExperimentalComponentCard(item) {
+  const card = el('div', 'card experimental-component');
+  const secondary = item.modelo || item.ambiente;
+  card.innerHTML = `
+    <div class="experimental-component__header">
+      <div>
+        <div class="card__label">${item.rotulo}</div>
+        ${secondary ? `<div class="experimental-component__meta">${secondary}${item.ambiente && item.modelo ? ' · ' + item.ambiente : item.ambiente ? '' : ''}</div>` : ''}
+      </div>
+    </div>
+    <div class="experimental-component__chips">
+      ${renderStatusPill('implementacao', item.implementacao_status)}
+      ${renderStatusPill('exploratorio', item.validacao_exploratoria_status)}
+      ${renderStatusPill('oficial', item.execucao_oficial_status)}
+    </div>
+    ${item.dataset_exploratorio ? `<p class="experimental-component__text"><strong>Dataset exploratório:</strong> ${item.dataset_exploratorio}</p>` : ''}
+    ${item.evidencia_exploratoria ? `<p class="experimental-component__text"><strong>Evidência:</strong> ${item.evidencia_exploratoria}</p>` : ''}
+    ${item.artefato_exploratorio ? `<p class="experimental-component__path"><code>${item.artefato_exploratorio}</code></p>` : ''}
+    ${item.observacao ? `<p class="experimental-component__note">${item.observacao}</p>` : ''}
+  `;
+  return card;
+}
+
+function buildExperimentalPhase(phase) {
+  const section = el('section', 'phase phase--experimental');
+  const header = el('div', 'phase__header');
+  const numBadge = el('div', 'phase__number phase__number--done');
+  numBadge.textContent = phase.numero;
+
+  const title = el('span', 'phase__title');
+  title.textContent = `Fase ${phase.numero}: ${phase.nome}`;
+
+  const statusGroup = el('div', 'phase__status-group');
+  statusGroup.innerHTML = `
+    ${renderStatusPill('implementacao', phase.implementacao_status)}
+    ${renderStatusPill('exploratorio', phase.validacao_exploratoria_status)}
+    ${renderStatusPill('oficial', phase.execucao_oficial_status)}
+  `;
+
+  header.append(numBadge, title, statusGroup);
+  section.appendChild(header);
+
+  const body = el('div', 'phase__body');
+
+  if (phase.descricao) {
+    const desc = el('p', 'phase__desc');
+    desc.textContent = phase.descricao;
+    body.appendChild(desc);
+  }
+
+  const warning = el('div', 'experimental-callout');
+  warning.innerHTML = `
+    <div class="experimental-callout__title">Leitura correta desta fase</div>
+    <p>${phase.aviso_leitor || 'Os artefatos abaixo documentam prontidão técnica e smoke tests exploratórios.'}</p>
+    ${phase.bloqueio_principal ? `<p><strong>Bloqueio atual:</strong> ${phase.bloqueio_principal}</p>` : ''}
+  `;
+  body.appendChild(warning);
+
+  const summaryCards = el('div', 'cards');
+  summaryCards.append(
+    experimentalStatusCard('implementacao', phase.implementacao_status),
+    experimentalStatusCard('exploratorio', phase.validacao_exploratoria_status),
+    experimentalStatusCard('oficial', phase.execucao_oficial_status),
+  );
+  body.appendChild(summaryCards);
+
+  if (phase.componentes && phase.componentes.length > 0) {
+    const componentsGrid = el('div', 'cards');
+    phase.componentes.forEach(item => componentsGrid.appendChild(buildExperimentalComponentCard(item)));
+    body.appendChild(componentsGrid);
+  }
+
+  section.appendChild(body);
+  return section;
+}
+
 /* ===== Phase Meta Builder (clean, no emojis) ===== */
 function buildPhaseMeta(data) {
   const meta = el('div', 'phase__meta');
@@ -189,11 +385,18 @@ function buildPhase(num, data, contentFn) {
   const loading = document.getElementById('loading');
 
   try {
-    const resp = await fetch('data/estatisticas_corpus.json');
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-    const data = await resp.json();
+    const [respStats, respStatus57] = await Promise.all([
+      fetch('data/estatisticas_corpus.json'),
+      fetch('data/fases_5_7_status.json').catch(() => null),
+    ]);
+    if (!respStats.ok) throw new Error(`HTTP ${respStats.status}: ${respStats.statusText}`);
+    const data = await respStats.json();
+    let status57 = null;
+    if (respStatus57 && respStatus57.ok) {
+      status57 = await respStatus57.json();
+    }
     loading.remove();
-    render(data);
+    render(data, status57);
     document.getElementById('footer').style.display = '';
   } catch (err) {
     loading.innerHTML = `
@@ -209,7 +412,7 @@ function buildPhase(num, data, contentFn) {
 })();
 
 /* ===== Main Render ===== */
-function render(data) {
+function render(data, status57) {
   const meta = data.meta || {};
   document.getElementById('titulo').textContent       = meta.titulo_pesquisa || 'Dashboard';
   document.getElementById('autor').textContent        = meta.autor || '';
@@ -461,20 +664,24 @@ function render(data) {
     return cards;
   }));
 
-  // Phases 5-7 (pending)
-  const pendingPhases = [
-    { num: 5, key: 'fase5_finetuning', nome: 'Fine-Tuning', desc: 'Fine-Tuning Supervisionado em dois modelos: Gemini 2.5 Flash via Vertex AI (SFT nativo) e Qwen 2.5 14B via LoRA/Unsloth em RunPod A100 80GB.' },
-    { num: 6, key: 'fase6_baseline', nome: 'Baseline Zero-Shot', desc: 'Inferência zero-shot dos modelos base (sem fine-tuning) para cada modelo — Gemini 2.5 Flash e Qwen 2.5 14B — gerando artefatos separados para comparação.' },
-    { num: 7, key: 'fase7_avaliacao', nome: 'Avaliação Final', desc: 'Quatro condições experimentais (Gemini FT/ZS · Qwen FT/ZS) avaliadas em 4 eixos: ROUGE + BERTScore · LLM-as-a-Judge (DeepSeek V3, 5 dimensões CNJ 154/2024) · Bootstrap IC 95% + p-value · Avaliação Humana (Likert + Kappa).' },
-  ];
-  pendingPhases.forEach(p => {
-    const phaseData = fases[p.key];
-    if (phaseData === null || phaseData === undefined) {
+  if (status57) {
+    main.appendChild(buildExperimentalOverview(status57));
+    ['fase5', 'fase6', 'fase7'].forEach(key => {
+      const phase = status57.fases?.[key];
+      if (phase) {
+        main.appendChild(buildExperimentalPhase(phase));
+      }
+    });
+  } else {
+    const pendingPhases = [
+      { num: 5, nome: 'Fine-Tuning', desc: 'Fase implementada no código, mas ainda sem snapshot de prontidão experimental disponível no dashboard.' },
+      { num: 6, nome: 'Inferência e Predições', desc: 'Runners implementados, mas sem snapshot de prontidão experimental disponível no dashboard.' },
+      { num: 7, nome: 'Avaliação Final', desc: 'Infraestrutura implementada, mas sem snapshot de prontidão experimental disponível no dashboard.' },
+    ];
+    pendingPhases.forEach(p => {
       main.appendChild(buildPhase(p.num, { nome: p.nome, descricao: p.desc, status: 'pendente' }, null));
-    } else {
-      main.appendChild(buildPhase(p.num, phaseData, null));
-    }
-  });
+    });
+  }
 
   // Cache f4/f3 and render charts
   window._cachedF4 = f4;
