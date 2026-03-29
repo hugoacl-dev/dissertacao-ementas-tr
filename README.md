@@ -131,7 +131,7 @@ Dashboard interativo para visualização das estatísticas do corpus, disponíve
 A Fase 7 compara **quatro condições experimentais** (Gemini FT, Gemini Zero-Shot, Qwen FT, Qwen Zero-Shot) contra as ementas oficiais (referência humana). A validação é conduzida em quatro eixos:
 
 1. **Léxico-Semântico:** ROUGE-1/2/L + **BERTScore F1** com `xlm-roberta-large` e `rescale_with_baseline=True`
-2. **Qualidade Jurídica:** LLM-as-a-Judge via DeepSeek V3 em 5 dimensões adaptadas à Recomendação CNJ 154/2024, com **score global** calculado como média aritmética das dimensões
+2. **Qualidade Jurídica:** LLM-as-a-Judge via `deepseek-chat` (alias da API DeepSeek; em 2026-03-29 correspondia a DeepSeek-V3.2 em modo non-thinking) em 5 dimensões adaptadas à Recomendação CNJ 154/2024, com **score global** calculado como média aritmética das dimensões
 3. **Estatístico:** inferência **pareada por exemplo**, com bootstrap pareado (**10.000** reamostragens) para IC 95%, teste de permutação pareado (**10.000** iterações) para `p-value` e ajustes de multiplicidade
 4. **Humano:** **40 casos**, 2 avaliadores, design cego, escala Likert `1–5` e **weighted Cohen's kappa quadrático** por critério
 
@@ -147,7 +147,7 @@ Infraestrutura já versionada no repositório:
 - Amostragem cega, gabarito separado e relatório da avaliação humana: `pipeline/fase7/avaliacao_humana.py`
 - Consolidação das métricas da Fase 7: `pipeline/fase7/metricas.py`
 - Núcleo estatístico da Fase 7: `pipeline/fase7/estatisticas.py`
-- Tabela consolidada esperada de entrada: `data/fase7/metricas_automaticas.csv`
+- Tabela consolidada esperada de entrada no perfil oficial: `data/fase7/metricas_automaticas.csv`
 - Schema de `casos_avaliacao.jsonl`: `caso_id`, `indice_teste`, `fundamentacao`, `ementa_referencia`
 - Schema de cada arquivo de predição: `caso_id`, `condicao_id`, `ementa_gerada`
 
@@ -157,16 +157,15 @@ Infraestrutura já versionada no repositório:
 |---|---|
 | `requirements.txt` | Dependências do pipeline local e da suíte de testes |
 | `requirements_fases_avancadas.txt` | Dependências opcionais das Fases 5–7, para ambientes específicos |
-| `tests/` | Suíte mínima de regressão e smoke test sintético das Fases 2–4 |
+| `tests/` | Suíte mínima de regressão e smoke tests sintéticos do pipeline, incluindo Fases 5–7 |
 | `.github/workflows/testes.yml` | CI executando `pytest -q` em `push` para `main` e em PRs |
 | `pipeline/fase5/finetuning_gemini.py` | Preparação e submissão do SFT do Gemini, com perfis `exploratorio`/`oficial`; a CLI grava em `data/exploratorio/fase5/` por padrão e usa `data/fase5/` apenas com `--perfil-execucao oficial` |
 | `pipeline/fase5/finetuning_qwen.py` | Preparação e execução do SFT LoRA do Qwen, com separação entre artefatos exploratórios e oficiais |
 | `pipeline/fase5/tuning_utils.py` | Carregamento do dataset conversacional, nomes de experimento e persistência dos manifestos da Fase 5 |
 | `pipeline/fase6/baseline_gemini.py` | Geração das predições `gemini_zero_shot.jsonl` e `gemini_ft.jsonl`, com perfis `exploratorio`/`oficial`; a CLI usa `data/exploratorio/fase7/predicoes/` por padrão |
 | `pipeline/fase6/baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` e `qwen_ft.jsonl`, com suporte a checkpoint LoRA local e separação entre artefatos exploratórios e oficiais |
-| `pipeline/fase7/casos_avaliacao.py` | Geração de `data/fase7/casos_avaliacao.jsonl` a partir de `data/dataset_teste.jsonl` |
 | `pipeline/fase7/casos_avaliacao.py` | Geração dos casos-base com perfis `exploratorio`/`oficial`, mantendo os testes em `data/exploratorio/fase7/` por padrão |
-| `pipeline/fase7/avaliacao_judge.py` | Execução incremental do DeepSeek V3 / `deepseek-chat` com separação entre artefatos exploratórios e oficiais |
+| `pipeline/fase7/avaliacao_judge.py` | Execução incremental do juiz via `deepseek-chat`, com separação entre artefatos exploratórios e oficiais |
 | `pipeline/fase7/avaliacao_humana.py` | Geração da amostra estratificada cega (`amostra_humana.json`), gabarito separado (`gabarito_cegamento_humano.json`), template `avaliacao_humana.csv` e relatório humano consolidado, também separados por perfil |
 | `pipeline/fase7/predicoes_utils.py` | Leitura, retomada incremental e persistência canônica das predições |
 | `pipeline/prompts/llm_judge_prompt.txt` | Prompt versionado do LLM-as-a-Judge |

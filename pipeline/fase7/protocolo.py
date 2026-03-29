@@ -40,8 +40,12 @@ from pipeline.core.project_paths import (
 log = logging.getLogger(__name__)
 
 VERSAO_PROTOCOLO_FASE7 = "2026-03-29"
-MODELO_JUIZ = "DeepSeek V3"
+MODELO_JUIZ = "DeepSeek Chat"
 MODELO_JUIZ_API_PADRAO = "deepseek-chat"
+MODELO_JUIZ_API_OBSERVACAO = (
+    "Em 2026-03-29, o alias `deepseek-chat` da API DeepSeek "
+    "correspondia a DeepSeek-V3.2 em modo non-thinking."
+)
 
 DIMENSOES_JUIZ = (
     "pertinencia_tematica",
@@ -363,6 +367,7 @@ def gerar_manifesto_fase7(
         "llm_judge": {
             "modelo": MODELO_JUIZ,
             "modelo_api_padrao": MODELO_JUIZ_API_PADRAO,
+            "observacao_modelo_api": MODELO_JUIZ_API_OBSERVACAO,
             "prompt_path": str(LLM_JUDGE_PROMPT_PATH),
             "prompt_sha256": calcular_sha256_texto(prompt),
             "schema_resposta": schema_resposta_llm_judge(),

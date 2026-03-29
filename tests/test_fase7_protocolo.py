@@ -10,6 +10,7 @@ from pipeline.fase7.protocolo import (
     CONDICOES_EXPERIMENTAIS,
     CRITERIOS_AVALIACAO_HUMANA,
     DIMENSOES_JUIZ,
+    MODELO_JUIZ_API_OBSERVACAO,
     MODELO_JUIZ_API_PADRAO,
     SEED_AMOSTRAGEM_AVALIACAO_HUMANA,
     SEED_CEGAMENTO_AVALIACAO_HUMANA,
@@ -152,6 +153,7 @@ def test_manifesto_fase7_tem_contrato_estavel() -> None:
     assert manifesto["perfil_execucao"] == "oficial"
     assert manifesto["llm_judge"]["prompt_path"] == str(LLM_JUDGE_PROMPT_PATH)
     assert manifesto["llm_judge"]["modelo_api_padrao"] == MODELO_JUIZ_API_PADRAO
+    assert manifesto["llm_judge"]["observacao_modelo_api"] == MODELO_JUIZ_API_OBSERVACAO
     assert manifesto["artefatos"]["manifesto"] == str(FASE7_PROTOCOLO_PATH)
     assert manifesto["schema_caso_avaliacao"]["required"] == ["caso_id", "indice_teste", "fundamentacao", "ementa_referencia"]
     assert manifesto["schema_predicao"]["required"] == ["caso_id", "condicao_id", "ementa_gerada"]

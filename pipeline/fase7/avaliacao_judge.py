@@ -397,6 +397,7 @@ def executar_avaliacao_judge(
     manifesto: dict[str, Any] = {
         "perfil_execucao": perfil_execucao,
         "modelo_juiz_logico": MODELO_JUIZ,
+        "model_id": model_id,
         "model_id_api": model_id,
         "api_base": api_base,
         "api_key_env_var": api_key_env_var,

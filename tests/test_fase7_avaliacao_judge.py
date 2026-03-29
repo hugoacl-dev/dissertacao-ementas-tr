@@ -77,4 +77,6 @@ def test_executar_avaliacao_judge_com_retomada_incremental(monkeypatch, tmp_path
 
     manifesto = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifesto["status"] == "completed"
+    assert manifesto["model_id"] == "deepseek-chat"
+    assert manifesto["model_id_api"] == "deepseek-chat"
     assert sorted(manifesto["condicoes_ausentes"]) == ["gemini_zero_shot", "qwen_ft", "qwen_zero_shot"]
