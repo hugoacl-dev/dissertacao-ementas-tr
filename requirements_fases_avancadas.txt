@@ -2,9 +2,18 @@
 #
 # Fase 5a (fine-tuning Gemini 2.5 Flash via Vertex AI):
 google-cloud-aiplatform>=1.40.0
+google-cloud-storage>=2.16.0
+google-genai>=1.0.0
 #
 # Fase 5b (fine-tuning Qwen 2.5 14B via LoRA/Unsloth — executar em RunPod):
 # unsloth[cu124-torch260]   # instalar no ambiente RunPod, não localmente
+datasets>=2.19.0
+trl>=0.9.0
 #
-# Fases 6 e 7 (baseline + avaliação no Colab):
-# rouge-score, bert-score, transformers, deepseek-sdk  # instalar no Colab
+# Fases 6 e 7 (baseline + avaliação no Colab/ambiente dedicado):
+rouge-score>=0.1.2
+bert-score>=0.3.13
+transformers>=4.40.0
+accelerate>=0.30.0
+# torch  # instalar conforme o ambiente CPU/CUDA usado para o Qwen
+# deepseek-sdk  # instalar apenas no ambiente que executará o juiz automático
