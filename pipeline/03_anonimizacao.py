@@ -115,6 +115,25 @@ _RE_NOME_HONORIFICO = re.compile(
     rf"(?i)\b({_HONORIFICOS_PRIVADOS})\s+([A-ZÀ-Ÿ][a-zà-ÿ]+\s*){{1,4}}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
 )
 
+# Nomes privados em CAIXA ALTA capturados apenas em contextos fortemente
+# indicativos de parte privada/documento pericial, para evitar apagar
+# fórmulas jurídicas ou nomes de agentes públicos em precedentes.
+_RE_NOME_PRIVADO_CONTEXTUAL = re.compile(
+    r"(?P<prefixo>\b(?:AUTOR(?:A)?\s*:|movid[oa]\s+por|representad[oa]\s+por|Sr\(a\)\.)\s*)"
+    r"(?P<nome>[A-ZÀ-Ý]{2,}(?:\s+[A-ZÀ-Ý]{2,}){1,6}?)"
+    r"(?=\s*(?:R[ÉE]U\s*:|I(?:\.\d+)?\)|QUESTÕES\s+DO\b|ESPECIALIDADE\s*:|IDADE\s*:|"
+    r"DATA(?:\s+DA\s+REALIZAÇÃO)?\s*:|em\s+face\b|por\s+intermédio\b|/|,|;|\.|\)|$))"
+)
+_MARCADORES_NOME_PRIVADO_CONTEXTUAL = (
+    "AUTOR:",
+    "AUTORA:",
+    "movido por",
+    "movida por",
+    "representado por",
+    "representada por",
+    "Sr(a).",
+)
+
 # Nome próprio isolado: 3+ palavras com inicial maiúscula consecutivas
 _RE_NOME_PROPRIO = re.compile(
     r"\b([A-ZÀ-Ÿ][a-zà-ÿ]+\s+){2,5}[A-ZÀ-Ÿ][a-zà-ÿ]+\b"
@@ -225,6 +244,23 @@ def _contar_ocorrencias(pattern: re.Pattern[str], texto: str) -> int:
     return len(pattern.findall(texto))
 
 
+def _substituir_nomes_contextuais_privados(
+    texto: str,
+    nomes_coletados: set[str],
+) -> str:
+    """Substitui nomes privados em caixa alta em contextos documentais seguros."""
+    if not any(marcador in texto for marcador in _MARCADORES_NOME_PRIVADO_CONTEXTUAL):
+        return texto
+
+    def _repl(match: re.Match[str]) -> str:
+        nome = match.group("nome").strip()
+        if nome:
+            nomes_coletados.add(nome)
+        return f"{match.group('prefixo')}[NOME_OCULTADO]"
+
+    return _RE_NOME_PRIVADO_CONTEXTUAL.sub(_repl, texto)
+
+
 def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None) -> str:
     """Substitui dados pessoais no texto por tokens genéricos, em conformidade com a LGPD.
 
@@ -261,6 +297,8 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
         stats.emails += _contar_ocorrencias(_RE_EMAIL, texto)
         stats.telefones += _contar_ocorrencias(_RE_TELEFONE, texto)
         stats.nomes_honorificos += _contar_ocorrencias(_RE_NOME_HONORIFICO, texto)
+        if any(marcador in texto for marcador in _MARCADORES_NOME_PRIVADO_CONTEXTUAL):
+            stats.nomes_honorificos += _contar_ocorrencias(_RE_NOME_PRIVADO_CONTEXTUAL, texto)
         stats.logradouros += _contar_ocorrencias(_RE_LOGRADOURO, texto)
 
     texto = _RE_CPF.sub("[CPF]", texto)
@@ -283,6 +321,7 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
             nomes_coletados.add(nome_sem_titulo)
 
     texto = _RE_NOME_HONORIFICO.sub(r"\1 [NOME_OCULTADO]", texto)
+    texto = _substituir_nomes_contextuais_privados(texto, nomes_coletados)
 
     # --- Etapa 7: Back-reference — fragmentos de 2+ palavras dos nomes ---
     # Gera substrings de 2+ palavras consecutivas de cada nome coletado.

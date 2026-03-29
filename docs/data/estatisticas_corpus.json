@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-29T01:58:02",
+    "gerado_em": "2026-03-29T02:27:33",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
@@ -108,10 +108,10 @@
         "CONTA_DIGITO": 6,
         "EMAIL": 7,
         "TELEFONE": 39,
-        "NOME_OCULTADO": 137825,
-        "NOME_PESSOA": 85573,
+        "NOME_OCULTADO": 137931,
+        "NOME_PESSOA": 85597,
         "ENDERECO_COMPLETO": 22,
-        "total": 230834,
+        "total": 230964,
         "descartados_pos_anon": 0
       },
       "system_prompt": "Você é o relator de uma Turma Recursal de Juizado Especial Federal. Sua tarefa é redigir a ementa do acórdão a partir do voto a seguir. A ementa deve ser um resumo curto, objetivo e autossuficiente do que foi decidido, no formato condensado utilizado pelas Turmas Recursais: área do direito, tema, fundamento determinante e resultado do julgamento. Responda exclusivamente com o texto da ementa, sem explicações adicionais.",
@@ -169,7 +169,7 @@
         "p25": 374.0,
         "p75": 782.0,
         "p95": 1400.0,
-        "total_palavras": 20988393
+        "total_palavras": 20988030
       },
       "ementa": {
         "contagem": 32321,
@@ -221,16 +221,16 @@
         }
       },
       "vocabulario": {
-        "fundamentacao": 222011,
+        "fundamentacao": 221968,
         "ementa": 12601,
-        "total_unico": 223632,
+        "total_unico": 223589,
         "sobreposicao": 10980
       },
       "histograma_fundamentacao": {
         "0-199": 1077,
         "200-399": 8282,
-        "400-599": 9518,
-        "600-799": 5726,
+        "400-599": 9519,
+        "600-799": 5725,
         "800-999": 3104,
         "1000-1199": 1889,
         "1200-1399": 1105,
@@ -5195,6 +5195,10 @@
           },
           {
             "x": 641,
+            "y": 25
+          },
+          {
+            "x": 641,
             "y": 17
           },
           {
@@ -5234,20 +5238,16 @@
             "y": 21
           },
           {
-            "x": 645,
-            "y": 25
-          },
-          {
             "x": 646,
             "y": 60
           },
           {
             "x": 647,
-            "y": 38
+            "y": 21
           },
           {
             "x": 647,
-            "y": 21
+            "y": 38
           },
           {
             "x": 648,
@@ -6251,11 +6251,11 @@
           },
           {
             "x": 798,
-            "y": 21
+            "y": 22
           },
           {
             "x": 798,
-            "y": 22
+            "y": 21
           },
           {
             "x": 798,
@@ -6271,11 +6271,11 @@
           },
           {
             "x": 799,
-            "y": 24
+            "y": 28
           },
           {
             "x": 799,
-            "y": 28
+            "y": 24
           },
           {
             "x": 800,
@@ -6290,16 +6290,20 @@
             "y": 35
           },
           {
+            "x": 802,
+            "y": 34
+          },
+          {
+            "x": 803,
+            "y": 32
+          },
+          {
             "x": 803,
             "y": 25
           },
           {
             "x": 803,
             "y": 27
-          },
-          {
-            "x": 803,
-            "y": 32
           },
           {
             "x": 804,
@@ -6319,10 +6323,6 @@
           },
           {
             "x": 805,
-            "y": 34
-          },
-          {
-            "x": 805,
             "y": 32
           },
           {
@@ -6339,7 +6339,7 @@
           },
           {
             "x": 808,
-            "y": 66
+            "y": 32
           },
           {
             "x": 808,
@@ -6347,15 +6347,15 @@
           },
           {
             "x": 808,
-            "y": 32
-          },
-          {
-            "x": 809,
-            "y": 38
+            "y": 66
           },
           {
             "x": 809,
             "y": 65
+          },
+          {
+            "x": 809,
+            "y": 38
           },
           {
             "x": 810,
@@ -6407,11 +6407,11 @@
           },
           {
             "x": 826,
-            "y": 34
+            "y": 22
           },
           {
             "x": 826,
-            "y": 22
+            "y": 34
           },
           {
             "x": 826,
@@ -8038,7 +8038,7 @@
             "y": 17
           },
           {
-            "x": 1624,
+            "x": 1620,
             "y": 32
           },
           {
@@ -8118,7 +8118,7 @@
             "y": 68
           },
           {
-            "x": 1795,
+            "x": 1792,
             "y": 48
           },
           {
@@ -8158,7 +8158,7 @@
             "y": 32
           },
           {
-            "x": 2043,
+            "x": 2035,
             "y": 30
           },
           {
@@ -8190,7 +8190,7 @@
             "y": 54
           },
           {
-            "x": 2209,
+            "x": 2205,
             "y": 23
           },
           {
