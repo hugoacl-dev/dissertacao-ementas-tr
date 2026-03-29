@@ -12,7 +12,7 @@ Guia normativo para agentes de código que trabalham neste projeto. Este arquivo
 
 Este repositório implementa a dissertação de mestrado sobre **geração abstrativa de ementas judiciais** a partir de votos/fundamentações de uma Turma Recursal da Justiça Federal da Paraíba.
 
-- **Corpus atual:** 32.312 pares `{fundamentação, ementa}`
+- **Corpus atual:** 32.321 pares `{fundamentação, ementa}`
 - **Modelos-alvo:** Gemini 2.5 Flash e Qwen 2.5 14B-Instruct
 - **Objetivo:** construir e validar um pipeline completo de extração, higienização, anonimização, estatísticas, fine-tuning, baseline e avaliação
 - **Idioma do projeto:** português brasileiro em código, documentação, commits e interações

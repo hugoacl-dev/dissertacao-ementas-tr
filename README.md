@@ -15,9 +15,9 @@ Desenvolver e validar estatisticamente um pipeline computacional completo para a
 
 ## Corpus
 
-- **32.312 pares** {fundamentação, ementa} extraídos do sistema judicial
-- Razão de compressão média: **23,8:1** (660 palavras → 30 palavras)
-- Novel n-grams: **38,9%** de unigramas e **87,2%** de trigramas inéditos, confirmando a natureza **genuinamente abstrativa** das ementas
+- **32.321 pares** {fundamentação, ementa} extraídos do sistema judicial
+- Razão de compressão média: **23,4:1** (649,4 palavras → 30,1 palavras)
+- Novel n-grams: **39,2%** de unigramas e **87,5%** de trigramas inéditos, confirmando a natureza **genuinamente abstrativa** das ementas
 
 ## Pipeline
 
@@ -63,7 +63,7 @@ Dashboard interativo para visualização das estatísticas do corpus, disponíve
 
 - Funil de attrition, histogramas de comprimento, novel n-grams, distribuição temporal
 - Tema claro (projetor) e escuro
-- Dados consumidos de `data/estatisticas_corpus.json`
+- Dados consumidos de `docs/data/estatisticas_corpus.json`
 
 ## Avaliação (Fase 7)
 
