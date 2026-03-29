@@ -811,7 +811,6 @@ def gerar_relatorio(
         "meta": {
             "gerado_em": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
-            "autor": "AUTOR_ANONIMIZADO",
             "unidade_de_medida": "palavras (split por espaço)",
             "pipeline_total_segundos": timing.get("pipeline_total"),
         },

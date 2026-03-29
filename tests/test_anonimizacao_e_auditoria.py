@@ -35,15 +35,15 @@ def test_anonimiza_nome_privado_em_label_autor() -> None:
     assert "Instituto Nacional do Seguro Social" in anonimizado
 
 
-def test_preserva_nome_de_agente_publico_em_precedente() -> None:
+def test_preserva_referencia_institucional_em_precedente() -> None:
     texto = (
         "Reafirmação da jurisprudência do Supremo Tribunal Federal. "
-        "(RE 635729 RG, Relator Min. Ministro do Supremo Tribunal Federal, julgado em 30/06/2011)"
+        "(RE 635729 RG, Relator Ministro do Supremo Tribunal Federal, julgado em 30/06/2011)"
     )
 
     anonimizado = anonimizacao.anonimizar_texto(texto)
 
-    assert "Ministro do Supremo Tribunal Federal" in anonimizado
+    assert "Relator Ministro do Supremo Tribunal Federal" in anonimizado
     assert "[NOME_OCULTADO]" not in anonimizado
 
 

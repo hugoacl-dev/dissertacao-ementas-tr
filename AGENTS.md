@@ -73,7 +73,7 @@ A pasta `pesquisa/` existe neste ambiente local e é uma fonte importante de con
 
 1. `pesquisa/PLANO_ARQUITETURAL.md`
 2. `pesquisa/NOTAS_PESQUISA.md`
-3. `pesquisa/documento_compartilhado.md`
+3. documento compartilhado principal da dissertação em `pesquisa/`
 4. `pesquisa/REFERENCIAS.md`
 5. `pesquisa/fluxos/`
 
@@ -375,4 +375,4 @@ git push
 - `.github/workflows/testes.yml` para a automação de CI
 - `pesquisa/PLANO_ARQUITETURAL.md` para o desenho técnico das 7 fases
 - `pesquisa/NOTAS_PESQUISA.md` para números observados e justificativas metodológicas
-- `pesquisa/documento_compartilhado.md` para o enquadramento acadêmico da dissertação
+- documento compartilhado principal da dissertação em `pesquisa/` para o enquadramento acadêmico

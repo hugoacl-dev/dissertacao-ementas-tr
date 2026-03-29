@@ -2,7 +2,6 @@
   "meta": {
     "gerado_em": "2026-03-29T02:27:33",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
-    "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
     "pipeline_total_segundos": 139
   },

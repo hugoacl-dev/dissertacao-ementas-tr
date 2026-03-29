@@ -328,7 +328,7 @@ def anonimizar_texto(texto: str | None, stats: AnonimizationStats | None = None)
 
     # --- Etapa 7: Back-reference — fragmentos de 2+ palavras dos nomes ---
     # Gera substrings de 2+ palavras consecutivas de cada nome coletado.
-    # Ex.: "ALFA BETA GAMA" → {"ALFA BETA", "Silva Santos"}
+    # Ex.: "ALFA BETA GAMA" → {"ALFA BETA", "BETA GAMA"}
     fragmentos: set[str] = set()
     for nome in nomes_coletados:
         partes = nome.split()
