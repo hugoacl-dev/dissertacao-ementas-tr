@@ -114,7 +114,19 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     ),
 
 
-    # 12. "Súmula de Julgamento: …" até o final da string
+    # 12. Remove rótulo duplicado "Súmula de julgamento" imediatamente antes
+    # do cabeçalho completo da súmula terminal.
+    (
+        "sumula_julgamento_duplicada",
+        re.compile(
+            r"S[úu]mula\s+d[eo]\s+julgamento\s+"
+            r"(?=(?:\d+\.\s*)?S[úu]mula\s+d[eo]\s+julgamento\s*:)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        " ",
+    ),
+
+    # 13. "Súmula de Julgamento: …" até o final da string
     (
         "sumula_julgamento",
         re.compile(
@@ -126,7 +138,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 13. Assinaturas terminais com nome do magistrado + cargo
+    # 14. Assinaturas terminais com nome do magistrado + cargo
     (
         "assinatura_magistrado_nome_titulo",
         re.compile(
@@ -141,7 +153,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 14. Honoríficos de juízes até o final da string
+    # 15. Honoríficos de juízes até o final da string
     (
         "honorificos_juiz",
         re.compile(
@@ -151,7 +163,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 15. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
+    # 16. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
     (
         "capslock_assinatura",
         re.compile(r"\.?[ \n\r\t\xa0]*(?:[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]+){2,}[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]*$"),
