@@ -30,7 +30,7 @@ O projeto é dividido em **7 fases**. As Fases 1–4 são sequenciais; após a F
 | — | `pipeline.ferramentas.auditoria` | Auditoria pós-Fase 3: verifica ausência de dados pessoais residuais (8 categorias, incluindo nomes privados em contexto residual) |
 | 4 | `pipeline.fase1_4.fase04_estatisticas` | Estatísticas descritivas: funil de attrition, distribuições, novel n-grams |
 | 5 | `pipeline.fase5.finetuning_gemini` | Fine-tuning supervisionado (SFT) do **Gemini 2.5 Flash** via API do Vertex AI, com manifesto local e modo de preparação prévia do job |
-| 5 | `pipeline.fase5.finetuning_qwen` | Fine-tuning (LoRA via Unsloth) do **Qwen 2.5 14B** em GPU RunPod A100 80GB, com manifesto local e modo de preparação prévia do treino |
+| 5 | `pipeline.fase5.finetuning_qwen` | Fine-tuning (LoRA via Unsloth) do **Qwen 2.5 14B** em GPU RunPod de 80 GB, com manifesto local, compatibilidade com TRL recente e modo de preparação prévia do treino |
 | 6 | `pipeline.fase6.baseline_gemini` | Runner canônico de inferência do Gemini 2.5 Flash, com retomada incremental, manifesto de execução e suporte às condições `gemini_zero_shot` e `gemini_ft` |
 | 6 | `pipeline.fase6.baseline_qwen` | Runner canônico de inferência do Qwen 2.5 14B, com retomada incremental, manifesto de execução e suporte às condições `qwen_zero_shot` e `qwen_ft` (incluindo checkpoint LoRA local) |
 | 7 | `pipeline.fase7.casos_avaliacao` + `pipeline.fase7.protocolo` + `pipeline.fase7.avaliacao_judge` + `pipeline.fase7.avaliacao_humana` + `pipeline.fase7.metricas` + `pipeline.fase7.estatisticas` | Geração dos casos-base, protocolo versionado, executor canônico do LLM-as-a-Judge, amostragem/relatório da avaliação humana, consolidação de métricas e inferência estatística pareada das 4 condições experimentais |
