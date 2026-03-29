@@ -126,7 +126,22 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 13. Honoríficos de juízes até o final da string
+    # 13. Assinaturas terminais com nome do magistrado + cargo
+    (
+        "assinatura_magistrado_nome_titulo",
+        re.compile(
+            r"(?:^|[\n\r]|[.;:]\s+|\s{2,}|[\xa0]+)"
+            r"(?:(?:[A-ZÀ-Ý]{2,}|[A-ZÀ-Ý][a-zà-ÿ]+)"
+            r"(?:[\s\xa0]+(?:(?:[A-ZÀ-Ý]{2,}|[A-ZÀ-Ý][a-zà-ÿ]+)|da|de|do|dos|das|e)){2,7})"
+            r"[\s\xa0]+"
+            r"(?:(?i:Ju[ií]z(?:a)?(?:[\s\xa0]+Federal)?(?:[\s\xa0]+Relator(?:a)?)?"
+            r"|Relator(?:a)?|Desembargador(?:a)?(?:[\s\xa0]+Federal)?"
+            r"|Excelent[ií]ssimo(?:a)?))\.?[\s\xa0]*$"
+        ),
+        " ",
+    ),
+
+    # 14. Honoríficos de juízes até o final da string
     (
         "honorificos_juiz",
         re.compile(
@@ -136,7 +151,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
         " ",
     ),
 
-    # 14. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
+    # 15. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
     (
         "capslock_assinatura",
         re.compile(r"\.?[ \n]*[A-ZÀ-Ÿ\s]{10,}$"),

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-29T01:13:54",
+    "gerado_em": "2026-03-29T01:31:54",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "AUTOR_ANONIMIZADO",
     "unidade_de_medida": "palavras (split por espaço)",
@@ -71,7 +71,7 @@
         },
         {
           "nome": "dados_limpos.json",
-          "tamanho_mb": 148.4,
+          "tamanho_mb": 148.3,
           "tipo": "saida",
           "conteudo": "{id, fundamentação, ementa} limpos"
         }
@@ -108,17 +108,17 @@
         "CONTA_DIGITO": 6,
         "EMAIL": 7,
         "TELEFONE": 39,
-        "NOME_OCULTADO": 137802,
-        "NOME_PESSOA": 85653,
+        "NOME_OCULTADO": 137801,
+        "NOME_PESSOA": 85571,
         "ENDERECO_COMPLETO": 22,
-        "total": 230890,
+        "total": 230807,
         "descartados_pos_anon": 0
       },
       "system_prompt": "Você é o relator de uma Turma Recursal de Juizado Especial Federal. Sua tarefa é redigir a ementa do acórdão a partir do voto a seguir. A ementa deve ser um resumo curto, objetivo e autossuficiente do que foi decidido, no formato condensado utilizado pelas Turmas Recursais: área do direito, tema, fundamento determinante e resultado do julgamento. Responda exclusivamente com o texto da ementa, sem explicações adicionais.",
       "artefatos": [
         {
           "nome": "dados_limpos.json",
-          "tamanho_mb": 148.4,
+          "tamanho_mb": 148.3,
           "tipo": "entrada",
           "conteudo": "{id, fundamentação, ementa} limpos"
         },
@@ -169,7 +169,7 @@
         "p25": 374.0,
         "p75": 782.0,
         "p95": 1400.0,
-        "total_palavras": 20988272
+        "total_palavras": 20988097
       },
       "ementa": {
         "contagem": 32320,
@@ -185,7 +185,7 @@
         "p25": 22.0,
         "p75": 35.0,
         "p95": 53.0,
-        "total_palavras": 970761
+        "total_palavras": 970748
       },
       "razao_compressao": {
         "media": 23.44,
@@ -222,16 +222,16 @@
       },
       "vocabulario": {
         "fundamentacao": 222006,
-        "ementa": 12603,
+        "ementa": 12602,
         "total_unico": 223627,
-        "sobreposicao": 10982
+        "sobreposicao": 10981
       },
       "histograma_fundamentacao": {
         "0-199": 1077,
         "200-399": 8281,
         "400-599": 9518,
-        "600-799": 5725,
-        "800-999": 3105,
+        "600-799": 5726,
+        "800-999": 3104,
         "1000-1199": 1889,
         "1200-1399": 1105,
         "1400-1599": 598,
@@ -246,8 +246,8 @@
       "histograma_ementa": {
         "0-9": 243,
         "10-19": 5123,
-        "20-29": 13013,
-        "30-39": 7874,
+        "20-29": 13014,
+        "30-39": 7873,
         "40-49": 3742,
         "50-59": 1437,
         "60-69": 585,
@@ -2114,6 +2114,10 @@
             "y": 22
           },
           {
+            "x": 362,
+            "y": 37
+          },
+          {
             "x": 363,
             "y": 34
           },
@@ -2132,10 +2136,6 @@
           {
             "x": 364,
             "y": 40
-          },
-          {
-            "x": 364,
-            "y": 37
           },
           {
             "x": 364,
@@ -2302,6 +2302,10 @@
             "y": 20
           },
           {
+            "x": 377,
+            "y": 19
+          },
+          {
             "x": 378,
             "y": 25
           },
@@ -2347,6 +2351,10 @@
           },
           {
             "x": 380,
+            "y": 20
+          },
+          {
+            "x": 380,
             "y": 73
           },
           {
@@ -2354,16 +2362,8 @@
             "y": 20
           },
           {
-            "x": 380,
-            "y": 20
-          },
-          {
             "x": 381,
             "y": 20
-          },
-          {
-            "x": 381,
-            "y": 19
           },
           {
             "x": 383,
@@ -2383,11 +2383,11 @@
           },
           {
             "x": 385,
-            "y": 24
+            "y": 21
           },
           {
             "x": 385,
-            "y": 21
+            "y": 24
           },
           {
             "x": 385,
@@ -4567,11 +4567,11 @@
           },
           {
             "x": 570,
-            "y": 65
+            "y": 17
           },
           {
             "x": 570,
-            "y": 17
+            "y": 65
           },
           {
             "x": 571,
@@ -4583,11 +4583,19 @@
           },
           {
             "x": 572,
-            "y": 24
+            "y": 20
           },
           {
             "x": 572,
+            "y": 24
+          },
+          {
+            "x": 574,
             "y": 20
+          },
+          {
+            "x": 574,
+            "y": 35
           },
           {
             "x": 574,
@@ -4595,15 +4603,11 @@
           },
           {
             "x": 574,
-            "y": 20
-          },
-          {
-            "x": 574,
             "y": 23
           },
           {
-            "x": 574,
-            "y": 35
+            "x": 575,
+            "y": 16
           },
           {
             "x": 575,
@@ -4619,10 +4623,6 @@
           },
           {
             "x": 576,
-            "y": 22
-          },
-          {
-            "x": 576,
             "y": 24
           },
           {
@@ -4631,22 +4631,18 @@
           },
           {
             "x": 576,
-            "y": 29
+            "y": 22
           },
           {
-            "x": 578,
-            "y": 22
+            "x": 576,
+            "y": 29
           },
           {
             "x": 578,
             "y": 23
           },
           {
-            "x": 579,
-            "y": 16
-          },
-          {
-            "x": 579,
+            "x": 578,
             "y": 22
           },
           {
@@ -4654,12 +4650,16 @@
             "y": 19
           },
           {
-            "x": 580,
-            "y": 28
+            "x": 579,
+            "y": 22
           },
           {
             "x": 580,
             "y": 25
+          },
+          {
+            "x": 580,
+            "y": 28
           },
           {
             "x": 582,
@@ -4667,7 +4667,7 @@
           },
           {
             "x": 583,
-            "y": 50
+            "y": 16
           },
           {
             "x": 583,
@@ -4676,6 +4676,10 @@
           {
             "x": 583,
             "y": 26
+          },
+          {
+            "x": 583,
+            "y": 50
           },
           {
             "x": 584,
@@ -4691,10 +4695,6 @@
           },
           {
             "x": 585,
-            "y": 17
-          },
-          {
-            "x": 585,
             "y": 23
           },
           {
@@ -4704,6 +4704,10 @@
           {
             "x": 585,
             "y": 26
+          },
+          {
+            "x": 585,
+            "y": 17
           },
           {
             "x": 586,
@@ -4720,10 +4724,6 @@
           {
             "x": 587,
             "y": 48
-          },
-          {
-            "x": 587,
-            "y": 16
           },
           {
             "x": 587,
@@ -6275,10 +6275,6 @@
           },
           {
             "x": 783,
-            "y": 28
-          },
-          {
-            "x": 783,
             "y": 16
           },
           {
@@ -6286,16 +6282,20 @@
             "y": 20
           },
           {
+            "x": 783,
+            "y": 28
+          },
+          {
             "x": 784,
             "y": 63
           },
           {
             "x": 785,
-            "y": 43
+            "y": 29
           },
           {
             "x": 785,
-            "y": 29
+            "y": 43
           },
           {
             "x": 786,
@@ -6319,11 +6319,11 @@
           },
           {
             "x": 793,
-            "y": 22
+            "y": 33
           },
           {
             "x": 793,
-            "y": 33
+            "y": 22
           },
           {
             "x": 794,
@@ -6355,6 +6355,10 @@
           },
           {
             "x": 799,
+            "y": 24
+          },
+          {
+            "x": 799,
             "y": 20
           },
           {
@@ -6367,10 +6371,6 @@
           },
           {
             "x": 801,
-            "y": 30
-          },
-          {
-            "x": 801,
             "y": 48
           },
           {
@@ -6378,15 +6378,15 @@
             "y": 24
           },
           {
+            "x": 801,
+            "y": 30
+          },
+          {
             "x": 803,
             "y": 32
           },
           {
             "x": 803,
-            "y": 24
-          },
-          {
-            "x": 804,
             "y": 24
           },
           {
@@ -7211,15 +7211,15 @@
           },
           {
             "x": 1040,
+            "y": 34
+          },
+          {
+            "x": 1040,
             "y": 32
           },
           {
             "x": 1041,
             "y": 35
-          },
-          {
-            "x": 1042,
-            "y": 34
           },
           {
             "x": 1043,
@@ -8269,19 +8269,19 @@
       "wordcloud": [
         {
           "text": "sentença",
-          "weight": 37740
+          "weight": 37739
         },
         {
           "text": "recurso",
-          "weight": 34575
+          "weight": 34574
         },
         {
           "text": "autora",
-          "weight": 18031
+          "weight": 18030
         },
         {
           "text": "parte",
-          "weight": 17987
+          "weight": 17986
         },
         {
           "text": "previdenciário",
@@ -8325,7 +8325,7 @@
         },
         {
           "text": "mantida",
-          "weight": 6220
+          "weight": 6219
         },
         {
           "text": "laudo",
