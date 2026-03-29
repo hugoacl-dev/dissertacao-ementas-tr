@@ -71,6 +71,9 @@ python3 -m pipeline.fase6.baseline_gemini
 # Executar baseline zero-shot do Qwen
 python3 -m pipeline.fase6.baseline_qwen --model-id Qwen/Qwen2.5-14B-Instruct
 
+# Preparar um pod novo do RunPod para o Qwen (venv, torch, unsloth e caches)
+bash scripts/runpod_qwen_bootstrap.sh
+
 # Smoke test do Qwen em GPU (RunPod/H100), com cache do Hugging Face em /workspace
 bash scripts/qwen_smoke_gpu.sh
 
@@ -124,6 +127,7 @@ Essa separação evita que smoke tests e rodadas exploratórias contaminem os ar
 ### Notas Operacionais do Qwen em GPU
 
 - O smoke test real do Qwen foi validado em RunPod com `H100 80GB`.
+- Para recriar um pod novo com o combo validado, use primeiro [runpod_qwen_bootstrap.sh](/Users/nti/dissertacao-ementas-tr/scripts/runpod_qwen_bootstrap.sh) e depois [qwen_smoke_gpu.sh](/Users/nti/dissertacao-ementas-tr/scripts/qwen_smoke_gpu.sh).
 - No primeiro carregamento, o `baseline_qwen` baixa aproximadamente `29,5 GB` do modelo base `Qwen/Qwen2.5-14B-Instruct`; o `finetuning_qwen` via Unsloth baixa adicionalmente cerca de `11,3 GB` do checkpoint 4-bit otimizado.
 - Em RunPod, o cache padrão em `/root/.cache` pode esgotar o `container disk` mesmo quando `/workspace` ainda tem espaço livre. Por isso, o script [qwen_smoke_gpu.sh](/Users/nti/dissertacao-ementas-tr/scripts/qwen_smoke_gpu.sh) agora exporta por padrão:
   - `HF_HOME=/workspace/.cache/huggingface`
