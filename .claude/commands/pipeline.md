@@ -5,16 +5,16 @@ description: Executar o pipeline completo (Fases 1–4 + auditoria LGPD)
 Runbook curto. Fonte canônica: `AGENTS.md`.
 
 ```bash
-bash pipeline/run_all.sh
+bash scripts/run_all.sh
 ```
 
 Ordem executada:
 
-1. `pipeline/01_ingestao.py`
-2. `pipeline/02_higienizacao.py`
-3. `pipeline/03_anonimizacao.py`
-4. `pipeline/audit.py`
-5. `pipeline/04_estatisticas.py`
+1. `python3 -m pipeline.fases1_4.fase01_ingestao`
+2. `python3 -m pipeline.fases1_4.fase02_higienizacao`
+3. `python3 -m pipeline.fases1_4.fase03_anonimizacao`
+4. `python3 -m pipeline.ferramentas.auditoria`
+5. `python3 -m pipeline.fases1_4.fase04_estatisticas`
 
 Observação:
 

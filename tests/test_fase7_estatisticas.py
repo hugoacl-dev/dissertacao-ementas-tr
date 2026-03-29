@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import pytest
 
-from fase7_estatisticas import (
+from pipeline.fase7.estatisticas import (
     ajustar_pvalues_bh,
     ajustar_pvalues_holm,
     bootstrap_pareado,
@@ -13,7 +13,7 @@ from fase7_estatisticas import (
     gerar_relatorio_estatistico,
     validar_tabela_metricas_fase7,
 )
-from fase7_protocolo import gerar_manifesto_fase7
+from pipeline.fase7.protocolo import gerar_manifesto_fase7
 
 
 def _metricas_sinteticas() -> pd.DataFrame:

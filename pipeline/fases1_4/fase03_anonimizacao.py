@@ -9,7 +9,7 @@ treino/teste por critério cronológico.
 Entradas : data/dados_limpos.json
            (deve conter o campo 'data_cadastro' exportado pela Fase 1)
 Saídas   : data/dataset_treino.jsonl, data/dataset_teste.jsonl
-Executar a partir da raiz do projeto: python3 pipeline/03_anonimizacao.py
+Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase03_anonimizacao
 
 Divisão treino/teste: CRONOLÓGICA por 'data_cadastro'.
 As 90% decisões mais antigas vão para treino; as 10% mais recentes para teste.
@@ -34,10 +34,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-from artefato_utils import escrever_json_atomico
-from data_cadastro_utils import validar_e_converter_data_cadastro
-from jsonl_utils import MARCADOR_FUNDAMENTACAO
-from project_paths import (
+from pipeline.core.artefato_utils import escrever_json_atomico
+from pipeline.core.data_cadastro_utils import validar_e_converter_data_cadastro
+from pipeline.core.jsonl_utils import MARCADOR_FUNDAMENTACAO
+from pipeline.core.project_paths import (
     ANONIMIZACAO_STATS_PATH,
     DADOS_LIMPOS_PATH as INPUT_PATH,
     DATASET_TESTE_PATH as TEST_PATH,

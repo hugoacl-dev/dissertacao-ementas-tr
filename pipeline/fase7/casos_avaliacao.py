@@ -13,9 +13,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from artefato_utils import escrever_jsonl_atomico
-from jsonl_utils import extrair_fundamentacao_e_ementa
-from project_paths import DATASET_TESTE_PATH, FASE7_CASOS_AVALIACAO_PATH
+from pipeline.core.artefato_utils import escrever_jsonl_atomico
+from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.project_paths import DATASET_TESTE_PATH, FASE7_CASOS_AVALIACAO_PATH
 
 from .protocolo import validar_registro_caso_avaliacao
 
@@ -81,4 +81,3 @@ if __name__ == "__main__":
     except (FileNotFoundError, OSError, ValueError) as exc:
         log.critical("Execução interrompida: %s", exc)
         sys.exit(1)
-

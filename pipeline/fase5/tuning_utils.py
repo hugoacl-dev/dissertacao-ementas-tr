@@ -11,9 +11,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from artefato_utils import escrever_json_atomico
-from jsonl_utils import extrair_fundamentacao_e_ementa
-from project_paths import DATASET_TREINO_PATH, SYSTEM_PROMPT_PATH
+from pipeline.core.artefato_utils import escrever_json_atomico
+from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.project_paths import DATASET_TREINO_PATH, SYSTEM_PROMPT_PATH
 
 
 def _ler_jsonl(path: Path) -> list[dict[str, Any]]:

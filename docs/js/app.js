@@ -201,7 +201,7 @@ function buildPhase(num, data, contentFn) {
         <p style="font-size:2rem;margin-bottom:1rem">⚠️</p>
         <p><strong>Não foi possível carregar os dados.</strong></p>
         <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted)">
-          Execute <code>python3 pipeline/04_estatisticas.py</code> para gerar o JSON.<br>
+          Execute <code>python3 -m pipeline.fases1_4.fase04_estatisticas</code> para gerar o JSON.<br>
           Erro: ${err.message}
         </p>
       </div>`;

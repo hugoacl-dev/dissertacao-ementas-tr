@@ -23,20 +23,20 @@ Este repositório implementa a dissertação de mestrado sobre **geração abstr
 
 | Fase | Script | Estado | Saída principal |
 |---|---|---|---|
-| 1 | `pipeline/01_ingestao.py` | concluída | `data/dados_brutos.json`, `data/banco_sistema_judicial.sqlite` |
-| 2 | `pipeline/02_higienizacao.py` | concluída | `data/dados_limpos.json` |
-| 3 | `pipeline/03_anonimizacao.py` | concluída | `data/dataset_treino.jsonl`, `data/dataset_teste.jsonl` |
-| — | `pipeline/audit.py` | concluída | auditoria LGPD dos JSONL |
-| 4 | `pipeline/04_estatisticas.py` | concluída | `data/estatisticas_corpus.json`, `docs/data/estatisticas_corpus.json` |
+| 1 | `pipeline.fases1_4.fase01_ingestao` | concluída | `data/dados_brutos.json`, `data/banco_sistema_judicial.sqlite` |
+| 2 | `pipeline.fases1_4.fase02_higienizacao` | concluída | `data/dados_limpos.json` |
+| 3 | `pipeline.fases1_4.fase03_anonimizacao` | concluída | `data/dataset_treino.jsonl`, `data/dataset_teste.jsonl` |
+| — | `pipeline.ferramentas.auditoria` | concluída | auditoria LGPD dos JSONL |
+| 4 | `pipeline.fases1_4.fase04_estatisticas` | concluída | `data/estatisticas_corpus.json`, `docs/data/estatisticas_corpus.json` |
 
 ### Fases implementadas no código, dependentes de ambiente específico
 
 | Fase | Script | Estado |
 |---|---|---|
-| 5 | `pipeline/05_finetuning_gemini.py` | implementado; requer Vertex AI + `google-cloud-aiplatform` + `google-cloud-storage` |
-| 5 | `pipeline/05_finetuning_qwen.py` | implementado; requer GPU + `unsloth` + `datasets` + `trl` |
-| 6 | `pipeline/06_baseline_gemini.py` | implementado; requer Vertex AI + `google-genai` |
-| 6 | `pipeline/06_baseline_qwen.py` | implementado; requer `torch` + `transformers` |
+| 5 | `pipeline.fase5.finetuning_gemini` | implementado; requer Vertex AI + `google-cloud-aiplatform` + `google-cloud-storage` |
+| 5 | `pipeline.fase5.finetuning_qwen` | implementado; requer GPU + `unsloth` + `datasets` + `trl` |
+| 6 | `pipeline.fase6.baseline_gemini` | implementado; requer Vertex AI + `google-genai` |
+| 6 | `pipeline.fase6.baseline_qwen` | implementado; requer `torch` + `transformers` |
 | 7 | Notebook Colab de avaliação humana | em desenvolvimento |
 
 ### Garantias de engenharia já implementadas
@@ -45,15 +45,15 @@ Este repositório implementa a dissertação de mestrado sobre **geração abstr
 - smoke test sintético do pipeline para as Fases 2–4
 - CI no GitHub Actions executando `pytest -q` em `push` para `main` e em `pull_request`
 - helpers compartilhados para parsing do JSONL, validação de `data_cadastro`, paths do projeto e escrita atômica de artefatos JSON
-- utilitários compartilhados da Fase 5 em `pipeline/fase5_tuning_utils.py`
-- preparação e submissão do SFT do Gemini em `pipeline/05_finetuning_gemini.py`
-- preparação e execução do SFT LoRA do Qwen em `pipeline/05_finetuning_qwen.py`
+- utilitários compartilhados da Fase 5 em `pipeline/fase5/tuning_utils.py`
+- preparação e submissão do SFT do Gemini em `pipeline/fase5/finetuning_gemini.py`
+- preparação e execução do SFT LoRA do Qwen em `pipeline/fase5/finetuning_qwen.py`
 - prompt versionado do LLM-as-a-Judge em `pipeline/prompts/llm_judge_prompt.txt`
-- geração dos casos-base da Fase 7 em `pipeline/fase7_casos.py`
-- helper compartilhado de leitura e persistência das predições em `pipeline/fase7_predicoes_utils.py`
-- manifesto versionado e contratos mínimos da Fase 7 em `pipeline/fase7_protocolo.py`
-- consolidação de métricas da Fase 7 em `pipeline/fase7_metricas.py`
-- núcleo de inferência estatística pareada da Fase 7 em `pipeline/fase7_estatisticas.py`
+- geração dos casos-base da Fase 7 em `pipeline/fase7/casos_avaliacao.py`
+- helper compartilhado de leitura e persistência das predições em `pipeline/fase7/predicoes_utils.py`
+- manifesto versionado e contratos mínimos da Fase 7 em `pipeline/fase7/protocolo.py`
+- consolidação de métricas da Fase 7 em `pipeline/fase7/metricas.py`
+- núcleo de inferência estatística pareada da Fase 7 em `pipeline/fase7/estatisticas.py`
 
 ## Estrutura Relevante do Projeto
 
@@ -92,7 +92,7 @@ A pasta `pesquisa/` existe neste ambiente local e é uma fonte importante de con
 ### Dependências registradas
 
 - Produção local e testes: `requirements.txt`
-- Estatísticas: `numpy` já é usado pelo código de `pipeline/04_estatisticas.py`
+- Estatísticas: `numpy` já é usado pelo código de `pipeline/fases1_4/fase04_estatisticas.py`
 - Fases 5–7: `requirements_fases_avancadas.txt` e ambientes próprios, conforme a documentação da pesquisa
 - Fase 5 Gemini: `google-cloud-aiplatform`, `google-cloud-storage`
 - Fase 5 Qwen: `datasets`, `trl`, `unsloth`
@@ -154,12 +154,12 @@ As condições experimentais finais devem manter os quatro eixos previstos:
 ### Protocolo versionado da Fase 7
 
 - O prompt canônico do juiz automático deve ser lido de `pipeline/prompts/llm_judge_prompt.txt`.
-- Os casos-base da Fase 7 devem ser gerados por `python3 pipeline/fase7_casos.py`, a partir de `data/dataset_teste.jsonl`.
+- Os casos-base da Fase 7 devem ser gerados por `python3 -m pipeline.fase7.casos_avaliacao`, a partir de `data/dataset_teste.jsonl`.
 - Os baselines zero-shot devem gravar suas saídas em `data/fase7/predicoes/gemini_zero_shot.jsonl` e `data/fase7/predicoes/qwen_zero_shot.jsonl`.
 - Os scripts de baseline devem usar retomada incremental e respeitar o schema canônico de predição.
-- O manifesto e os contratos mínimos dos artefatos da Fase 7 devem ser gerados por `python3 pipeline/fase7_protocolo.py`.
-- A consolidação de ROUGE, BERTScore, `judge_score_global` e dimensões individuais deve ser executada por `python3 pipeline/fase7_metricas.py`.
-- A inferência estatística da Fase 7 deve ser executada por `python3 pipeline/fase7_estatisticas.py`, consumindo `data/fase7/metricas_automaticas.csv`.
+- O manifesto e os contratos mínimos dos artefatos da Fase 7 devem ser gerados por `python3 -m pipeline.fase7.protocolo`.
+- A consolidação de ROUGE, BERTScore, `judge_score_global` e dimensões individuais deve ser executada por `python3 -m pipeline.fase7.metricas`.
+- A inferência estatística da Fase 7 deve ser executada por `python3 -m pipeline.fase7.estatisticas`, consumindo `data/fase7/metricas_automaticas.csv`.
 - O schema da resposta do LLM-as-a-Judge exige exatamente cinco dimensões, cada uma com `score` inteiro de 1 a 5 e `justificativa` textual.
 - O schema de `casos_avaliacao.jsonl` exige exatamente `caso_id`, `indice_teste`, `fundamentacao` e `ementa_referencia`.
 - O schema dos arquivos de predição exige exatamente `caso_id`, `condicao_id` e `ementa_gerada`.
@@ -183,7 +183,7 @@ As condições experimentais finais devem manter os quatro eixos previstos:
 
 - O prompt canônico está em `pipeline/prompts/system_prompt.txt`.
 - Scripts das Fases 5, 6 e 7 devem ler o mesmo arquivo para preservar consistência experimental.
-- Alterar o prompt exige reexecução de `bash pipeline/run_all.sh` para regenerar os JSONL.
+- Alterar o prompt exige reexecução de `bash scripts/run_all.sh` para regenerar os JSONL.
 
 ## Segurança, LGPD e Dados Sensíveis
 
@@ -226,7 +226,7 @@ Não commitar:
 
 ### Auditoria LGPD
 
-- Novos padrões de anonimização devem ser validados com `python3 pipeline/audit.py`.
+- Novos padrões de anonimização devem ser validados com `python3 -m pipeline.ferramentas.auditoria`.
 - A auditoria verifica 8 categorias de vazamento residual, incluindo nomes próprios em contexto privado residual.
 - Decisões metodológicas de anonimização devem ser refletidas em `pesquisa/NOTAS_PESQUISA.md` quando alterarem comportamento experimental.
 
@@ -235,7 +235,7 @@ Não commitar:
 - O prompt canônico atual é o de `pipeline/prompts/system_prompt.txt`.
 - O turno `user` do JSONL embute a instrução e a fundamentação no formato:
   `{system_prompt}\n\nGere a ementa para a seguinte fundamentação:\n{fundamentação}`.
-- A extração do conteúdo real do turno `user` foi centralizada em `pipeline/jsonl_utils.py`.
+- A extração do conteúdo real do turno `user` foi centralizada em `pipeline/core/jsonl_utils.py`.
 - Novos consumidores do JSONL devem reutilizar esse helper, em vez de replicar parsing local.
 
 ## Comandos Operacionais Essenciais
@@ -243,7 +243,7 @@ Não commitar:
 ### Pipeline completo
 
 ```bash
-bash pipeline/run_all.sh
+bash scripts/run_all.sh
 ```
 
 Executa Fase 1, Fase 2, Fase 3, auditoria LGPD e Fase 4.
@@ -251,18 +251,18 @@ Executa Fase 1, Fase 2, Fase 3, auditoria LGPD e Fase 4.
 ### Fases individuais
 
 ```bash
-python3 pipeline/01_ingestao.py
-python3 pipeline/02_higienizacao.py
-python3 pipeline/03_anonimizacao.py
-python3 pipeline/audit.py
-python3 pipeline/04_estatisticas.py
+python3 -m pipeline.fases1_4.fase01_ingestao
+python3 -m pipeline.fases1_4.fase02_higienizacao
+python3 -m pipeline.fases1_4.fase03_anonimizacao
+python3 -m pipeline.ferramentas.auditoria
+python3 -m pipeline.fases1_4.fase04_estatisticas
 ```
 
 ### Inspeção manual
 
 ```bash
-python3 pipeline/ver_registro.py 42
-python3 pipeline/ver_registro.py 10 treino
+python3 -m pipeline.ferramentas.ver_registro 42
+python3 -m pipeline.ferramentas.ver_registro 10 treino
 ```
 
 ### Testes de regressão
@@ -274,14 +274,14 @@ pytest -q
 ### Fluxo operacional das Fases 5–7
 
 ```bash
-python3 pipeline/fase7_casos.py
-python3 pipeline/05_finetuning_gemini.py --project-id SEU_PROJECT_ID --staging-bucket gs://SEU_BUCKET --prepare-only
-python3 pipeline/05_finetuning_qwen.py --prepare-only
-python3 pipeline/06_baseline_gemini.py
-python3 pipeline/06_baseline_qwen.py --model-id Qwen/Qwen2.5-14B-Instruct
-python3 pipeline/fase7_protocolo.py
-python3 pipeline/fase7_metricas.py
-python3 pipeline/fase7_estatisticas.py
+python3 -m pipeline.fase7.casos_avaliacao
+python3 -m pipeline.fase5.finetuning_gemini --project-id SEU_PROJECT_ID --staging-bucket gs://SEU_BUCKET --prepare-only
+python3 -m pipeline.fase5.finetuning_qwen --prepare-only
+python3 -m pipeline.fase6.baseline_gemini
+python3 -m pipeline.fase6.baseline_qwen --model-id Qwen/Qwen2.5-14B-Instruct
+python3 -m pipeline.fase7.protocolo
+python3 -m pipeline.fase7.metricas
+python3 -m pipeline.fase7.estatisticas
 ```
 
 ### CI
@@ -297,7 +297,7 @@ python3 -m http.server -d docs
 
 ### Atualização do dashboard versionado
 
-`pipeline/04_estatisticas.py` já copia automaticamente `data/estatisticas_corpus.json` para `docs/data/estatisticas_corpus.json`. Após rodar o pipeline ou a Fase 4, basta versionar o artefato em `docs/data/`.
+`pipeline/fases1_4/fase04_estatisticas.py` já copia automaticamente `data/estatisticas_corpus.json` para `docs/data/estatisticas_corpus.json`. Após rodar o pipeline ou a Fase 4, basta versionar o artefato em `docs/data/`.
 
 ## Artefatos de Dados
 
@@ -347,7 +347,7 @@ Observação: a API de tuning do Gemini não aceita `role: "system"` em `content
 ### Workflow comum após regenerar estatísticas
 
 ```bash
-bash pipeline/run_all.sh
+bash scripts/run_all.sh
 git add docs/data/estatisticas_corpus.json
 git commit -m "dados: atualizar estatísticas"
 git push
@@ -364,13 +364,13 @@ git push
 
 - `README.md` para visão humana de alto nível
 - `pipeline/prompts/system_prompt.txt` para o prompt canônico
-- `pipeline/06_baseline_gemini.py` e `pipeline/06_baseline_qwen.py` para as condições zero-shot
+- `pipeline/fase6/baseline_gemini.py` e `pipeline/fase6/baseline_qwen.py` para as condições zero-shot
 - `pipeline/prompts/llm_judge_prompt.txt` para o prompt canônico do LLM-as-a-Judge
-- `pipeline/fase7_casos.py` para geração dos casos-base da avaliação
-- `pipeline/fase7_predicoes_utils.py` para retomada incremental e persistência das predições
-- `pipeline/fase7_protocolo.py` para contratos e manifesto da Fase 7
-- `pipeline/fase7_metricas.py` para consolidação das métricas automáticas e do juiz
-- `pipeline/fase7_estatisticas.py` para a inferência estatística pareada da Fase 7
+- `pipeline/fase7/casos_avaliacao.py` para geração dos casos-base da avaliação
+- `pipeline/fase7/predicoes_utils.py` para retomada incremental e persistência das predições
+- `pipeline/fase7/protocolo.py` para contratos e manifesto da Fase 7
+- `pipeline/fase7/metricas.py` para consolidação das métricas automáticas e do juiz
+- `pipeline/fase7/estatisticas.py` para a inferência estatística pareada da Fase 7
 - `tests/` para a suíte mínima de regressão e o smoke test das Fases 2–4
 - `.github/workflows/testes.yml` para a automação de CI
 - `pesquisa/PLANO_ARQUITETURAL.md` para o desenho técnico das 7 fases

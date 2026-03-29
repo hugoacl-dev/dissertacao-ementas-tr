@@ -15,8 +15,8 @@ from typing import Any
 
 import pandas as pd
 
-from artefato_utils import escrever_csv_atomico
-from project_paths import (
+from pipeline.core.artefato_utils import escrever_csv_atomico
+from pipeline.core.project_paths import (
     FASE7_AVALIACAO_JUDGE_PATH,
     FASE7_CASOS_AVALIACAO_PATH,
     FASE7_METRICAS_AUTOMATICAS_PATH,
@@ -317,4 +317,3 @@ if __name__ == "__main__":
     except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError, ImportError) as exc:
         log.critical("Execução interrompida: %s", exc)
         sys.exit(1)
-

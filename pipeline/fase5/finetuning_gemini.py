@@ -14,8 +14,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-from fase5_tuning_utils import construir_uri_gcs, escrever_manifesto_tuning, gerar_nome_experimento
-from project_paths import (
+from pipeline.fase5.tuning_utils import (
+    construir_uri_gcs,
+    escrever_manifesto_tuning,
+    gerar_nome_experimento,
+)
+from pipeline.core.project_paths import (
     DATASET_TREINO_PATH,
     FASE5_GEMINI_MANIFEST_PATH,
     FASE5_GEMINI_MODELO_PATH,

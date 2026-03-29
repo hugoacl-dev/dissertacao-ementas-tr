@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from artefato_utils import escrever_csv_atomico
-from fase7_metricas import (
+from pipeline.core.artefato_utils import escrever_csv_atomico
+from pipeline.fase7.metricas import (
     carregar_avaliacoes_judge,
     carregar_casos_avaliacao,
     carregar_predicoes_condicao,
@@ -103,7 +103,7 @@ def test_gerar_tabela_metricas_fase7_com_metricas_mockadas(monkeypatch, tmp_path
     )
 
     monkeypatch.setattr(
-        "fase7_metricas._calcular_metricas_rouge_por_par",
+        "pipeline.fase7.metricas._calcular_metricas_rouge_por_par",
         lambda referencia, candidata: {
             "rouge_1_f1": 0.1,
             "rouge_2_f1": 0.05,
@@ -111,7 +111,7 @@ def test_gerar_tabela_metricas_fase7_com_metricas_mockadas(monkeypatch, tmp_path
         },
     )
     monkeypatch.setattr(
-        "fase7_metricas._calcular_bertscore_f1_lote",
+        "pipeline.fase7.metricas._calcular_bertscore_f1_lote",
         lambda geradas, referencias, **kwargs: [0.9] * len(geradas),
     )
 
@@ -167,7 +167,7 @@ def test_escrever_metricas_fase7_com_artefatos_sinteticos(monkeypatch, tmp_path)
     )
 
     monkeypatch.setattr(
-        "fase7_metricas._calcular_metricas_rouge_por_par",
+        "pipeline.fase7.metricas._calcular_metricas_rouge_por_par",
         lambda referencia, candidata: {
             "rouge_1_f1": 0.1,
             "rouge_2_f1": 0.05,
@@ -175,7 +175,7 @@ def test_escrever_metricas_fase7_com_artefatos_sinteticos(monkeypatch, tmp_path)
         },
     )
     monkeypatch.setattr(
-        "fase7_metricas._calcular_bertscore_f1_lote",
+        "pipeline.fase7.metricas._calcular_bertscore_f1_lote",
         lambda geradas, referencias, **kwargs: [0.9] * len(geradas),
     )
 

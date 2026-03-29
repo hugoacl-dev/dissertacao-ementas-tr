@@ -4,7 +4,7 @@ audit.py — Validação pós-Fase 3: Auditoria de Vazamentos de Dados Pessoais
 Varre os arquivos JSONL gerados pela Fase 3 em busca de resíduos de dados pessoais
 que tenham escapado da limpeza e anonimização.
 
-Executar a partir da raiz do projeto: python3 pipeline/audit.py
+Executar a partir da raiz do projeto: python3 -m pipeline.ferramentas.auditoria
 
 Lógica de extração de texto:
   - Turno "user": extrai apenas o conteúdo da fundamentação por meio do
@@ -20,8 +20,8 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from jsonl_utils import extrair_fundamentacao_e_ementa
-from project_paths import DATASET_TESTE_PATH, DATASET_TREINO_PATH
+from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.project_paths import DATASET_TESTE_PATH, DATASET_TREINO_PATH
 
 # ---------------------------------------------------------------------------
 # Padrões de auditoria

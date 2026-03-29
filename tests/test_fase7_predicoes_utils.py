@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from fase7_predicoes_utils import (
+from pipeline.fase7.predicoes_utils import (
     carregar_casos_predicao,
     carregar_predicoes_existentes,
     filtrar_casos_pendentes,

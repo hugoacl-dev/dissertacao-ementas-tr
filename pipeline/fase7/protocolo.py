@@ -13,8 +13,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from artefato_utils import escrever_json_atomico
-from project_paths import (
+from pipeline.core.artefato_utils import escrever_json_atomico
+from pipeline.core.project_paths import (
     FASE7_AMOSTRA_HUMANA_PATH,
     FASE7_AVALIACAO_HUMANA_PATH,
     FASE7_AVALIACAO_JUDGE_PATH,
@@ -327,4 +327,3 @@ if __name__ == "__main__":
     except (FileNotFoundError, OSError, ValueError) as exc:
         log.critical("Execução interrompida: %s", exc)
         sys.exit(1)
-

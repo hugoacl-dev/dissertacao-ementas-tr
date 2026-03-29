@@ -13,13 +13,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from fase5_tuning_utils import (
+from pipeline.fase5.tuning_utils import (
     calcular_batch_size_efetivo,
     carregar_amostras_treino_sft,
     escrever_manifesto_tuning,
     gerar_nome_experimento,
 )
-from project_paths import DATASET_TREINO_PATH, FASE5_QWEN_CHECKPOINT_DIR, FASE5_QWEN_MANIFEST_PATH
+from pipeline.core.project_paths import DATASET_TREINO_PATH, FASE5_QWEN_CHECKPOINT_DIR, FASE5_QWEN_MANIFEST_PATH
 
 log = logging.getLogger(__name__)
 

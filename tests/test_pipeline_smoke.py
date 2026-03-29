@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from conftest import carregar_modulo_pipeline
-from jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
 
 
 higienizacao = carregar_modulo_pipeline("02_higienizacao.py")

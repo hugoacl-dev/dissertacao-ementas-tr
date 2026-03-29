@@ -7,7 +7,7 @@ carimbos DJe, assinaturas de juízes). Datas e conteúdo de mérito são preserv
 
 Entradas : data/dados_brutos.json
 Saídas   : data/dados_limpos.json
-Executar a partir da raiz do projeto: python3 pipeline/02_higienizacao.py
+Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase02_higienizacao
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-from project_paths import (
+from pipeline.core.project_paths import (
     DADOS_BRUTOS_PATH as INPUT_PATH,
     DADOS_LIMPOS_PATH as OUTPUT_PATH,
 )

@@ -12,14 +12,14 @@ import logging
 import sys
 from pathlib import Path
 
-from fase7_predicoes_utils import (
+from pipeline.fase7.predicoes_utils import (
     carregar_casos_predicao,
     carregar_predicoes_existentes,
     filtrar_casos_pendentes,
     normalizar_ementa_gerada,
     persistir_predicoes,
 )
-from project_paths import FASE7_CASOS_AVALIACAO_PATH, FASE7_PREDICAO_PATHS, SYSTEM_PROMPT_PATH
+from pipeline.core.project_paths import FASE7_CASOS_AVALIACAO_PATH, FASE7_PREDICAO_PATHS, SYSTEM_PROMPT_PATH
 
 log = logging.getLogger(__name__)
 

@@ -19,7 +19,7 @@ de chamadas à API para contagem de tokens de subword.
 Entradas : data/dados_brutos.json, data/dados_limpos.json,
            data/dataset_treino.jsonl, data/dataset_teste.jsonl
 Saídas   : data/estatisticas_corpus.json
-Executar a partir da raiz do projeto: python3 pipeline/04_estatisticas.py
+Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase04_estatisticas
 """
 from __future__ import annotations
 
@@ -34,10 +34,10 @@ from typing import Any
 
 import pandas as pd
 import numpy as np
-from artefato_utils import escrever_json_atomico
-from data_cadastro_utils import validar_e_converter_data_cadastro
-from jsonl_utils import extrair_fundamentacao_e_ementa
-from project_paths import (
+from pipeline.core.artefato_utils import escrever_json_atomico
+from pipeline.core.data_cadastro_utils import validar_e_converter_data_cadastro
+from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.project_paths import (
     ANONIMIZACAO_STATS_PATH as PII_STATS_PATH,
     DADOS_BRUTOS_PATH as BRUTOS_PATH,
     DADOS_LIMPOS_PATH as LIMPOS_PATH,
@@ -727,7 +727,7 @@ def gerar_relatorio(
         "nome": "Ingestão",
         "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema judicial.",
         "narrativa": narrativa_f1, "status": "concluida",
-        "script": "pipeline/01_ingestao.py",
+        "script": "python3 -m pipeline.fases1_4.fase01_ingestao",
         "duracao_segundos": timing.get("fase1_ingestao"),
         "registros_dump": total_dump,
         "registros_exportados": len(df_brutos),
@@ -743,7 +743,7 @@ def gerar_relatorio(
         "nome": "Higienização",
         "descricao": "Limpeza do corpus para remoção de ruídos processuais via expressões regulares.",
         "narrativa": narrativa_f2, "status": "concluida",
-        "script": "pipeline/02_higienizacao.py",
+        "script": "python3 -m pipeline.fases1_4.fase02_higienizacao",
         "duracao_segundos": timing.get("fase2_higienizacao"),
         "registros_entrada": len(df_brutos), "registros_saida": len(df_limpos),
         "perda": perda_f2, "taxa_retencao": taxa_ret_f2,
@@ -758,7 +758,7 @@ def gerar_relatorio(
         "nome": "Anonimização (LGPD)",
         "descricao": "Substituição de dados pessoais por tokens genéricos e formatação para fine-tuning.",
         "narrativa": narrativa_f3, "status": "concluida",
-        "script": "pipeline/03_anonimizacao.py",
+        "script": "python3 -m pipeline.fases1_4.fase03_anonimizacao",
         "duracao_segundos": timing.get("fase3_anonimizacao"),
         "registros_entrada": len(df_limpos),
         "registros_saida": len(treino_raw) + len(teste_raw),
@@ -781,7 +781,7 @@ def gerar_relatorio(
         "nome": "Estatísticas Descritivas",
         "descricao": "Análise quantitativa do corpus: distribuições, compressão e grau de abstratividade.",
         "narrativa": narrativa_f4, "status": "concluida",
-        "script": "pipeline/04_estatisticas.py",
+        "script": "python3 -m pipeline.fases1_4.fase04_estatisticas",
         "duracao_segundos": timing.get("fase4_estatisticas"),
         "funil": funil,
         "fundamentacao": dist_fund,
@@ -819,8 +819,8 @@ def gerar_relatorio(
             "fase2_higienizacao": fase2,
             "fase3_anonimizacao": fase3,
             "fase4_estatisticas": fase4,
-            "fase5_finetuning":  {"nome": "Fine-Tuning", "status": "pendente", "scripts": ["pipeline/05_finetuning_gemini.py", "pipeline/05_finetuning_qwen.py"]},
-            "fase6_baseline":    {"nome": "Baseline Zero-Shot", "status": "pendente", "scripts": ["pipeline/06_baseline_gemini.py", "pipeline/06_baseline_qwen.py"]},
+            "fase5_finetuning":  {"nome": "Fine-Tuning", "status": "pendente", "scripts": ["python3 -m pipeline.fase5.finetuning_gemini", "python3 -m pipeline.fase5.finetuning_qwen"]},
+            "fase6_baseline":    {"nome": "Baseline Zero-Shot", "status": "pendente", "scripts": ["python3 -m pipeline.fase6.baseline_gemini", "python3 -m pipeline.fase6.baseline_qwen"]},
             "fase7_avaliacao":   {"nome": "Avaliação", "status": "pendente", "script": "Apresentacao_Dissertacao_Colab.ipynb"},
         },
     }

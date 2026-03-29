@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from fase7_protocolo import (
+from pipeline.fase7.protocolo import (
     CONDICOES_EXPERIMENTAIS,
     CRITERIOS_AVALIACAO_HUMANA,
     DIMENSOES_JUIZ,
@@ -19,7 +19,7 @@ from fase7_protocolo import (
     validar_registro_predicao,
     validar_resposta_llm_judge,
 )
-from project_paths import FASE7_PREDICAO_PATHS, FASE7_PROTOCOLO_PATH, LLM_JUDGE_PROMPT_PATH
+from pipeline.core.project_paths import FASE7_PREDICAO_PATHS, FASE7_PROTOCOLO_PATH, LLM_JUDGE_PROMPT_PATH
 
 
 def test_prompt_judge_versionado_existe_e_define_regras_essenciais() -> None:

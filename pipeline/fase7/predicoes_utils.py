@@ -13,8 +13,8 @@ from typing import Any
 
 import pandas as pd
 
-from artefato_utils import escrever_jsonl_atomico
-from project_paths import FASE7_CASOS_AVALIACAO_PATH
+from pipeline.core.artefato_utils import escrever_jsonl_atomico
+from pipeline.core.project_paths import FASE7_CASOS_AVALIACAO_PATH
 
 from .protocolo import validar_registro_caso_avaliacao, validar_registro_predicao
 
@@ -91,4 +91,3 @@ def persistir_predicoes(
         for registro in registros
     ]
     escrever_jsonl_atomico(path, normalizados)
-

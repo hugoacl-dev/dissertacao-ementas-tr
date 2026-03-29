@@ -16,8 +16,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from artefato_utils import escrever_json_atomico
-from project_paths import (
+from pipeline.core.artefato_utils import escrever_json_atomico
+from pipeline.core.project_paths import (
     FASE7_METRICAS_AUTOMATICAS_PATH,
     FASE7_PROTOCOLO_PATH,
     FASE7_RELATORIO_ESTATISTICO_PATH,

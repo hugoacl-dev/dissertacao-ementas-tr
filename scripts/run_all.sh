@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # run_all.sh — Executa as Fases 1-4 do pipeline sequencialmente
-# Uso: bash pipeline/run_all.sh  (a partir da raiz do projeto)
+# Uso: bash scripts/run_all.sh  (a partir da raiz do projeto)
 set -euo pipefail
 
 # Ensure Homebrew binaries (including pg_restore) are in PATH
@@ -17,31 +17,31 @@ t_pipeline=$(date +%s)
 
 echo "[1/5] Fase 1: Ingestão (pg_restore → SQLite + JSON)"
 t0=$(date +%s)
-python3 pipeline/01_ingestao.py
+python3 -m pipeline.fases1_4.fase01_ingestao
 t_fase1=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[2/5] Fase 2: Higienização (Regex)"
 t0=$(date +%s)
-python3 pipeline/02_higienizacao.py
+python3 -m pipeline.fases1_4.fase02_higienizacao
 t_fase2=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[3/5] Fase 3: Anonimização (LGPD) + JSONL"
 t0=$(date +%s)
-python3 pipeline/03_anonimizacao.py
+python3 -m pipeline.fases1_4.fase03_anonimizacao
 t_fase3=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[4/5] Auditoria LGPD"
 t0=$(date +%s)
-python3 pipeline/audit.py
+python3 -m pipeline.ferramentas.auditoria
 t_audit=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[5/5] Fase 4: Estatísticas Descritivas do Corpus"
 t0=$(date +%s)
-python3 pipeline/04_estatisticas.py
+python3 -m pipeline.fases1_4.fase04_estatisticas
 t_fase4=$(( $(date +%s) - t0 ))
 echo ""
 

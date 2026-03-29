@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fase5_tuning_utils import (
+from pipeline.fase5.tuning_utils import (
     calcular_batch_size_efetivo,
     carregar_amostras_treino_sft,
     construir_uri_gcs,

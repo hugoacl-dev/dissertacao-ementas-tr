@@ -2,19 +2,19 @@
 ver_registro.py — Inspeciona um registro do dataset JSONL
 
 Uso (a partir da raiz do projeto):
-    python3 pipeline/ver_registro.py [índice] [arquivo]
+    python3 -m pipeline.ferramentas.ver_registro [índice] [arquivo]
 
 Exemplos:
-    python3 pipeline/ver_registro.py 0               # 1º registro do dataset de teste
-    python3 pipeline/ver_registro.py 42              # registro 42 do dataset de teste
-    python3 pipeline/ver_registro.py 0 treino        # 1º registro do dataset de treino
+    python3 -m pipeline.ferramentas.ver_registro 0               # 1º registro do dataset de teste
+    python3 -m pipeline.ferramentas.ver_registro 42              # registro 42 do dataset de teste
+    python3 -m pipeline.ferramentas.ver_registro 0 treino        # 1º registro do dataset de treino
 """
 from __future__ import annotations
 
 import json
 import sys
-from jsonl_utils import extrair_fundamentacao_e_ementa
-from project_paths import DATASET_PATHS
+from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.project_paths import DATASET_PATHS
 
 # Argumentos: índice (padrão 0) e dataset (padrão "teste")
 idx = int(sys.argv[1]) if len(sys.argv) > 1 else 0

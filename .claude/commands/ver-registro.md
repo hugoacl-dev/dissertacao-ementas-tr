@@ -6,8 +6,8 @@ argument-hint: "[índice] [teste|treino]"
 Runbook curto. Fonte canônica: `AGENTS.md`.
 
 ```bash
-python3 pipeline/ver_registro.py 42
-python3 pipeline/ver_registro.py 10 treino
+python3 -m pipeline.ferramentas.ver_registro 42
+python3 -m pipeline.ferramentas.ver_registro 10 treino
 ```
 
 Notas:

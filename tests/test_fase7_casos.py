@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fase7_casos import gerar_casos_avaliacao
+from pipeline.fase7.casos_avaliacao import gerar_casos_avaliacao
 
 
 def _escrever_dataset_teste(path: Path, registros: list[dict]) -> None:
