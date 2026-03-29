@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 PIPELINE_DIR = Path(__file__).resolve().parent.parent
+PROMPTS_DIR = PIPELINE_DIR / "prompts"
 DATA_DIR = Path("data")
 DOCS_DATA_DIR = Path("docs/data")
 FASE5_DIR = DATA_DIR / "fase5"
@@ -28,8 +29,8 @@ INGESTAO_STATS_PATH = DATA_DIR / ".ingestao_stats.json"
 ANONIMIZACAO_STATS_PATH = DATA_DIR / ".anonimizacao_stats.json"
 PIPELINE_TIMING_PATH = DATA_DIR / ".pipeline_timing.json"
 
-SYSTEM_PROMPT_PATH = PIPELINE_DIR / "system_prompt.txt"
-LLM_JUDGE_PROMPT_PATH = PIPELINE_DIR / "llm_judge_prompt.txt"
+SYSTEM_PROMPT_PATH = PROMPTS_DIR / "system_prompt.txt"
+LLM_JUDGE_PROMPT_PATH = PROMPTS_DIR / "llm_judge_prompt.txt"
 
 FASE7_PROTOCOLO_PATH = FASE7_DIR / "protocolo_avaliacao.json"
 FASE7_CASOS_AVALIACAO_PATH = FASE7_DIR / "casos_avaliacao.jsonl"
@@ -55,4 +56,3 @@ FASE7_PREDICAO_PATHS = {
     "qwen_ft": FASE7_PREDICOES_DIR / "qwen_ft.jsonl",
     "qwen_zero_shot": FASE7_PREDICOES_DIR / "qwen_zero_shot.jsonl",
 }
-

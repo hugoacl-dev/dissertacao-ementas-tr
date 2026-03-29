@@ -103,7 +103,7 @@ Infraestrutura já versionada no repositório:
 
 - Casos-base da Fase 7: `pipeline/fase7_casos.py`
 - Helper compartilhado das predições: `pipeline/fase7_predicoes_utils.py`
-- Prompt do juiz: `pipeline/llm_judge_prompt.txt`
+- Prompt do juiz: `pipeline/prompts/llm_judge_prompt.txt`
 - Contratos e manifesto da Fase 7: `pipeline/fase7_protocolo.py`
 - Consolidação das métricas da Fase 7: `pipeline/fase7_metricas.py`
 - Núcleo estatístico da Fase 7: `pipeline/fase7_estatisticas.py`
@@ -126,7 +126,7 @@ Infraestrutura já versionada no repositório:
 | `pipeline/06_baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` via `transformers` |
 | `pipeline/fase7_casos.py` | Geração de `data/fase7/casos_avaliacao.jsonl` a partir de `data/dataset_teste.jsonl` |
 | `pipeline/fase7_predicoes_utils.py` | Leitura, retomada incremental e persistência canônica das predições |
-| `pipeline/llm_judge_prompt.txt` | Prompt versionado do LLM-as-a-Judge |
+| `pipeline/prompts/llm_judge_prompt.txt` | Prompt versionado do LLM-as-a-Judge |
 | `pipeline/fase7_protocolo.py` | Geração do manifesto e contratos mínimos dos artefatos da Fase 7 |
 | `pipeline/fase7_metricas.py` | Consolidação de ROUGE, BERTScore, score global do juiz e dimensões individuais em `data/fase7/metricas_automaticas.csv` |
 | `pipeline/fase7_estatisticas.py` | Inferência estatística pareada e geração de `data/fase7/relatorio_estatistico.json` |

@@ -298,7 +298,7 @@ function render(data) {
     if (f3.system_prompt) {
       const spCard = el('div', 'card card--wide');
       spCard.innerHTML = `
-        <div class="card__label">System Prompt Canônico <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— pipeline/system_prompt.txt</span></div>
+        <div class="card__label">System Prompt Canônico <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— pipeline/prompts/system_prompt.txt</span></div>
         <p class="card__hint">Instrução embutida em cada registro do JSONL (turno <code>user</code>). O mesmo prompt é usado no fine-tuning (Fase 5) e no baseline zero-shot (Fase 6), garantindo consistência experimental.</p>
         <blockquote class="system-prompt-quote">${f3.system_prompt}</blockquote>`;
       cards.appendChild(spCard);

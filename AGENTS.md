@@ -48,7 +48,7 @@ Este repositório implementa a dissertação de mestrado sobre **geração abstr
 - utilitários compartilhados da Fase 5 em `pipeline/fase5_tuning_utils.py`
 - preparação e submissão do SFT do Gemini em `pipeline/05_finetuning_gemini.py`
 - preparação e execução do SFT LoRA do Qwen em `pipeline/05_finetuning_qwen.py`
-- prompt versionado do LLM-as-a-Judge em `pipeline/llm_judge_prompt.txt`
+- prompt versionado do LLM-as-a-Judge em `pipeline/prompts/llm_judge_prompt.txt`
 - geração dos casos-base da Fase 7 em `pipeline/fase7_casos.py`
 - helper compartilhado de leitura e persistência das predições em `pipeline/fase7_predicoes_utils.py`
 - manifesto versionado e contratos mínimos da Fase 7 em `pipeline/fase7_protocolo.py`
@@ -153,7 +153,7 @@ As condições experimentais finais devem manter os quatro eixos previstos:
 
 ### Protocolo versionado da Fase 7
 
-- O prompt canônico do juiz automático deve ser lido de `pipeline/llm_judge_prompt.txt`.
+- O prompt canônico do juiz automático deve ser lido de `pipeline/prompts/llm_judge_prompt.txt`.
 - Os casos-base da Fase 7 devem ser gerados por `python3 pipeline/fase7_casos.py`, a partir de `data/dataset_teste.jsonl`.
 - Os baselines zero-shot devem gravar suas saídas em `data/fase7/predicoes/gemini_zero_shot.jsonl` e `data/fase7/predicoes/qwen_zero_shot.jsonl`.
 - Os scripts de baseline devem usar retomada incremental e respeitar o schema canônico de predição.
@@ -181,7 +181,7 @@ As condições experimentais finais devem manter os quatro eixos previstos:
 
 ### Consistência entre fine-tuning, baseline e avaliação
 
-- O prompt canônico está em `pipeline/system_prompt.txt`.
+- O prompt canônico está em `pipeline/prompts/system_prompt.txt`.
 - Scripts das Fases 5, 6 e 7 devem ler o mesmo arquivo para preservar consistência experimental.
 - Alterar o prompt exige reexecução de `bash pipeline/run_all.sh` para regenerar os JSONL.
 
@@ -232,7 +232,7 @@ Não commitar:
 
 ## Contrato Atual do JSONL
 
-- O prompt canônico atual é o de `pipeline/system_prompt.txt`.
+- O prompt canônico atual é o de `pipeline/prompts/system_prompt.txt`.
 - O turno `user` do JSONL embute a instrução e a fundamentação no formato:
   `{system_prompt}\n\nGere a ementa para a seguinte fundamentação:\n{fundamentação}`.
 - A extração do conteúdo real do turno `user` foi centralizada em `pipeline/jsonl_utils.py`.
@@ -363,9 +363,9 @@ git push
 ## Referências Internas Mais Importantes
 
 - `README.md` para visão humana de alto nível
-- `pipeline/system_prompt.txt` para o prompt canônico
+- `pipeline/prompts/system_prompt.txt` para o prompt canônico
 - `pipeline/06_baseline_gemini.py` e `pipeline/06_baseline_qwen.py` para as condições zero-shot
-- `pipeline/llm_judge_prompt.txt` para o prompt canônico do LLM-as-a-Judge
+- `pipeline/prompts/llm_judge_prompt.txt` para o prompt canônico do LLM-as-a-Judge
 - `pipeline/fase7_casos.py` para geração dos casos-base da avaliação
 - `pipeline/fase7_predicoes_utils.py` para retomada incremental e persistência das predições
 - `pipeline/fase7_protocolo.py` para contratos e manifesto da Fase 7
