@@ -19,15 +19,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+from project_paths import (
+    DADOS_BRUTOS_PATH as INPUT_PATH,
+    DADOS_LIMPOS_PATH as OUTPUT_PATH,
+)
 
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
 
 log = logging.getLogger(__name__)
-
-INPUT_PATH = Path("data/dados_brutos.json")
-OUTPUT_PATH = Path("data/dados_limpos.json")
 
 # Comprimento mínimo aceitável (em palavras) após limpeza.
 # Usar palavras em vez de caracteres torna o limiar mais robusto e

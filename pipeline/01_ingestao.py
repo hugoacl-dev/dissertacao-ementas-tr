@@ -12,7 +12,6 @@ Executar a partir da raiz do projeto: python3 pipeline/01_ingestao.py
 """
 from __future__ import annotations
 
-import json
 import logging
 import sqlite3
 import subprocess
@@ -23,17 +22,19 @@ from pathlib import Path
 from typing import Generator, Iterator
 
 import pandas as pd
+from artefato_utils import escrever_json_atomico
+from project_paths import (
+    DADOS_BRUTOS_PATH as JSON_PATH,
+    DUMP_PATH,
+    INGESTAO_STATS_PATH as STATS_PATH,
+    SQLITE_DB_PATH as DB_PATH,
+)
 
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
 
 log = logging.getLogger(__name__)
-
-DUMP_PATH = Path("dump_sistema_judicial.sql")
-DB_PATH = Path("data/banco_sistema_judicial.sqlite")
-JSON_PATH = Path("data/dados_brutos.json")
-STATS_PATH = Path("data/.ingestao_stats.json")
 
 TARGET_TABLE = "turmarecursal_processo"
 COMMIT_BATCH_SIZE = 5_000  # Faz commit a cada N registros para segurança transacional
@@ -308,11 +309,7 @@ def salvar_stats(stats: ExtractionStats, path: Path) -> None:
         "descartados_nulos": stats.descartados_nulos,
         "exportados": stats.exportados,
     }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = path.with_suffix(path.suffix + ".tmp")
-    with temp_path.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    temp_path.replace(path)
+    escrever_json_atomico(path, payload)
     log.info("Estatísticas da ingestão salvas em %s.", path)
 
 

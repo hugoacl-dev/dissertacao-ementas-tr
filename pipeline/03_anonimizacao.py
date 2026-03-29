@@ -34,8 +34,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+from artefato_utils import escrever_json_atomico
 from data_cadastro_utils import validar_e_converter_data_cadastro
 from jsonl_utils import MARCADOR_FUNDAMENTACAO
+from project_paths import (
+    ANONIMIZACAO_STATS_PATH,
+    DADOS_LIMPOS_PATH as INPUT_PATH,
+    DATASET_TESTE_PATH as TEST_PATH,
+    DATASET_TREINO_PATH as TRAIN_PATH,
+    SYSTEM_PROMPT_PATH,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -43,10 +51,6 @@ from jsonl_utils import MARCADOR_FUNDAMENTACAO
 # ---------------------------------------------------------------------------
 
 log = logging.getLogger(__name__)
-
-INPUT_PATH = Path("data/dados_limpos.json")
-TRAIN_PATH = Path("data/dataset_treino.jsonl")
-TEST_PATH = Path("data/dataset_teste.jsonl")
 
 TEST_SIZE: float = 0.10  # 10% para avaliação da banca; 90% para fine-tuning
 
@@ -62,8 +66,7 @@ MIN_EMENTA_ANON_LEN: int = 20
 
 # Instrução de sistema carregada de arquivo externo para facilitar edição
 # e reutilização nas Fases 5, 6 e 7 (ver nota no cabeçalho sobre role "system").
-_SYSTEM_PROMPT_PATH = Path(__file__).parent / "system_prompt.txt"
-_INSTRUCAO_SISTEMA = _SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
+_INSTRUCAO_SISTEMA = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
 # ---------------------------------------------------------------------------
@@ -557,7 +560,6 @@ def gerar_datasets(
     _dividir_e_gravar(df_exemplos, train_path, test_path, test_size)
 
     # Persistir contagens PII para consumo pelo dashboard (04_estatisticas.py)
-    pii_stats_path = Path("data/.anonimizacao_stats.json")
     pii_payload = {
         "CPF": stats.cpfs,
         "CNPJ": stats.cnpjs,
@@ -571,9 +573,8 @@ def gerar_datasets(
         "total": stats.total,
         "descartados_pos_anon": stats.descartados_pos_anon,
     }
-    with pii_stats_path.open("w", encoding="utf-8") as f:
-        json.dump(pii_payload, f, ensure_ascii=False, indent=2)
-    log.info("Stats PII salvas em %s", pii_stats_path)
+    escrever_json_atomico(ANONIMIZACAO_STATS_PATH, pii_payload)
+    log.info("Stats PII salvas em %s", ANONIMIZACAO_STATS_PATH)
 
     log.info("=== Fase 3 finalizada com sucesso. ===")
     return stats

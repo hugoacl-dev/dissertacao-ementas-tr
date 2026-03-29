@@ -21,6 +21,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from jsonl_utils import extrair_fundamentacao_e_ementa
+from project_paths import DATASET_TESTE_PATH, DATASET_TREINO_PATH
 
 # ---------------------------------------------------------------------------
 # Padrões de auditoria
@@ -171,7 +172,7 @@ def audit(file_path: str | Path) -> bool:
 
 
 def main() -> None:
-    targets = [Path("data/dataset_treino.jsonl"), Path("data/dataset_teste.jsonl")]
+    targets = [DATASET_TREINO_PATH, DATASET_TESTE_PATH]
     all_passed = True
     for target in targets:
         if not target.exists():

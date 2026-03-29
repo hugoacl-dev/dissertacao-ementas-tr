@@ -13,19 +13,14 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 from jsonl_utils import extrair_fundamentacao_e_ementa
+from project_paths import DATASET_PATHS
 
 # Argumentos: índice (padrão 0) e dataset (padrão "teste")
 idx = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 dataset = sys.argv[2] if len(sys.argv) > 2 else "teste"
 
-paths = {
-    "teste": Path("data/dataset_teste.jsonl"),
-    "treino": Path("data/dataset_treino.jsonl"),
-}
-
-path = paths.get(dataset)
+path = DATASET_PATHS.get(dataset)
 if path is None or not path.exists():
     print(f"[ERRO] Dataset '{dataset}' não encontrado. Use: teste | treino")
     sys.exit(1)

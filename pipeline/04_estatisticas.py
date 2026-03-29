@@ -34,25 +34,29 @@ from typing import Any
 
 import pandas as pd
 import numpy as np
+from artefato_utils import escrever_json_atomico
 from data_cadastro_utils import validar_e_converter_data_cadastro
 from jsonl_utils import extrair_fundamentacao_e_ementa
+from project_paths import (
+    ANONIMIZACAO_STATS_PATH as PII_STATS_PATH,
+    DADOS_BRUTOS_PATH as BRUTOS_PATH,
+    DADOS_LIMPOS_PATH as LIMPOS_PATH,
+    DATASET_TESTE_PATH as TESTE_PATH,
+    DATASET_TREINO_PATH as TREINO_PATH,
+    DOCS_DATA_DIR as DOCS_DATA_PATH,
+    DUMP_PATH,
+    ESTATISTICAS_PATH as OUTPUT_PATH,
+    INGESTAO_STATS_PATH,
+    PIPELINE_TIMING_PATH as TIMING_PATH,
+    SQLITE_DB_PATH,
+    SYSTEM_PROMPT_PATH,
+)
 
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
 
 log = logging.getLogger(__name__)
-
-BRUTOS_PATH = Path("data/dados_brutos.json")
-LIMPOS_PATH = Path("data/dados_limpos.json")
-TREINO_PATH = Path("data/dataset_treino.jsonl")
-TESTE_PATH  = Path("data/dataset_teste.jsonl")
-OUTPUT_PATH = Path("data/estatisticas_corpus.json")
-INGESTAO_STATS_PATH = Path("data/.ingestao_stats.json")
-TIMING_PATH = Path("data/.pipeline_timing.json")
-PII_STATS_PATH = Path("data/.anonimizacao_stats.json")
-DOCS_DATA_PATH = Path("docs/data")
-SYSTEM_PROMPT_PATH = Path(__file__).parent / "system_prompt.txt"
 
 # Número total de registros lidos do dump (pré-filtro de nulos).
 # Fallback para execuções legadas em que a Fase 1 ainda não persiste stats.
@@ -308,10 +312,9 @@ def calcular_periodo_temporal(df_brutos: pd.DataFrame) -> dict:
     else:
         # Fallback: ler do SQLite
         import sqlite3
-        db_path = Path("data/banco_sistema_judicial.sqlite")
-        if not db_path.exists():
+        if not SQLITE_DB_PATH.exists():
             raise ValueError("Fase 4 / período temporal: `data_cadastro` não disponível.")
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(SQLITE_DB_PATH)
         rows = conn.execute(
             "SELECT data_cadastro FROM turmarecursal_processo "
             "WHERE data_cadastro IS NOT NULL"
@@ -634,9 +637,6 @@ def gerar_relatorio(
             log.warning("Não foi possível ler PII stats.")
 
     # --- Narrativas ---
-    db_path   = Path("data/banco_sistema_judicial.sqlite")
-    dump_path = Path("dump_sistema_judicial.sql")
-
     taxa_ret_f1 = round(len(df_brutos) / total_dump * 100, 1) if total_dump else 0
     perda_f1    = total_dump - len(df_brutos)
     narrativa_f1 = (
@@ -734,7 +734,7 @@ def gerar_relatorio(
         "perda": perda_f1, "taxa_retencao": taxa_ret_f1,
         "fonte": "Sistema Judicial / PostgreSQL",
         "artefatos": [
-            {"nome": "dump.sql", "tamanho_mb": _file_size_mb(dump_path), "tipo": "entrada", "conteudo": "Dump binário PostgreSQL (custom format)"},
+            {"nome": "dump.sql", "tamanho_mb": _file_size_mb(DUMP_PATH), "tipo": "entrada", "conteudo": "Dump binário PostgreSQL (custom format)"},
             {"nome": "dados_brutos.json", "tamanho_mb": _file_size_mb(brutos_path), "tipo": "saida", "conteudo": "{id, fundamentação, ementa}"},
         ],
     }
@@ -828,8 +828,7 @@ def gerar_relatorio(
 
     # --- Gravar JSON ---
     log.info("Gravando resultados em %s ...", output_path)
-    with output_path.open("w", encoding="utf-8") as f:
-        json.dump(resultado, f, ensure_ascii=False, indent=2)
+    escrever_json_atomico(output_path, resultado)
 
     # Cópia para GitHub Pages
     DOCS_DATA_PATH.mkdir(parents=True, exist_ok=True)
