@@ -19,7 +19,7 @@ de chamadas à API para contagem de tokens de subword.
 Entradas : data/dados_brutos.json, data/dados_limpos.json,
            data/dataset_treino.jsonl, data/dataset_teste.jsonl
 Saídas   : data/estatisticas_corpus.json
-Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase04_estatisticas
+Executar a partir da raiz do projeto: python3 -m pipeline.fase1_4.fase04_estatisticas
 """
 from __future__ import annotations
 
@@ -727,7 +727,7 @@ def gerar_relatorio(
         "nome": "Ingestão",
         "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema judicial.",
         "narrativa": narrativa_f1, "status": "concluida",
-        "script": "python3 -m pipeline.fases1_4.fase01_ingestao",
+        "script": "python3 -m pipeline.fase1_4.fase01_ingestao",
         "duracao_segundos": timing.get("fase1_ingestao"),
         "registros_dump": total_dump,
         "registros_exportados": len(df_brutos),
@@ -743,7 +743,7 @@ def gerar_relatorio(
         "nome": "Higienização",
         "descricao": "Limpeza do corpus para remoção de ruídos processuais via expressões regulares.",
         "narrativa": narrativa_f2, "status": "concluida",
-        "script": "python3 -m pipeline.fases1_4.fase02_higienizacao",
+        "script": "python3 -m pipeline.fase1_4.fase02_higienizacao",
         "duracao_segundos": timing.get("fase2_higienizacao"),
         "registros_entrada": len(df_brutos), "registros_saida": len(df_limpos),
         "perda": perda_f2, "taxa_retencao": taxa_ret_f2,
@@ -758,7 +758,7 @@ def gerar_relatorio(
         "nome": "Anonimização (LGPD)",
         "descricao": "Substituição de dados pessoais por tokens genéricos e formatação para fine-tuning.",
         "narrativa": narrativa_f3, "status": "concluida",
-        "script": "python3 -m pipeline.fases1_4.fase03_anonimizacao",
+        "script": "python3 -m pipeline.fase1_4.fase03_anonimizacao",
         "duracao_segundos": timing.get("fase3_anonimizacao"),
         "registros_entrada": len(df_limpos),
         "registros_saida": len(treino_raw) + len(teste_raw),
@@ -781,7 +781,7 @@ def gerar_relatorio(
         "nome": "Estatísticas Descritivas",
         "descricao": "Análise quantitativa do corpus: distribuições, compressão e grau de abstratividade.",
         "narrativa": narrativa_f4, "status": "concluida",
-        "script": "python3 -m pipeline.fases1_4.fase04_estatisticas",
+        "script": "python3 -m pipeline.fase1_4.fase04_estatisticas",
         "duracao_segundos": timing.get("fase4_estatisticas"),
         "funil": funil,
         "fundamentacao": dist_fund,

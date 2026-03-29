@@ -7,7 +7,7 @@ carimbos DJe, assinaturas de juízes). Datas e conteúdo de mérito são preserv
 
 Entradas : data/dados_brutos.json
 Saídas   : data/dados_limpos.json
-Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase02_higienizacao
+Executar a partir da raiz do projeto: python3 -m pipeline.fase1_4.fase02_higienizacao
 """
 from __future__ import annotations
 

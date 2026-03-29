@@ -24,11 +24,11 @@ O projeto é dividido em **7 fases**. As Fases 1–4 são sequenciais; após a F
 
 | Fase | Script(s) | Descrição |
 |---:|---|---|
-| 1 | `pipeline.fases1_4.fase01_ingestao` | Ingestão do dump PostgreSQL e exportação dos pares válidos com `data_cadastro` para divisão cronológica |
-| 2 | `pipeline.fases1_4.fase02_higienizacao` | Remoção de ruído estrutural via Regex (HTML, IDs PJe, carimbos DJe, assinaturas). Exclusão de registros corrompidos (fund. idêntica à ementa). Datas e conteúdo de mérito são preservados |
-| 3 | `pipeline.fases1_4.fase03_anonimizacao` | Anonimização LGPD: CPF, CNPJ, NPU, e-mail, telefone, nomes de partes privadas → tokens genéricos. Agentes públicos preservados (Art. 93, IX CF). **Split cronológico** 90/10 |
+| 1 | `pipeline.fase1_4.fase01_ingestao` | Ingestão do dump PostgreSQL e exportação dos pares válidos com `data_cadastro` para divisão cronológica |
+| 2 | `pipeline.fase1_4.fase02_higienizacao` | Remoção de ruído estrutural via Regex (HTML, IDs PJe, carimbos DJe, assinaturas). Exclusão de registros corrompidos (fund. idêntica à ementa). Datas e conteúdo de mérito são preservados |
+| 3 | `pipeline.fase1_4.fase03_anonimizacao` | Anonimização LGPD: CPF, CNPJ, NPU, e-mail, telefone, nomes de partes privadas → tokens genéricos. Agentes públicos preservados (Art. 93, IX CF). **Split cronológico** 90/10 |
 | — | `pipeline.ferramentas.auditoria` | Auditoria pós-Fase 3: verifica ausência de dados pessoais residuais (8 categorias, incluindo nomes privados em contexto residual) |
-| 4 | `pipeline.fases1_4.fase04_estatisticas` | Estatísticas descritivas: funil de attrition, distribuições, novel n-grams |
+| 4 | `pipeline.fase1_4.fase04_estatisticas` | Estatísticas descritivas: funil de attrition, distribuições, novel n-grams |
 | 5 | `pipeline.fase5.finetuning_gemini` | Fine-tuning supervisionado (SFT) do **Gemini 2.5 Flash** via API do Vertex AI, com manifesto local e modo de preparação prévia do job |
 | 5 | `pipeline.fase5.finetuning_qwen` | Fine-tuning (LoRA via Unsloth) do **Qwen 2.5 14B** em GPU RunPod A100 80GB, com manifesto local e modo de preparação prévia do treino |
 | 6 | `pipeline.fase6.baseline_gemini` | Baseline zero-shot do Gemini 2.5 Flash para comparação |
@@ -130,7 +130,7 @@ Infraestrutura já versionada no repositório:
 | `pipeline/fase7/protocolo.py` | Geração do manifesto e contratos mínimos dos artefatos da Fase 7 |
 | `pipeline/fase7/metricas.py` | Consolidação de ROUGE, BERTScore, score global do juiz e dimensões individuais em `data/fase7/metricas_automaticas.csv` |
 | `pipeline/fase7/estatisticas.py` | Inferência estatística pareada e geração de `data/fase7/relatorio_estatistico.json` |
-| **Divisão cronológica** | Por `data_cadastro` em `pipeline/fases1_4/fase03_anonimizacao.py` (sem shuffle aleatório) |
+| **Divisão cronológica** | Por `data_cadastro` em `pipeline/fase1_4/fase03_anonimizacao.py` (sem shuffle aleatório) |
 | Versão dos modelos base | Registrada em `modelo_gemini_nome.txt` e `modelo_qwen_checkpoint/` |
 | `.gitignore` | Exclui dados brutos, banco SQLite e documentos privados |
 

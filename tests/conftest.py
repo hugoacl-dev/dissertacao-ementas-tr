@@ -13,10 +13,10 @@ if str(REPO_ROOT) not in sys.path:
 
 
 MAPA_MODULOS_PIPELINE = {
-    "01_ingestao.py": "pipeline.fases1_4.fase01_ingestao",
-    "02_higienizacao.py": "pipeline.fases1_4.fase02_higienizacao",
-    "03_anonimizacao.py": "pipeline.fases1_4.fase03_anonimizacao",
-    "04_estatisticas.py": "pipeline.fases1_4.fase04_estatisticas",
+    "01_ingestao.py": "pipeline.fase1_4.fase01_ingestao",
+    "02_higienizacao.py": "pipeline.fase1_4.fase02_higienizacao",
+    "03_anonimizacao.py": "pipeline.fase1_4.fase03_anonimizacao",
+    "04_estatisticas.py": "pipeline.fase1_4.fase04_estatisticas",
     "05_finetuning_gemini.py": "pipeline.fase5.finetuning_gemini",
     "05_finetuning_qwen.py": "pipeline.fase5.finetuning_qwen",
     "06_baseline_gemini.py": "pipeline.fase6.baseline_gemini",

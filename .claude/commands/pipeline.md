@@ -10,11 +10,11 @@ bash scripts/run_all.sh
 
 Ordem executada:
 
-1. `python3 -m pipeline.fases1_4.fase01_ingestao`
-2. `python3 -m pipeline.fases1_4.fase02_higienizacao`
-3. `python3 -m pipeline.fases1_4.fase03_anonimizacao`
+1. `python3 -m pipeline.fase1_4.fase01_ingestao`
+2. `python3 -m pipeline.fase1_4.fase02_higienizacao`
+3. `python3 -m pipeline.fase1_4.fase03_anonimizacao`
 4. `python3 -m pipeline.ferramentas.auditoria`
-5. `python3 -m pipeline.fases1_4.fase04_estatisticas`
+5. `python3 -m pipeline.fase1_4.fase04_estatisticas`
 
 Observação:
 

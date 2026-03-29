@@ -8,7 +8,7 @@ Converte o dump binário PostgreSQL (custom format) do sistema sistema judicial 
     O campo data_cadastro é preservado para viabilizar a divisão cronológica na Fase 3.
 
 Dependência externa: pg_restore (instalável via `brew install postgresql@16`)
-Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase01_ingestao
+Executar a partir da raiz do projeto: python3 -m pipeline.fase1_4.fase01_ingestao
 """
 from __future__ import annotations
 

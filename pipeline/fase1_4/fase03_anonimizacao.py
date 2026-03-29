@@ -9,7 +9,7 @@ treino/teste por critério cronológico.
 Entradas : data/dados_limpos.json
            (deve conter o campo 'data_cadastro' exportado pela Fase 1)
 Saídas   : data/dataset_treino.jsonl, data/dataset_teste.jsonl
-Executar a partir da raiz do projeto: python3 -m pipeline.fases1_4.fase03_anonimizacao
+Executar a partir da raiz do projeto: python3 -m pipeline.fase1_4.fase03_anonimizacao
 
 Divisão treino/teste: CRONOLÓGICA por 'data_cadastro'.
 As 90% decisões mais antigas vão para treino; as 10% mais recentes para teste.

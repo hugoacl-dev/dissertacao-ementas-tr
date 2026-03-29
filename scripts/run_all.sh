@@ -17,19 +17,19 @@ t_pipeline=$(date +%s)
 
 echo "[1/5] Fase 1: Ingestão (pg_restore → SQLite + JSON)"
 t0=$(date +%s)
-python3 -m pipeline.fases1_4.fase01_ingestao
+python3 -m pipeline.fase1_4.fase01_ingestao
 t_fase1=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[2/5] Fase 2: Higienização (Regex)"
 t0=$(date +%s)
-python3 -m pipeline.fases1_4.fase02_higienizacao
+python3 -m pipeline.fase1_4.fase02_higienizacao
 t_fase2=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[3/5] Fase 3: Anonimização (LGPD) + JSONL"
 t0=$(date +%s)
-python3 -m pipeline.fases1_4.fase03_anonimizacao
+python3 -m pipeline.fase1_4.fase03_anonimizacao
 t_fase3=$(( $(date +%s) - t0 ))
 echo ""
 
@@ -41,7 +41,7 @@ echo ""
 
 echo "[5/5] Fase 4: Estatísticas Descritivas do Corpus"
 t0=$(date +%s)
-python3 -m pipeline.fases1_4.fase04_estatisticas
+python3 -m pipeline.fase1_4.fase04_estatisticas
 t_fase4=$(( $(date +%s) - t0 ))
 echo ""
 

@@ -23,11 +23,11 @@ Este repositório implementa a dissertação de mestrado sobre **geração abstr
 
 | Fase | Script | Estado | Saída principal |
 |---|---|---|---|
-| 1 | `pipeline.fases1_4.fase01_ingestao` | concluída | `data/dados_brutos.json`, `data/banco_sistema_judicial.sqlite` |
-| 2 | `pipeline.fases1_4.fase02_higienizacao` | concluída | `data/dados_limpos.json` |
-| 3 | `pipeline.fases1_4.fase03_anonimizacao` | concluída | `data/dataset_treino.jsonl`, `data/dataset_teste.jsonl` |
+| 1 | `pipeline.fase1_4.fase01_ingestao` | concluída | `data/dados_brutos.json`, `data/banco_sistema_judicial.sqlite` |
+| 2 | `pipeline.fase1_4.fase02_higienizacao` | concluída | `data/dados_limpos.json` |
+| 3 | `pipeline.fase1_4.fase03_anonimizacao` | concluída | `data/dataset_treino.jsonl`, `data/dataset_teste.jsonl` |
 | — | `pipeline.ferramentas.auditoria` | concluída | auditoria LGPD dos JSONL |
-| 4 | `pipeline.fases1_4.fase04_estatisticas` | concluída | `data/estatisticas_corpus.json`, `docs/data/estatisticas_corpus.json` |
+| 4 | `pipeline.fase1_4.fase04_estatisticas` | concluída | `data/estatisticas_corpus.json`, `docs/data/estatisticas_corpus.json` |
 
 ### Fases implementadas no código, dependentes de ambiente específico
 
@@ -92,7 +92,7 @@ A pasta `pesquisa/` existe neste ambiente local e é uma fonte importante de con
 ### Dependências registradas
 
 - Produção local e testes: `requirements.txt`
-- Estatísticas: `numpy` já é usado pelo código de `pipeline/fases1_4/fase04_estatisticas.py`
+- Estatísticas: `numpy` já é usado pelo código de `pipeline/fase1_4/fase04_estatisticas.py`
 - Fases 5–7: `requirements_fases_avancadas.txt` e ambientes próprios, conforme a documentação da pesquisa
 - Fase 5 Gemini: `google-cloud-aiplatform`, `google-cloud-storage`
 - Fase 5 Qwen: `datasets`, `trl`, `unsloth`
@@ -251,11 +251,11 @@ Executa Fase 1, Fase 2, Fase 3, auditoria LGPD e Fase 4.
 ### Fases individuais
 
 ```bash
-python3 -m pipeline.fases1_4.fase01_ingestao
-python3 -m pipeline.fases1_4.fase02_higienizacao
-python3 -m pipeline.fases1_4.fase03_anonimizacao
+python3 -m pipeline.fase1_4.fase01_ingestao
+python3 -m pipeline.fase1_4.fase02_higienizacao
+python3 -m pipeline.fase1_4.fase03_anonimizacao
 python3 -m pipeline.ferramentas.auditoria
-python3 -m pipeline.fases1_4.fase04_estatisticas
+python3 -m pipeline.fase1_4.fase04_estatisticas
 ```
 
 ### Inspeção manual
@@ -297,7 +297,7 @@ python3 -m http.server -d docs
 
 ### Atualização do dashboard versionado
 
-`pipeline/fases1_4/fase04_estatisticas.py` já copia automaticamente `data/estatisticas_corpus.json` para `docs/data/estatisticas_corpus.json`. Após rodar o pipeline ou a Fase 4, basta versionar o artefato em `docs/data/`.
+`pipeline/fase1_4/fase04_estatisticas.py` já copia automaticamente `data/estatisticas_corpus.json` para `docs/data/estatisticas_corpus.json`. Após rodar o pipeline ou a Fase 4, basta versionar o artefato em `docs/data/`.
 
 ## Artefatos de Dados
 

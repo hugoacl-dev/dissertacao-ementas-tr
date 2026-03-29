@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-29T05:24:48",
+    "gerado_em": "2026-03-29T05:28:45",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "unidade_de_medida": "palavras (split por espaço)",
     "pipeline_total_segundos": 139
@@ -11,7 +11,7 @@
       "descricao": "Extração dos votos (fundamentações) e ementas do banco PostgreSQL do sistema judicial.",
       "narrativa": "O sistema judicial armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
       "status": "concluida",
-      "script": "python3 -m pipeline.fases1_4.fase01_ingestao",
+      "script": "python3 -m pipeline.fase1_4.fase01_ingestao",
       "duracao_segundos": 4,
       "registros_dump": 32478,
       "registros_exportados": 32377,
@@ -38,7 +38,7 @@
       "descricao": "Limpeza do corpus para remoção de ruídos processuais via expressões regulares.",
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar as regras de limpeza via expressões regulares e os filtros de qualidade da Fase 2. 56 registros foram descartados. A retenção de 99.8% confirma que o ruído era pontual e que a maior parte do corpus permaneceu utilizável.",
       "status": "concluida",
-      "script": "python3 -m pipeline.fases1_4.fase02_higienizacao",
+      "script": "python3 -m pipeline.fase1_4.fase02_higienizacao",
       "duracao_segundos": 39,
       "registros_entrada": 32377,
       "registros_saida": 32321,
@@ -81,7 +81,7 @@
       "descricao": "Substituição de dados pessoais por tokens genéricos e formatação para fine-tuning.",
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.089 registros. 90%) e teste (3.232 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
-      "script": "python3 -m pipeline.fases1_4.fase03_anonimizacao",
+      "script": "python3 -m pipeline.fase1_4.fase03_anonimizacao",
       "duracao_segundos": 61,
       "registros_entrada": 32321,
       "registros_saida": 32321,
@@ -140,7 +140,7 @@
       "descricao": "Análise quantitativa do corpus: distribuições, compressão e grau de abstratividade.",
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
-      "script": "python3 -m pipeline.fases1_4.fase04_estatisticas",
+      "script": "python3 -m pipeline.fase1_4.fase04_estatisticas",
       "duracao_segundos": 21,
       "funil": {
         "dump_postgresql": 32478,
