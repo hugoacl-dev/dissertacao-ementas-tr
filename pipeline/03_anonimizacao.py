@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+from jsonl_utils import MARCADOR_FUNDAMENTACAO
 
 
 # ---------------------------------------------------------------------------
@@ -335,7 +336,7 @@ def formatar_exemplo_gemini(fundamentacao: str, ementa: str) -> dict:
                     {
                         "text": (
                             f"{_INSTRUCAO_SISTEMA}\n\n"
-                            f"Gere a ementa para a seguinte fundamentação:\n{fundamentacao}"
+                            f"{MARCADOR_FUNDAMENTACAO}{fundamentacao}"
                         )
                     }
                 ],

@@ -31,6 +31,7 @@ from typing import Any
 
 import pandas as pd
 import numpy as np
+from jsonl_utils import extrair_fundamentacao_e_ementa
 
 # ---------------------------------------------------------------------------
 # Configuração
@@ -43,10 +44,11 @@ LIMPOS_PATH = Path("data/dados_limpos.json")
 TREINO_PATH = Path("data/dataset_treino.jsonl")
 TESTE_PATH  = Path("data/dataset_teste.jsonl")
 OUTPUT_PATH = Path("data/estatisticas_corpus.json")
+INGESTAO_STATS_PATH = Path("data/.ingestao_stats.json")
 
 # Número total de registros lidos do dump (pré-filtro de nulos).
-# Obtido do log da Fase 1, não pode ser recalculado a partir dos JSONs.
-TOTAL_DUMP = 32_478
+# Fallback para execuções legadas em que a Fase 1 ainda não persiste stats.
+TOTAL_DUMP_FALLBACK = 32_478
 
 # Percentis padrão para distribuições de comprimento
 _PERCENTIS = [0.05, 0.25, 0.75, 0.95]
@@ -73,24 +75,26 @@ def _carregar_jsonl(path: Path) -> list[dict]:
     return registros
 
 
+def _carregar_stats_ingestao(path: Path) -> dict[str, int]:
+    """Lê as estatísticas estruturadas da Fase 1, se disponíveis."""
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as f:
+        payload = json.load(f)
+    return {
+        "total_lidos": int(payload.get("total_lidos", 0)),
+        "descartados_nulos": int(payload.get("descartados_nulos", 0)),
+        "exportados": int(payload.get("exportados", 0)),
+    }
+
+
 def _extrair_texto_do_jsonl(obj: dict) -> tuple[str, str]:
     """Extrai fundamentação e ementa de um registro JSONL do Gemini.
 
     O turno 'user' contém a instrução de sistema + fundamentação.
     O turno 'model' contém a ementa.
     """
-    fundamentacao = ""
-    ementa = ""
-    for content in obj.get("contents", []):
-        role = content.get("role", "")
-        text = content["parts"][0]["text"]
-        if role == "user":
-            marcador = "Gere a ementa para a seguinte fundamentação:\n"
-            idx = text.find(marcador)
-            fundamentacao = text[idx + len(marcador):] if idx >= 0 else text
-        elif role == "model":
-            ementa = text
-    return fundamentacao, ementa
+    return extrair_fundamentacao_e_ementa(obj)
 
 
 # ---------------------------------------------------------------------------
@@ -246,6 +250,7 @@ def calcular_novel_ngrams(
 
 
 def calcular_funil(
+    total_dump: int,
     n_brutos: int,
     n_limpos: int,
     n_treino: int,
@@ -254,16 +259,16 @@ def calcular_funil(
     """Calcula o funil de attrition do pipeline."""
     total_final = n_treino + n_teste
     return {
-        "dump_postgresql":          TOTAL_DUMP,
+        "dump_postgresql":          total_dump,
         "apos_filtro_nulos_fase1":  n_brutos,
         "apos_limpeza_fase2":       n_limpos,
         "dataset_final_fase3":      total_final,
         "treino":                   n_treino,
         "teste":                    n_teste,
-        "perda_fase1":              TOTAL_DUMP - n_brutos,
+        "perda_fase1":              total_dump - n_brutos,
         "perda_fase2":              n_brutos - n_limpos,
-        "perda_total":              TOTAL_DUMP - total_final,
-        "taxa_retencao_global":     round(total_final / TOTAL_DUMP * 100, 1),
+        "perda_total":              total_dump - total_final,
+        "taxa_retencao_global":     round(total_final / total_dump * 100, 1) if total_dump else 0.0,
     }
 
 
@@ -470,6 +475,12 @@ def gerar_relatorio(
     df_limpos = _carregar_json(limpos_path)
     treino_raw = _carregar_jsonl(treino_path)
     teste_raw  = _carregar_jsonl(teste_path)
+    try:
+        ingestao_stats = _carregar_stats_ingestao(INGESTAO_STATS_PATH)
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
+        log.warning("Não foi possível ler %s: %s", INGESTAO_STATS_PATH, exc)
+        ingestao_stats = {}
+    total_dump = ingestao_stats.get("total_lidos", TOTAL_DUMP_FALLBACK)
 
     # --- Extrair textos do JSONL final para um DataFrame ---
     log.info("Extraindo textos do dataset final...")
@@ -482,7 +493,7 @@ def gerar_relatorio(
     df["razao"]   = np.where(df["n_ementa"] > 0, df["n_fund"] / df["n_ementa"], np.nan)
 
     # --- Funil ---
-    funil = calcular_funil(len(df_brutos), len(df_limpos), len(treino_raw), len(teste_raw))
+    funil = calcular_funil(total_dump, len(df_brutos), len(df_limpos), len(treino_raw), len(teste_raw))
     log.info("Funil de Attrition:")
     log.info("  Dump PostgreSQL:        %d", funil["dump_postgresql"])
     log.info("  Após filtro nulos (F1): %d (-%d)", funil["apos_filtro_nulos_fase1"], funil["perda_fase1"])
@@ -618,11 +629,11 @@ def gerar_relatorio(
     db_path   = Path("data/banco_sistema_judicial.sqlite")
     dump_path = Path("dump_sistema_judicial.sql")
 
-    taxa_ret_f1 = round(len(df_brutos) / TOTAL_DUMP * 100, 1)
-    perda_f1    = TOTAL_DUMP - len(df_brutos)
+    taxa_ret_f1 = round(len(df_brutos) / total_dump * 100, 1) if total_dump else 0
+    perda_f1    = total_dump - len(df_brutos)
     narrativa_f1 = (
         f"O sistema judicial armazena votos e ementas em PostgreSQL. "
-        f"O dump original contém {TOTAL_DUMP:,} registros. "
+        f"O dump original contém {total_dump:,} registros. "
         f"Após descartar {perda_f1:,} registros sem voto (fundamentação) ou ementa preenchida, "
         f"{len(df_brutos):,} pares válidos foram exportados, uma retenção de {taxa_ret_f1}%, "
         f"indicando alta completude da base de dados."
@@ -633,9 +644,9 @@ def gerar_relatorio(
     narrativa_f2 = (
         f"Textos jurídicos contêm ruído processual (identificadores PJe, carimbos de "
         f"publicação DJe, assinaturas) que polui o treinamento de modelos de linguagem. "
-        f"Após aplicar 6 regras de limpeza via expressões regulares, {perda_f2:,} registros "
-        f"foram descartados por fundamentação ou ementa muito curta. A retenção de {taxa_ret_f2}% "
-        f"confirma que o ruído era pontual. A maioria do corpus é utilizável."
+        f"Após aplicar as regras de limpeza via expressões regulares e os filtros de qualidade "
+        f"da Fase 2, {perda_f2:,} registros foram descartados. A retenção de {taxa_ret_f2}% "
+        f"confirma que o ruído era pontual e que a maior parte do corpus permaneceu utilizável."
     ).replace(",", ".")
 
     narrativa_f3 = (
@@ -690,15 +701,18 @@ def gerar_relatorio(
         "Remoção de tags HTML (artefatos de renderização)",
         "Remoção de metadados processuais (Processo nº, NPU)",
         "Remoção de identificadores PJe (id. 48772689, etc.)",
-        "Remoção de carimbos DJe completos e simples",
+        "Remoção de carimbos DJe completos",
+        "Remoção de carimbos DJe simples e datas DJe",
         "Remoção de 'DIVULG' isolado (resíduo DJe)",
         "Remoção de Ação Civil Pública + DPU com nº (cabeçalho formatado)",
         "Substituição de datas prefixadas por cidade por token [DATA]",
         "Remoção de Súmula de Julgamento (rodapé processual)",
         "Remoção de honoríficos de juízes no final (assinatura)",
         "Remoção de blocos em CAPSLOCK no final (assinatura)",
-        "Filtro: fundamentação < 50 caracteres → descarte",
-        "Filtro: ementa < 20 caracteres → descarte",
+        "Descarte de registros vazios após a limpeza",
+        "Descarte de registros com fundamentação idêntica à ementa",
+        "Filtro: fundamentação com menos de 10 palavras",
+        "Filtro: ementa com menos de 5 palavras",
     ]
 
     fase1 = {
@@ -707,7 +721,7 @@ def gerar_relatorio(
         "narrativa": narrativa_f1, "status": "concluida",
         "script": "pipeline/01_ingestao.py",
         "duracao_segundos": timing.get("fase1_ingestao"),
-        "registros_dump": TOTAL_DUMP,
+        "registros_dump": total_dump,
         "registros_exportados": len(df_brutos),
         "perda": perda_f1, "taxa_retencao": taxa_ret_f1,
         "fonte": "Sistema Judicial / PostgreSQL",

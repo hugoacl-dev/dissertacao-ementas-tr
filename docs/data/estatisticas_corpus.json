@@ -1,6 +1,6 @@
 {
   "meta": {
-    "gerado_em": "2026-03-28T20:07:32",
+    "gerado_em": "2026-03-29T00:14:45",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "autor": "Hugo Andrade Correia Lima Filho",
     "unidade_de_medida": "palavras (split por espaço)",
@@ -13,7 +13,7 @@
       "narrativa": "O sistema judicial armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
       "status": "concluida",
       "script": "pipeline/01_ingestao.py",
-      "duracao_segundos": 5,
+      "duracao_segundos": 4,
       "registros_dump": 32478,
       "registros_exportados": 32377,
       "perda": 101,
@@ -37,7 +37,7 @@
     "fase2_higienizacao": {
       "nome": "Higienização",
       "descricao": "Limpeza do corpus para remoção de ruídos processuais via expressões regulares.",
-      "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar 6 regras de limpeza via expressões regulares. 65 registros foram descartados por fundamentação ou ementa muito curta. A retenção de 99.8% confirma que o ruído era pontual. A maioria do corpus é utilizável.",
+      "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar as regras de limpeza via expressões regulares e os filtros de qualidade da Fase 2. 65 registros foram descartados. A retenção de 99.8% confirma que o ruído era pontual e que a maior parte do corpus permaneceu utilizável.",
       "status": "concluida",
       "script": "pipeline/02_higienizacao.py",
       "duracao_segundos": 39,
@@ -49,15 +49,18 @@
         "Remoção de tags HTML (artefatos de renderização)",
         "Remoção de metadados processuais (Processo nº, NPU)",
         "Remoção de identificadores PJe (id. 48772689, etc.)",
-        "Remoção de carimbos DJe completos e simples",
+        "Remoção de carimbos DJe completos",
+        "Remoção de carimbos DJe simples e datas DJe",
         "Remoção de 'DIVULG' isolado (resíduo DJe)",
         "Remoção de Ação Civil Pública + DPU com nº (cabeçalho formatado)",
         "Substituição de datas prefixadas por cidade por token [DATA]",
         "Remoção de Súmula de Julgamento (rodapé processual)",
         "Remoção de honoríficos de juízes no final (assinatura)",
         "Remoção de blocos em CAPSLOCK no final (assinatura)",
-        "Filtro: fundamentação < 50 caracteres → descarte",
-        "Filtro: ementa < 20 caracteres → descarte"
+        "Descarte de registros vazios após a limpeza",
+        "Descarte de registros com fundamentação idêntica à ementa",
+        "Filtro: fundamentação com menos de 10 palavras",
+        "Filtro: ementa com menos de 5 palavras"
       ],
       "artefatos": [
         {
@@ -80,7 +83,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.081 registros. 90%) e teste (3.231 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
       "script": "pipeline/03_anonimizacao.py",
-      "duracao_segundos": 62,
+      "duracao_segundos": 61,
       "registros_entrada": 32312,
       "registros_saida": 32312,
       "treino": 29081,
@@ -139,7 +142,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "pipeline/04_estatisticas.py",
-      "duracao_segundos": 18,
+      "duracao_segundos": 21,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,

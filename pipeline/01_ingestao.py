@@ -33,6 +33,7 @@ log = logging.getLogger(__name__)
 DUMP_PATH = Path("dump_sistema_judicial.sql")
 DB_PATH = Path("data/banco_sistema_judicial.sqlite")
 JSON_PATH = Path("data/dados_brutos.json")
+STATS_PATH = Path("data/.ingestao_stats.json")
 
 TARGET_TABLE = "turmarecursal_processo"
 COMMIT_BATCH_SIZE = 5_000  # Faz commit a cada N registros para segurança transacional
@@ -300,6 +301,18 @@ def exportar_json(registros: list[RegistroProcesso], path: Path) -> None:
     log.info("JSON exportado para %s (%s registros).", path, len(registros))
 
 
+def salvar_stats(stats: ExtractionStats, path: Path) -> None:
+    """Persiste as contagens da Fase 1 para reuso nas etapas seguintes."""
+    payload = {
+        "total_lidos": stats.total_lidos,
+        "descartados_nulos": stats.descartados_nulos,
+        "exportados": stats.exportados,
+    }
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    log.info("Estatísticas da ingestão salvas em %s.", path)
+
+
 
 # ---------------------------------------------------------------------------
 # Entrypoint
@@ -330,6 +343,7 @@ def main() -> None:
         stats.descartados_nulos,
         stats.taxa_aproveitamento,
     )
+    salvar_stats(stats, STATS_PATH)
 
     if not registros:
         log.warning("Nenhum registro válido extraído. Verifique o dump e o schema.")

@@ -2,25 +2,17 @@
 description: Regenerar estatísticas descritivas do corpus (Fase 4)
 ---
 
-Regenera as estatísticas descritivas a partir dos datasets já processados (pós-anonimização).
+Runbook curto. Fonte canônica: `AGENTS.md`.
 
 ```bash
 python3 pipeline/04_estatisticas.py
 ```
 
-**Artefato gerado:** `data/estatisticas_corpus.json`
+Artefatos relevantes:
 
-Este JSON é consumido pelo dashboard em `docs/` e pelo Notebook de avaliação (Fase 7).
+- `data/estatisticas_corpus.json`
+- `docs/data/estatisticas_corpus.json`
 
-**Métricas calculadas:**
-- Funil de attrition (brutos → limpos → final)
-- Distribuição de comprimento em palavras (média, mediana, P5/P25/P75/P95)
-- Razão de compressão (fundamentação / ementa)
-- Novel n-grams (uni/bi/tri) — evidência de abstratividade
-- Período temporal coberto
-- Total de palavras por split
+Observação:
 
-Para atualizar o dashboard após regenerar:
-```bash
-cp data/estatisticas_corpus.json docs/data/ && git add docs/data/estatisticas_corpus.json && git commit -m "dados: atualizar estatísticas" && git push
-```
+- o script já copia o JSON final para `docs/data/`, então não é necessário `cp` manual antes do commit.

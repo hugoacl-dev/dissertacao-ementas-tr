@@ -34,7 +34,9 @@ t_fase3=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[4/5] Auditoria LGPD"
+t0=$(date +%s)
 python3 pipeline/audit.py
+t_audit=$(( $(date +%s) - t0 ))
 echo ""
 
 echo "[5/5] Fase 4: Estatísticas Descritivas do Corpus"
@@ -50,6 +52,7 @@ cat > "$TIMING_FILE" <<EOF
   "fase1_ingestao": $t_fase1,
   "fase2_higienizacao": $t_fase2,
   "fase3_anonimizacao": $t_fase3,
+  "auditoria_lgpd": $t_audit,
   "fase4_estatisticas": $t_fase4,
   "pipeline_total": $t_total
 }
