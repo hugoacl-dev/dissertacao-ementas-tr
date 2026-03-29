@@ -222,6 +222,12 @@ python3 pipeline/ver_registro.py 42
 python3 pipeline/ver_registro.py 10 treino
 ```
 
+### Testes de regressão
+
+```bash
+pytest -q
+```
+
 ### Dashboard local
 
 ```bash

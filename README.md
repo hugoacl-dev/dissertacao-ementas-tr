@@ -52,6 +52,9 @@ bash pipeline/run_all.sh && git add docs/data/estatisticas_corpus.json && git co
 # Inspecionar um registro do dataset (índice 0 do teste, por padrão)
 python3 pipeline/ver_registro.py 42          # registro 42 do teste
 python3 pipeline/ver_registro.py 10 treino   # registro 10 do treino
+
+# Rodar a suíte mínima de regressão
+pytest -q
 ```
 
 ## Dashboard
