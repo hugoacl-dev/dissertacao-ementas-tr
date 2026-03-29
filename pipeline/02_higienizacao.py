@@ -154,7 +154,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 15. Blocos isolados CAPSLOCK no final (assinaturas de juízes)
     (
         "capslock_assinatura",
-        re.compile(r"\.?[ \n]*[A-ZÀ-Ÿ\s]{10,}$"),
+        re.compile(r"\.?[ \n\r\t\xa0]*(?:[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]+){2,}[A-ZÀ-Þ]{2,}[ \n\r\t\xa0]*$"),
         " ",
     ),
 ]
