@@ -6,6 +6,7 @@ Esta pasta existe apenas para compatibilidade com Claude Code.
 
 Leia primeiro `AGENTS.md`. Ele é a fonte local de:
 
+- perfil esperado dos agentes
 - contexto do projeto
 - estado atual das fases
 - convenções de código
