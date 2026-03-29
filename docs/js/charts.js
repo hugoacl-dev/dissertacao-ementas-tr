@@ -405,7 +405,8 @@ function renderScatterCompression(f4) {
   if (!canvas || !f4?.scatter_compressao) return;
   const c = getChartColors();
 
-  const pts = f4.scatter_compressao;
+  const scatterData = f4.scatter_compressao;
+  const pts = Array.isArray(scatterData) ? scatterData : scatterData.pontos;
 
   // ── Regressão linear (mínimos quadrados) ──
   const n = pts.length;
@@ -453,7 +454,7 @@ function renderScatterCompression(f4) {
           order: 2,
         },
         {
-          label: `Tendência linear (R² = ${r2.toFixed(3)})`,
+          label: `Tendência linear (R² = ${r2.toFixed(3)}${!Array.isArray(scatterData) && scatterData.spearman_rho != null ? ` · ρ = ${scatterData.spearman_rho.toFixed(3)}` : ''})`,
           data: trendData,
           type: 'line',
           borderColor: c.accent3,
