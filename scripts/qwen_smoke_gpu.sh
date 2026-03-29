@@ -12,6 +12,7 @@ PER_DEVICE_TRAIN_BATCH_SIZE="${PER_DEVICE_TRAIN_BATCH_SIZE:-1}"
 GRADIENT_ACCUMULATION_STEPS="${GRADIENT_ACCUMULATION_STEPS:-1}"
 NUM_TRAIN_EPOCHS="${NUM_TRAIN_EPOCHS:-1}"
 SMOKE_ID="${SMOKE_ID:-qwen_smoke_$(date +%Y%m%d_%H%M%S)}"
+HF_HOME_DEFAULT="${HF_HOME_DEFAULT:-/workspace/.cache/huggingface}"
 
 TRAIN_DATASET_PATH="data/exploratorio/fase5/${SMOKE_ID}_dataset_treino.jsonl"
 CHECKPOINT_DIR="data/exploratorio/fase5/${SMOKE_ID}_modelo_qwen_checkpoint"
@@ -21,6 +22,15 @@ QWEN_ZS_OUTPUT_PATH="data/exploratorio/fase7/predicoes/${SMOKE_ID}_qwen_zero_sho
 QWEN_ZS_MANIFEST_PATH="data/exploratorio/fase7/predicoes/${SMOKE_ID}_qwen_zero_shot.manifest.json"
 QWEN_FT_OUTPUT_PATH="data/exploratorio/fase7/predicoes/${SMOKE_ID}_qwen_ft.jsonl"
 QWEN_FT_MANIFEST_PATH="data/exploratorio/fase7/predicoes/${SMOKE_ID}_qwen_ft.manifest.json"
+
+if [[ -d "/workspace" ]]; then
+  export HF_HOME="${HF_HOME:-$HF_HOME_DEFAULT}"
+else
+  export HF_HOME="${HF_HOME:-$REPO_ROOT/.cache/huggingface}"
+fi
+export HF_HUB_CACHE="${HF_HUB_CACHE:-$HF_HOME/hub}"
+export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME/transformers}"
+export HF_HUB_DISABLE_XET="${HF_HUB_DISABLE_XET:-1}"
 
 if [[ ! -f "data/dataset_treino.jsonl" ]]; then
   echo "Arquivo ausente: data/dataset_treino.jsonl"
@@ -46,6 +56,13 @@ print("Dependências OK")
 PY
 
 mkdir -p data/exploratorio/fase5 data/exploratorio/fase7 data/exploratorio/fase7/predicoes
+mkdir -p "$HF_HOME" "$HF_HUB_CACHE" "$TRANSFORMERS_CACHE"
+
+echo "== Cache Hugging Face =="
+echo "HF_HOME=$HF_HOME"
+echo "HF_HUB_CACHE=$HF_HUB_CACHE"
+echo "TRANSFORMERS_CACHE=$TRANSFORMERS_CACHE"
+echo "HF_HUB_DISABLE_XET=$HF_HUB_DISABLE_XET"
 
 echo "== Gerando subset de treino (${TRAIN_LIMIT} linhas) =="
 head -n "$TRAIN_LIMIT" data/dataset_treino.jsonl > "$TRAIN_DATASET_PATH"

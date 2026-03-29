@@ -71,6 +71,9 @@ python3 -m pipeline.fase6.baseline_gemini
 # Executar baseline zero-shot do Qwen
 python3 -m pipeline.fase6.baseline_qwen --model-id Qwen/Qwen2.5-14B-Instruct
 
+# Smoke test do Qwen em GPU (RunPod/H100), com cache do Hugging Face em /workspace
+bash scripts/qwen_smoke_gpu.sh
+
 # Rodar explicitamente no perfil oficial após congelamento metodológico
 python3 -m pipeline.fase5.finetuning_gemini --project-id SEU_PROJECT_ID --staging-bucket gs://SEU_BUCKET --prepare-only --perfil-execucao oficial
 python3 -m pipeline.fase6.baseline_gemini --perfil-execucao oficial
@@ -117,6 +120,22 @@ As CLIs das Fases 5, 6 e 7 agora distinguem dois perfis:
 - `oficial`: artefatos nos caminhos canônicos `data/fase5/` e `data/fase7/`, a serem usados somente após o congelamento do pipeline, prompt e parâmetros
 
 Essa separação evita que smoke tests e rodadas exploratórias contaminem os artefatos destinados ao resultado final.
+
+### Notas Operacionais do Qwen em GPU
+
+- O smoke test real do Qwen foi validado em RunPod com `H100 80GB`.
+- No primeiro carregamento, o `baseline_qwen` baixa aproximadamente `29,5 GB` do modelo base `Qwen/Qwen2.5-14B-Instruct`; o `finetuning_qwen` via Unsloth baixa adicionalmente cerca de `11,3 GB` do checkpoint 4-bit otimizado.
+- Em RunPod, o cache padrão em `/root/.cache` pode esgotar o `container disk` mesmo quando `/workspace` ainda tem espaço livre. Por isso, o script [qwen_smoke_gpu.sh](/Users/nti/dissertacao-ementas-tr/scripts/qwen_smoke_gpu.sh) agora exporta por padrão:
+  - `HF_HOME=/workspace/.cache/huggingface`
+  - `HF_HUB_CACHE=/workspace/.cache/huggingface/hub`
+  - `TRANSFORMERS_CACHE=/workspace/.cache/huggingface/transformers`
+- O smoke também força `HF_HUB_DISABLE_XET=1`, porque o backend Xet do `huggingface_hub` apresentou falhas de reconstrução durante downloads paralelos dos shards.
+- O fluxo de smoke validado foi:
+  - `prepare-only` do Qwen
+  - `qwen_zero_shot` com 1 caso
+  - fine-tuning LoRA mínimo com 1 amostra e 1 época
+  - `qwen_ft` com o checkpoint LoRA local recém-gerado
+- Para smoke tests de infraestrutura, é aceitável usar dataset sintético mínimo. Para qualquer rodada metodologicamente relevante, use apenas os JSONL reais do projeto.
 
 ## Dashboard
 
