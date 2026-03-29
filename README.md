@@ -2,6 +2,8 @@
 
 Pipeline de dados e treinamento para Processamento de Linguagem Natural aplicado ao domínio jurídico.
 
+Para agentes de código, a fonte canônica de instruções do projeto é `AGENTS.md`. A pasta `.claude/` é mantida apenas como camada de compatibilidade para Claude Code.
+
 **Autor:** AUTOR_ANONIMIZADO
 **Modelos:** `Gemini 2.5 Flash` (Google, Vertex AI) · `Qwen 2.5 14B-Instruct` (Alibaba, LoRA/Unsloth)
 

@@ -2,6 +2,7 @@
 #
 # Fases 1–4 (ingestão, higienização, anonimização, estatísticas):
 pandas>=2.2.0
+numpy>=1.26.0
 #
 # Fase 5a (fine-tuning Gemini 2.5 Flash via Vertex AI):
 google-cloud-aiplatform>=1.40.0

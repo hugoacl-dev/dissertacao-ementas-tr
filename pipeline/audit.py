@@ -7,9 +7,8 @@ que tenham escapado da limpeza e anonimização.
 Executar a partir da raiz do projeto: python3 pipeline/audit.py
 
 Lógica de extração de texto:
-  - Turno "user": extrai apenas o conteúdo da fundamentação, removendo o
-    prefix fixo da instrução de sistema (que contém palavras como "relator"
-    e "Desembargador" de forma legítima, não como dados pessoais).
+  - Turno "user": extrai apenas o conteúdo da fundamentação por meio do
+    helper compartilhado do projeto, removendo a instrução embutida.
   - Turno "model": extrai o texto da ementa diretamente.
 
 Isso evita falsos positivos causados pela instrução de sistema embutida.
@@ -21,16 +20,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-
-# Prefixo fixo da instrução de sistema embutida no turno "user".
-# Deve ser mantido em sync com dados_anonimizacao.py → _INSTRUCAO_SISTEMA.
-_PREFIXO_SISTEMA = (
-    "Você é um assistente jurídico experiente que auxilia juízes a escreverem "
-    "Ementas Judiciais, que são resumos curtos, estruturados e objetivos do que "
-    "foi decidido numa fundamentação (voto). Ao ser fornecida a fundamentação de um "
-    "Recurso, você deve responder única e exclusivamente com o texto da Ementa correspondente."
-    "\n\nGere a ementa para a seguinte fundamentação:\n"
-)
+from jsonl_utils import extrair_fundamentacao_e_ementa
 
 # ---------------------------------------------------------------------------
 # Padrões de auditoria
@@ -52,27 +42,18 @@ PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 # ---------------------------------------------------------------------------
-# Extração dos campos de dado (excluindo instrução de sistema)
+# Extração dos campos de dado (excluindo instrução embutida)
 # ---------------------------------------------------------------------------
 
 
 def _extrair_textos_de_dado(obj: dict) -> str:
     """Extrai apenas os campos de conteúdo real (fundamentação e ementa).
 
-    Remove o prefixo fixo da instrução de sistema do turno "user" para
-    evitar falsos positivos causados por palavras como "relator" ou
-    "Desembargador" presentes na instrução.
+    Usa o mesmo contrato do JSONL consumido pela Fase 4 e pelos utilitários
+    do projeto, removendo a instrução embutida do turno "user".
     """
-    partes: list[str] = []
-    for content in obj.get("contents", []):
-        role = content.get("role", "")
-        for part in content.get("parts", []):
-            text = part.get("text", "")
-            if role == "user":
-                # Remove o prefixo fixo; o restante é a fundamentação real
-                text = text.replace(_PREFIXO_SISTEMA, "", 1)
-            partes.append(text)
-    return " ".join(partes)
+    fundamentacao, ementa = extrair_fundamentacao_e_ementa(obj)
+    return " ".join(parte for parte in (fundamentacao, ementa) if parte)
 
 
 # ---------------------------------------------------------------------------
