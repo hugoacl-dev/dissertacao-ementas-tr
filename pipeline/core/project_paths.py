@@ -36,8 +36,12 @@ FASE7_PROTOCOLO_PATH = FASE7_DIR / "protocolo_avaliacao.json"
 FASE7_CASOS_AVALIACAO_PATH = FASE7_DIR / "casos_avaliacao.jsonl"
 FASE7_METRICAS_AUTOMATICAS_PATH = FASE7_DIR / "metricas_automaticas.csv"
 FASE7_AVALIACAO_JUDGE_PATH = FASE7_DIR / "avaliacao_llm_judge.jsonl"
+FASE7_AVALIACAO_JUDGE_BRUTA_PATH = FASE7_DIR / "avaliacao_llm_judge_bruta.jsonl"
+FASE7_AVALIACAO_JUDGE_MANIFEST_PATH = FASE7_DIR / "avaliacao_llm_judge_manifest.json"
 FASE7_AMOSTRA_HUMANA_PATH = FASE7_DIR / "amostra_humana.json"
+FASE7_GABARITO_CEGAMENTO_HUMANO_PATH = FASE7_DIR / "gabarito_cegamento_humano.json"
 FASE7_AVALIACAO_HUMANA_PATH = FASE7_DIR / "avaliacao_humana.csv"
+FASE7_RELATORIO_AVALIACAO_HUMANA_PATH = FASE7_DIR / "relatorio_avaliacao_humana.json"
 FASE7_RELATORIO_ESTATISTICO_PATH = FASE7_DIR / "relatorio_estatistico.json"
 
 FASE5_GEMINI_MANIFEST_PATH = FASE5_DIR / "gemini_sft_manifest.json"
@@ -55,4 +59,9 @@ FASE7_PREDICAO_PATHS = {
     "gemini_zero_shot": FASE7_PREDICOES_DIR / "gemini_zero_shot.jsonl",
     "qwen_ft": FASE7_PREDICOES_DIR / "qwen_ft.jsonl",
     "qwen_zero_shot": FASE7_PREDICOES_DIR / "qwen_zero_shot.jsonl",
+}
+
+FASE7_PREDICAO_MANIFEST_PATHS = {
+    condicao_id: path.with_suffix(".manifest.json")
+    for condicao_id, path in FASE7_PREDICAO_PATHS.items()
 }

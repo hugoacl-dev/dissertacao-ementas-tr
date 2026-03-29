@@ -97,5 +97,6 @@ def test_gerar_relatorio_estatistico_sintetico() -> None:
     assert relatorio["versao_protocolo"] == manifesto["versao_protocolo"]
     assert relatorio["resumo_familias"]["gemini"]["sucesso_confirmatorio"] is True
     assert relatorio["resumo_familias"]["qwen"]["sucesso_confirmatorio"] is True
+    assert relatorio["consistencia_entre_familias"]["bertscore_f1"]["direcao_consistente"] is True
     assert len(relatorio["comparacoes"]) == 6
     json.dumps(relatorio, ensure_ascii=False)

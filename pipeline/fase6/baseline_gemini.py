@@ -11,9 +11,11 @@ import argparse
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
+from pipeline.core.artefato_utils import escrever_json_atomico
 from pipeline.fase7.predicoes_utils import (
     carregar_casos_predicao,
     carregar_predicoes_existentes,
@@ -21,7 +23,13 @@ from pipeline.fase7.predicoes_utils import (
     normalizar_ementa_gerada,
     persistir_predicoes,
 )
-from pipeline.core.project_paths import FASE7_CASOS_AVALIACAO_PATH, FASE7_PREDICAO_PATHS, SYSTEM_PROMPT_PATH
+from pipeline.core.project_paths import (
+    FASE7_CASOS_AVALIACAO_PATH,
+    FASE7_PREDICAO_MANIFEST_PATHS,
+    FASE7_PREDICAO_PATHS,
+    SYSTEM_PROMPT_PATH,
+)
+from pipeline.fase7.protocolo import CONDICOES_EXPERIMENTAIS, calcular_sha256_texto
 
 log = logging.getLogger(__name__)
 
@@ -91,63 +99,201 @@ def gerar_ementa_gemini(
     return normalizar_ementa_gerada(_extrair_texto_resposta_gemini(resposta))
 
 
+def _validar_condicao_gemini(condicao_id: str) -> str:
+    condicoes_validas = {
+        item["id"]
+        for item in CONDICOES_EXPERIMENTAIS
+        if item["familia"] == "gemini"
+    }
+    if condicao_id not in condicoes_validas:
+        raise ValueError(
+            f"`condicao_id` inválido para o runner Gemini: {condicao_id}. "
+            f"Use uma dentre {sorted(condicoes_validas)}."
+        )
+    return condicao_id
+
+
+def _validar_modelo_gemini_para_condicao(*, condicao_id: str, model_id: str) -> None:
+    """Impede rotulagem fine-tuned com o modelo base padrão."""
+    if condicao_id == "gemini_ft" and model_id == MODELO_PADRAO:
+        raise ValueError(
+            "A condição `gemini_ft` exige informar explicitamente o identificador "
+            "do modelo ajustado gerado na Fase 5."
+        )
+
+
+def _gerar_ementa_gemini_com_retry(
+    cliente: Any,
+    *,
+    model_id: str,
+    system_prompt: str,
+    fundamentacao: str,
+    temperature: float,
+    top_p: float,
+    max_output_tokens: int,
+    max_retries: int,
+    retry_backoff_seconds: float,
+) -> str:
+    ultima_exc: Exception | None = None
+    for tentativa in range(1, max_retries + 1):
+        try:
+            return gerar_ementa_gemini(
+                cliente,
+                model_id=model_id,
+                system_prompt=system_prompt,
+                fundamentacao=fundamentacao,
+                temperature=temperature,
+                top_p=top_p,
+                max_output_tokens=max_output_tokens,
+            )
+        except Exception as exc:  # noqa: BLE001 - tolerância operacional a falhas transitórias
+            ultima_exc = exc
+            if tentativa == max_retries:
+                break
+            espera = retry_backoff_seconds * (2 ** (tentativa - 1))
+            log.warning(
+                "Falha transitória no Gemini (%s/%s): %s. Nova tentativa em %.1fs.",
+                tentativa,
+                max_retries,
+                exc,
+                espera,
+            )
+            time.sleep(espera)
+    assert ultima_exc is not None
+    raise RuntimeError(
+        f"Falha ao gerar ementa no Gemini após {max_retries} tentativas."
+    ) from ultima_exc
+
+
 def executar_baseline_gemini(
     *,
     casos_path: Path = FASE7_CASOS_AVALIACAO_PATH,
-    output_path: Path = FASE7_PREDICAO_PATHS[CONDICAO_ID],
+    output_path: Path | None = None,
     model_id: str = MODELO_PADRAO,
+    condicao_id: str = CONDICAO_ID,
     temperature: float = 0.0,
     top_p: float = 1.0,
     max_output_tokens: int = 256,
     limit: int | None = None,
     flush_every: int = 20,
+    max_retries: int = 3,
+    retry_backoff_seconds: float = 2.0,
+    manifest_path: Path | None = None,
 ) -> Path:
-    """Executa o baseline zero-shot do Gemini com retomada incremental."""
+    """Executa inferência do Gemini com retomada incremental.
+
+    Pode ser usado tanto para a condição zero-shot quanto para a condição
+    fine-tuned, desde que `condicao_id` e `model_id` sejam consistentes.
+    """
+    condicao_id = _validar_condicao_gemini(condicao_id)
+    _validar_modelo_gemini_para_condicao(condicao_id=condicao_id, model_id=model_id)
+    if output_path is None:
+        output_path = FASE7_PREDICAO_PATHS[condicao_id]
+    if manifest_path is None:
+        manifest_path = FASE7_PREDICAO_MANIFEST_PATHS[condicao_id]
+    if flush_every <= 0:
+        raise ValueError("`flush_every` deve ser inteiro positivo.")
+    if limit is not None and limit <= 0:
+        raise ValueError("`limit` deve ser positivo quando informado.")
+    if max_retries <= 0:
+        raise ValueError("`max_retries` deve ser inteiro positivo.")
+    if retry_backoff_seconds < 0:
+        raise ValueError("`retry_backoff_seconds` não pode ser negativo.")
+
     casos_df = carregar_casos_predicao(casos_path)
     system_prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
-    cliente = _construir_cliente_gemini()
 
-    existentes = carregar_predicoes_existentes(output_path, condicao_id=CONDICAO_ID)
+    existentes = carregar_predicoes_existentes(output_path, condicao_id=condicao_id)
     registros = list(existentes)
     pendentes = filtrar_casos_pendentes(casos_df, existentes)
     if limit is not None:
         pendentes = pendentes[:limit]
 
-    for indice, caso in enumerate(pendentes, start=1):
-        ementa = gerar_ementa_gemini(
-            cliente,
-            model_id=model_id,
-            system_prompt=system_prompt,
-            fundamentacao=caso["fundamentacao"],
-            temperature=temperature,
-            top_p=top_p,
-            max_output_tokens=max_output_tokens,
-        )
-        registros.append(
-            {
-                "caso_id": caso["caso_id"],
-                "condicao_id": CONDICAO_ID,
-                "ementa_gerada": ementa,
-            }
-        )
-        if indice % flush_every == 0:
-            persistir_predicoes(output_path, condicao_id=CONDICAO_ID, registros=registros)
-            log.info("Gemini baseline: %s registros persistidos", len(registros))
+    manifesto: dict[str, Any] = {
+        "condicao_id": condicao_id,
+        "familia_modelo": "gemini",
+        "model_id": model_id,
+        "casos_path": str(casos_path),
+        "output_path": str(output_path),
+        "system_prompt_path": str(SYSTEM_PROMPT_PATH),
+        "system_prompt_sha256": calcular_sha256_texto(system_prompt),
+        "temperature": temperature,
+        "top_p": top_p,
+        "max_output_tokens": max_output_tokens,
+        "flush_every": flush_every,
+        "max_retries": max_retries,
+        "retry_backoff_seconds": retry_backoff_seconds,
+        "total_casos_base": int(len(casos_df)),
+        "predicoes_existentes": len(existentes),
+        "predicoes_pendentes_planejadas": len(pendentes),
+        "status": "running",
+    }
+    escrever_json_atomico(manifest_path, manifesto, indent=2)
 
-    persistir_predicoes(output_path, condicao_id=CONDICAO_ID, registros=registros)
+    if not pendentes:
+        manifesto["status"] = "completed"
+        manifesto["predicoes_persistidas"] = len(registros)
+        manifesto["predicoes_geradas_nesta_execucao"] = 0
+        escrever_json_atomico(manifest_path, manifesto, indent=2)
+        return output_path
+
+    cliente = _construir_cliente_gemini()
+
+    try:
+        for indice, caso in enumerate(pendentes, start=1):
+            ementa = _gerar_ementa_gemini_com_retry(
+                cliente,
+                model_id=model_id,
+                system_prompt=system_prompt,
+                fundamentacao=caso["fundamentacao"],
+                temperature=temperature,
+                top_p=top_p,
+                max_output_tokens=max_output_tokens,
+                max_retries=max_retries,
+                retry_backoff_seconds=retry_backoff_seconds,
+            )
+            registros.append(
+                {
+                    "caso_id": caso["caso_id"],
+                    "condicao_id": condicao_id,
+                    "ementa_gerada": ementa,
+                }
+            )
+            if indice % flush_every == 0:
+                persistir_predicoes(output_path, condicao_id=condicao_id, registros=registros)
+                log.info("Gemini %s: %s registros persistidos", condicao_id, len(registros))
+
+        persistir_predicoes(output_path, condicao_id=condicao_id, registros=registros)
+    except Exception as exc:  # noqa: BLE001 - manifesto de falha
+        manifesto["status"] = "failed"
+        manifesto["erro"] = str(exc)
+        manifesto["predicoes_persistidas"] = len(registros)
+        escrever_json_atomico(manifest_path, manifesto, indent=2)
+        raise
+
+    manifesto["status"] = "completed"
+    manifesto["predicoes_persistidas"] = len(registros)
+    manifesto["predicoes_geradas_nesta_execucao"] = len(registros) - len(existentes)
+    escrever_json_atomico(manifest_path, manifesto, indent=2)
     return output_path
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Baseline zero-shot do Gemini 2.5 Flash.")
+    parser = argparse.ArgumentParser(
+        description="Inferência do Gemini 2.5 Flash para condições zero-shot ou fine-tuned."
+    )
     parser.add_argument("--casos-path", type=Path, default=FASE7_CASOS_AVALIACAO_PATH)
-    parser.add_argument("--output-path", type=Path, default=FASE7_PREDICAO_PATHS[CONDICAO_ID])
+    parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument("--model-id", default=MODELO_PADRAO)
+    parser.add_argument("--condicao-id", default=CONDICAO_ID)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top-p", type=float, default=1.0)
     parser.add_argument("--max-output-tokens", type=int, default=256)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--flush-every", type=int, default=20)
+    parser.add_argument("--max-retries", type=int, default=3)
+    parser.add_argument("--retry-backoff-seconds", type=float, default=2.0)
+    parser.add_argument("--manifest-path", type=Path, default=None)
     return parser.parse_args()
 
 
@@ -162,11 +308,15 @@ def main() -> None:
         casos_path=args.casos_path,
         output_path=args.output_path,
         model_id=args.model_id,
+        condicao_id=args.condicao_id,
         temperature=args.temperature,
         top_p=args.top_p,
         max_output_tokens=args.max_output_tokens,
         limit=args.limit,
         flush_every=args.flush_every,
+        max_retries=args.max_retries,
+        retry_backoff_seconds=args.retry_backoff_seconds,
+        manifest_path=args.manifest_path,
     )
     log.info("Predições do baseline Gemini persistidas em %s", output_path)
 

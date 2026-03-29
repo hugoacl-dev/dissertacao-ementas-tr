@@ -8,6 +8,7 @@ persiste o nome do modelo gerado quando o job conclui.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import logging
 import sys
 import time
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.fase5.tuning_utils import (
+    contar_registros_treino_sft,
     construir_uri_gcs,
     escrever_manifesto_tuning,
     gerar_nome_experimento,
@@ -23,6 +25,7 @@ from pipeline.core.project_paths import (
     DATASET_TREINO_PATH,
     FASE5_GEMINI_MANIFEST_PATH,
     FASE5_GEMINI_MODELO_PATH,
+    SYSTEM_PROMPT_PATH,
 )
 
 log = logging.getLogger(__name__)
@@ -106,6 +109,7 @@ def executar_finetuning_gemini(
     output_model_name_path: Path = FASE5_GEMINI_MODELO_PATH,
 ) -> Path:
     """Prepara e opcionalmente submete o job SFT do Gemini."""
+    system_prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
     if train_dataset_gcs_uri is None:
         if staging_bucket is None:
             raise ValueError(
@@ -121,6 +125,9 @@ def executar_finetuning_gemini(
         "project_id": project_id,
         "location": location,
         "dataset_path_local": str(dataset_path),
+        "train_samples": contar_registros_treino_sft(dataset_path),
+        "system_prompt_path": str(SYSTEM_PROMPT_PATH),
+        "system_prompt_sha256": hashlib.sha256(system_prompt.encode("utf-8")).hexdigest(),
         "train_dataset_gcs_uri": train_dataset_gcs_uri,
         "validation_dataset_gcs_uri": validation_dataset_gcs_uri,
         "tuned_model_display_name": display_name,

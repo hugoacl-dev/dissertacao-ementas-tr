@@ -280,7 +280,47 @@ def aplicar_ajustes_multiplicidade(
     return sorted(resultado, key=lambda item: (item["familia"], item["metrica"]))
 
 
-def gerar_relatorio_estatistico(df: pd.DataFrame, manifesto: dict[str, Any]) -> dict[str, Any]:
+def _resumir_consistencia_entre_familias(
+    comparacoes: list[dict[str, Any]],
+    *,
+    metricas_primarias: list[str],
+) -> dict[str, Any]:
+    """Resume, de forma exploratória, a consistência entre Gemini e Qwen."""
+    resumo: dict[str, Any] = {}
+    for metrica in metricas_primarias:
+        itens = [
+            item
+            for item in comparacoes
+            if item["escopo"] == "primario" and item["metrica"] == metrica
+        ]
+        if not itens:
+            continue
+        sinais_nao_nulos = {
+            1 if item["delta_medio"] > 0 else -1
+            for item in itens
+            if item["delta_medio"] != 0
+        }
+        resumo[metrica] = {
+            "direcao_consistente": len(sinais_nao_nulos) <= 1,
+            "familias": {
+                item["familia"]: {
+                    "delta_medio": item["delta_medio"],
+                    "p_value_ajustado": item["p_value_ajustado"],
+                    "significativo_ajustado": item["significativo_ajustado"],
+                }
+                for item in itens
+            },
+        }
+    return resumo
+
+
+def gerar_relatorio_estatistico(
+    df: pd.DataFrame,
+    manifesto: dict[str, Any],
+    *,
+    metricas_path: Path = FASE7_METRICAS_AUTOMATICAS_PATH,
+    manifesto_path: Path = FASE7_PROTOCOLO_PATH,
+) -> dict[str, Any]:
     """Gera o relatório estatístico consolidado da Fase 7."""
     tabela = validar_tabela_metricas_fase7(df)
     familias = mapear_condicoes_por_familia()
@@ -343,13 +383,20 @@ def gerar_relatorio_estatistico(df: pd.DataFrame, manifesto: dict[str, Any]) -> 
             "metricas_primarias": [item["metrica"] for item in primarias],
         }
 
+    consistencia_entre_familias = _resumir_consistencia_entre_familias(
+        comparacoes_ajustadas,
+        metricas_primarias=metricas_primarias,
+    )
+
     return {
         "versao_protocolo": manifesto["versao_protocolo"],
         "semente_inferencia": SEMENTE_INFERENCIA,
         "alpha": ALPHA_PADRAO,
-        "arquivo_metricas": str(FASE7_METRICAS_AUTOMATICAS_PATH),
+        "arquivo_metricas": str(metricas_path),
+        "arquivo_manifesto": str(manifesto_path),
         "comparacoes": comparacoes_ajustadas,
         "resumo_familias": resumo_familias,
+        "consistencia_entre_familias": consistencia_entre_familias,
     }
 
 
@@ -360,7 +407,12 @@ def escrever_relatorio_estatistico(
     """Carrega métricas, gera o relatório e persiste o artefato final."""
     manifesto = carregar_manifesto_fase7()
     tabela = carregar_metricas_fase7(metricas_path)
-    relatorio = gerar_relatorio_estatistico(tabela, manifesto)
+    relatorio = gerar_relatorio_estatistico(
+        tabela,
+        manifesto,
+        metricas_path=metricas_path,
+        manifesto_path=FASE7_PROTOCOLO_PATH,
+    )
     escrever_json_atomico(output_path, relatorio, indent=2)
     return output_path
 

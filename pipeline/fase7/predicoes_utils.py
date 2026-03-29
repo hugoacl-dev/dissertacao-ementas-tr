@@ -7,6 +7,7 @@ condições zero-shot e, futuramente, fine-tuned.
 """
 from __future__ import annotations
 
+from collections import Counter
 import json
 from pathlib import Path
 from typing import Any
@@ -90,4 +91,12 @@ def persistir_predicoes(
         validar_registro_predicao(registro, condicao_id_esperada=condicao_id)
         for registro in registros
     ]
+    contagem_caso_ids = Counter(registro["caso_id"] for registro in normalizados)
+    duplicados = sorted(
+        caso_id for caso_id, quantidade in contagem_caso_ids.items() if quantidade > 1
+    )
+    if duplicados:
+        raise ValueError(
+            f"Predições duplicadas detectadas para {condicao_id}. Exemplos: {duplicados[:5]}"
+        )
     escrever_jsonl_atomico(path, normalizados)

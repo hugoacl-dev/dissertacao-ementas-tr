@@ -8,8 +8,11 @@ import pytest
 from pipeline.core.artefato_utils import escrever_json_atomico
 from pipeline.core.jsonl_utils import (
     MARCADOR_FUNDAMENTACAO,
+    extrair_prompt_do_registro_jsonl,
+    extrair_prompt_e_fundamentacao_do_texto_user,
     extrair_fundamentacao_do_texto_user,
     extrair_fundamentacao_e_ementa,
+    validar_prompt_canonico_do_registro,
 )
 from pipeline.core.data_cadastro_utils import validar_e_converter_data_cadastro
 from pipeline.core.project_paths import DATASET_PATHS, DATASET_TESTE_PATH, DATASET_TREINO_PATH, SYSTEM_PROMPT_PATH
@@ -43,6 +46,53 @@ def test_extrai_fundamentacao_e_ementa_do_formato_jsonl() -> None:
 def test_fallback_da_extracao_quando_marcador_nao_existe() -> None:
     texto_user = "texto legado sem marcador"
     assert extrair_fundamentacao_do_texto_user(texto_user) == texto_user
+
+
+def test_extrai_prompt_e_fundamentacao_do_texto_user() -> None:
+    texto_user = "prompt canônico\n\n" + MARCADOR_FUNDAMENTACAO + "fundamentação real"
+
+    prompt, fundamentacao = extrair_prompt_e_fundamentacao_do_texto_user(texto_user)
+
+    assert prompt == "prompt canônico"
+    assert fundamentacao == "fundamentação real"
+
+
+def test_valida_prompt_canonico_do_registro() -> None:
+    obj = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": "prompt canônico\n\n" + MARCADOR_FUNDAMENTACAO + "fund"}],
+            },
+            {"role": "model", "parts": [{"text": "ementa"}]},
+        ]
+    }
+
+    assert extrair_prompt_do_registro_jsonl(obj) == "prompt canônico"
+    validar_prompt_canonico_do_registro(
+        obj,
+        prompt_canonico="prompt canônico",
+        contexto="sintético",
+    )
+
+
+def test_prompt_divergente_aborta_fases_avancadas() -> None:
+    obj = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": "prompt antigo\n\n" + MARCADOR_FUNDAMENTACAO + "fund"}],
+            },
+            {"role": "model", "parts": [{"text": "ementa"}]},
+        ]
+    }
+
+    with pytest.raises(ValueError, match="diverge de `system_prompt.txt`"):
+        validar_prompt_canonico_do_registro(
+            obj,
+            prompt_canonico="prompt novo",
+            contexto="sintético",
+        )
 
 
 def test_valida_e_converte_data_cadastro_iso8601() -> None:

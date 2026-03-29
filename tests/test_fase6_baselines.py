@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from conftest import carregar_modulo_pipeline
 
 
@@ -78,3 +80,24 @@ def test_gerar_ementa_qwen_funciona_com_modelo_e_tokenizer_fake() -> None:
     )
 
     assert texto == "AREA. TEMA. FUNDAMENTO. RESULTADO."
+
+
+def test_runners_rejeitam_condicao_de_familia_errada() -> None:
+    with pytest.raises(ValueError, match="runner Gemini"):
+        baseline_gemini.executar_baseline_gemini(condicao_id="qwen_ft")
+
+    with pytest.raises(ValueError, match="runner Qwen"):
+        baseline_qwen.executar_baseline_qwen(condicao_id="gemini_ft")
+
+
+def test_runner_gemini_rejeita_rotulo_ft_com_modelo_base() -> None:
+    with pytest.raises(ValueError, match="modelo ajustado"):
+        baseline_gemini.executar_baseline_gemini(condicao_id="gemini_ft")
+
+
+def test_runner_qwen_rejeita_rotulo_ft_sem_checkpoint_local() -> None:
+    with pytest.raises(ValueError, match="checkpoint gerado na Fase 5"):
+        baseline_qwen.executar_baseline_qwen(
+            condicao_id="qwen_ft",
+            model_id="Qwen/Qwen2.5-14B-Instruct",
+        )

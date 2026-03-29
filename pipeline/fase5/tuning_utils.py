@@ -12,7 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.core.artefato_utils import escrever_json_atomico
-from pipeline.core.jsonl_utils import extrair_fundamentacao_e_ementa
+from pipeline.core.jsonl_utils import (
+    extrair_fundamentacao_e_ementa,
+    validar_prompt_canonico_do_registro,
+)
 from pipeline.core.project_paths import DATASET_TREINO_PATH, SYSTEM_PROMPT_PATH
 
 
@@ -45,6 +48,11 @@ def carregar_amostras_treino_sft(
     amostras: list[dict[str, Any]] = []
 
     for indice, registro in enumerate(registros):
+        validar_prompt_canonico_do_registro(
+            registro,
+            prompt_canonico=system_prompt,
+            contexto=f"de treino no índice {indice}",
+        )
         fundamentacao, ementa = extrair_fundamentacao_e_ementa(registro)
         if not fundamentacao.strip() or not ementa.strip():
             raise ValueError(f"Registro de treino inválido no índice {indice}.")
@@ -70,6 +78,11 @@ def carregar_amostras_treino_sft(
         )
 
     return amostras
+
+
+def contar_registros_treino_sft(dataset_path: Path = DATASET_TREINO_PATH) -> int:
+    """Conta registros do dataset de treino já validando não vazio."""
+    return len(_ler_jsonl(dataset_path))
 
 
 def gerar_nome_experimento(prefixo: str) -> str:
