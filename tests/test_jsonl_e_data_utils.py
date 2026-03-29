@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import json
+
 import pandas as pd
 import pytest
 
+from artefato_utils import escrever_json_atomico
 from jsonl_utils import (
     MARCADOR_FUNDAMENTACAO,
     extrair_fundamentacao_do_texto_user,
     extrair_fundamentacao_e_ementa,
 )
 from data_cadastro_utils import validar_e_converter_data_cadastro
+from project_paths import DATASET_PATHS, DATASET_TESTE_PATH, DATASET_TREINO_PATH, SYSTEM_PROMPT_PATH
 
 
 def test_extrai_fundamentacao_e_ementa_do_formato_jsonl() -> None:
@@ -67,3 +71,20 @@ def test_data_cadastro_invalida_aborta_execucao() -> None:
 
     with pytest.raises(ValueError, match="inválida"):
         validar_e_converter_data_cadastro(serie, contexto="teste")
+
+
+def test_project_paths_mantem_mapeamento_dos_datasets() -> None:
+    assert DATASET_PATHS["treino"] == DATASET_TREINO_PATH
+    assert DATASET_PATHS["teste"] == DATASET_TESTE_PATH
+    assert SYSTEM_PROMPT_PATH.name == "system_prompt.txt"
+    assert SYSTEM_PROMPT_PATH.exists()
+
+
+def test_escrever_json_atomico_cria_pasta_e_sobrescreve_arquivo(tmp_path) -> None:
+    path = tmp_path / "subdir" / "stats.json"
+
+    escrever_json_atomico(path, {"fase": 1, "ok": True})
+    assert json.loads(path.read_text(encoding="utf-8")) == {"fase": 1, "ok": True}
+
+    escrever_json_atomico(path, {"fase": 2, "ok": False})
+    assert json.loads(path.read_text(encoding="utf-8")) == {"fase": 2, "ok": False}
