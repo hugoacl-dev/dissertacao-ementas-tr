@@ -4,7 +4,7 @@ Esta pasta existe apenas para compatibilidade com Claude Code.
 
 ## Fonte principal
 
-Leia primeiro `../AGENTS.md`. Ele é a fonte canônica de:
+Leia primeiro `AGENTS.md`. Ele é a fonte local de:
 
 - contexto do projeto
 - estado atual das fases
@@ -15,7 +15,7 @@ Leia primeiro `../AGENTS.md`. Ele é a fonte canônica de:
 
 ## Como usar esta pasta
 
-- `rules/` contém ponte curta para as seções correspondentes de `AGENTS.md`
+- `rules/` contém ponte curta para as seções correspondentes de `.claude/AGENTS.md`
 - `commands/` contém runbooks enxutos para operações frequentes
 - `settings.json` contém preferências opcionais do Claude Code, não política geral do repositório
 

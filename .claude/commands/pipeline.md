@@ -2,7 +2,7 @@
 description: Executar o pipeline completo (Fases 1–4 + auditoria LGPD)
 ---
 
-Runbook curto. Fonte canônica: `AGENTS.md`.
+Runbook curto. Fonte local: `.claude/AGENTS.md`.
 
 ```bash
 bash scripts/run_all.sh

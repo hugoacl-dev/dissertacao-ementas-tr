@@ -1,6 +1,6 @@
 # Regras de Código
 
-Fonte canônica: `../AGENTS.md`.
+Fonte local: `../AGENTS.md`.
 
 Consulte especialmente:
 

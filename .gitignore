@@ -6,6 +6,8 @@
 __pycache__/
 *.pyc
 *.pyo
+.venv/
+.pytest_cache/
 
 # IDE
 .vscode/
@@ -21,6 +23,8 @@ credentials*.json
 
 # Documentos de pesquisa (privados)
 /pesquisa/
+AGENTS.md
+CONTEXTO_CONTINUIDADE.md
 Hugo - Revisado.md
 Hugo - Revisado.docx
 NOTAS_PESQUISA.md
@@ -32,3 +36,5 @@ dump_sistema_judicial.sql
 # Claude Code (configs locais — não versionar)
 CLAUDE.local.md
 .claude/settings.local.json
+.claude/AGENTS.md
+.claude/analise_codex.md

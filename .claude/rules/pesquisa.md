@@ -1,6 +1,6 @@
 # Regras de Pesquisa
 
-Fonte canônica: `../AGENTS.md`.
+Fonte local: `../AGENTS.md`.
 
 Consulte especialmente:
 

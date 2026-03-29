@@ -1,6 +1,6 @@
 # Regras LGPD
 
-Fonte canônica: `../AGENTS.md`.
+Fonte local: `../AGENTS.md`.
 
 Consulte especialmente:
 

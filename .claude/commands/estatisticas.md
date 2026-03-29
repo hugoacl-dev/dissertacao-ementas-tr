@@ -2,7 +2,7 @@
 description: Regenerar estatísticas descritivas do corpus (Fase 4)
 ---
 
-Runbook curto. Fonte canônica: `AGENTS.md`.
+Runbook curto. Fonte local: `.claude/AGENTS.md`.
 
 ```bash
 python3 -m pipeline.fase1_4.fase04_estatisticas

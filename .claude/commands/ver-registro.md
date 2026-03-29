@@ -3,7 +3,7 @@ description: Inspecionar um registro específico do dataset (teste ou treino)
 argument-hint: "[índice] [teste|treino]"
 ---
 
-Runbook curto. Fonte canônica: `AGENTS.md`.
+Runbook curto. Fonte local: `.claude/AGENTS.md`.
 
 ```bash
 python3 -m pipeline.ferramentas.ver_registro 42
