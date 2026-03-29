@@ -23,4 +23,4 @@ Leia primeiro `../AGENTS.md`. Ele é a fonte canônica de:
 
 - A pasta `pesquisa/` existe neste ambiente local e deve ser consultada quando a tarefa tocar metodologia ou justificativas acadêmicas.
 - O prompt canônico do projeto está em `pipeline/system_prompt.txt`.
-- A divergência conhecida entre `pipeline/audit.py` e o prompt atual está registrada em `AGENTS.md` e deve ser tratada como legado.
+- A extração da fundamentação a partir do turno `user` do JSONL foi centralizada em `pipeline/jsonl_utils.py`.

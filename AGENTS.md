@@ -186,14 +186,13 @@ Não commitar:
 - A auditoria verifica 7 categorias de vazamento residual.
 - Decisões metodológicas de anonimização devem ser refletidas em `pesquisa/NOTAS_PESQUISA.md` quando alterarem comportamento experimental.
 
-## Divergência Conhecida Entre Documentação e Código
-
-Há um ponto conhecido que deve ser tratado como legado:
+## Contrato Atual do JSONL
 
 - O prompt canônico atual é o de `pipeline/system_prompt.txt`.
-- `pipeline/audit.py` ainda remove um prefixo antigo de instrução embutida, diferente do prompt atual.
-- Ao documentar ou implementar novas fases, **não** propague esse prefixo antigo.
-- Esta discrepância deve ser corrigida em implementação posterior, mas **não** deve ser tratada como contrato vigente do projeto.
+- O turno `user` do JSONL embute a instrução e a fundamentação no formato:
+  `{system_prompt}\n\nGere a ementa para a seguinte fundamentação:\n{fundamentação}`.
+- A extração do conteúdo real do turno `user` foi centralizada em `pipeline/jsonl_utils.py`.
+- Novos consumidores do JSONL devem reutilizar esse helper, em vez de replicar parsing local.
 
 ## Comandos Operacionais Essenciais
 

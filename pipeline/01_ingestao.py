@@ -308,8 +308,11 @@ def salvar_stats(stats: ExtractionStats, path: Path) -> None:
         "descartados_nulos": stats.descartados_nulos,
         "exportados": stats.exportados,
     }
-    with path.open("w", encoding="utf-8") as f:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    with temp_path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
+    temp_path.replace(path)
     log.info("Estatísticas da ingestão salvas em %s.", path)
 
 
@@ -343,7 +346,6 @@ def main() -> None:
         stats.descartados_nulos,
         stats.taxa_aproveitamento,
     )
-    salvar_stats(stats, STATS_PATH)
 
     if not registros:
         log.warning("Nenhum registro válido extraído. Verifique o dump e o schema.")
@@ -357,6 +359,7 @@ def main() -> None:
 
     # Exportação JSON
     exportar_json(registros, JSON_PATH)
+    salvar_stats(stats, STATS_PATH)
     log.info("=== Fase 1 finalizada com sucesso. ===")
 
 

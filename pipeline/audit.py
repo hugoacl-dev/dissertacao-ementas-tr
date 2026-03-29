@@ -7,9 +7,8 @@ que tenham escapado da limpeza e anonimização.
 Executar a partir da raiz do projeto: python3 pipeline/audit.py
 
 Lógica de extração de texto:
-  - Turno "user": extrai apenas o conteúdo da fundamentação, removendo o
-    prefix fixo da instrução de sistema (que contém palavras como "relator"
-    e "Desembargador" de forma legítima, não como dados pessoais).
+  - Turno "user": extrai apenas o conteúdo da fundamentação por meio do
+    helper compartilhado do projeto, removendo a instrução embutida.
   - Turno "model": extrai o texto da ementa diretamente.
 
 Isso evita falsos positivos causados pela instrução de sistema embutida.
@@ -43,7 +42,7 @@ PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 # ---------------------------------------------------------------------------
-# Extração dos campos de dado (excluindo instrução de sistema)
+# Extração dos campos de dado (excluindo instrução embutida)
 # ---------------------------------------------------------------------------
 
 

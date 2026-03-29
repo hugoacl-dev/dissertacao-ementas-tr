@@ -81,11 +81,24 @@ def _carregar_stats_ingestao(path: Path) -> dict[str, int]:
         return {}
     with path.open("r", encoding="utf-8") as f:
         payload = json.load(f)
-    return {
-        "total_lidos": int(payload.get("total_lidos", 0)),
-        "descartados_nulos": int(payload.get("descartados_nulos", 0)),
-        "exportados": int(payload.get("exportados", 0)),
-    }
+    campos_obrigatorios = ("total_lidos", "descartados_nulos", "exportados")
+    faltantes = [campo for campo in campos_obrigatorios if campo not in payload]
+    if faltantes:
+        raise ValueError(
+            f"{path} não contém os campos obrigatórios: {', '.join(faltantes)}"
+        )
+
+    stats = {campo: int(payload[campo]) for campo in campos_obrigatorios}
+    if stats["total_lidos"] <= 0:
+        raise ValueError("total_lidos deve ser maior que zero.")
+    if stats["descartados_nulos"] < 0 or stats["exportados"] < 0:
+        raise ValueError("descartados_nulos e exportados não podem ser negativos.")
+    if stats["exportados"] + stats["descartados_nulos"] != stats["total_lidos"]:
+        raise ValueError(
+            "As estatísticas de ingestão são inconsistentes: "
+            "exportados + descartados_nulos deve ser igual a total_lidos."
+        )
+    return stats
 
 
 def _extrair_texto_do_jsonl(obj: dict) -> tuple[str, str]:
