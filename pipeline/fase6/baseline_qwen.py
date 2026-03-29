@@ -25,7 +25,13 @@ from pipeline.core.project_paths import (
     FASE7_CASOS_AVALIACAO_PATH,
     FASE7_PREDICAO_MANIFEST_PATHS,
     FASE7_PREDICAO_PATHS,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIL_EXECUCAO_OFICIAL,
+    PERFIS_EXECUCAO,
     SYSTEM_PROMPT_PATH,
+    resolver_manifestos_predicoes_fase7,
+    resolver_predicoes_fase7,
+    validar_perfil_execucao,
 )
 from pipeline.fase7.protocolo import CONDICOES_EXPERIMENTAIS, calcular_sha256_texto
 
@@ -137,6 +143,7 @@ def executar_baseline_qwen(
     limit: int | None = None,
     flush_every: int = 20,
     trust_remote_code: bool = False,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
     manifest_path: Path | None = None,
 ) -> Path:
     """Executa inferência do Qwen com retomada incremental.
@@ -154,6 +161,7 @@ def executar_baseline_qwen(
             f"`condicao_id` inválido para o runner Qwen: {condicao_id}. "
             f"Use uma dentre {sorted(condicoes_validas)}."
         )
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
     if condicao_id == "qwen_ft":
         model_path = Path(model_id)
         if not model_path.exists() or not model_path.is_dir():
@@ -185,6 +193,7 @@ def executar_baseline_qwen(
     usa_adapter_peft = Path(model_id).exists() and (Path(model_id) / "adapter_config.json").exists()
     manifesto: dict[str, Any] = {
         "condicao_id": condicao_id,
+        "perfil_execucao": perfil_execucao,
         "familia_modelo": "qwen",
         "model_id": model_id,
         "modo_inferencia": "peft_adapter_local" if usa_adapter_peft else "modelo_base_ou_mergeado",
@@ -257,6 +266,11 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Inferência do Qwen 2.5 14B-Instruct para condições zero-shot ou fine-tuned."
     )
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
     parser.add_argument("--casos-path", type=Path, default=FASE7_CASOS_AVALIACAO_PATH)
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument("--model-id", default=MODELO_PADRAO)
@@ -278,9 +292,11 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    predicao_paths = resolver_predicoes_fase7(args.perfil_execucao)
+    manifest_paths = resolver_manifestos_predicoes_fase7(args.perfil_execucao)
     output_path = executar_baseline_qwen(
         casos_path=args.casos_path,
-        output_path=args.output_path,
+        output_path=args.output_path or predicao_paths[args.condicao_id],
         model_id=args.model_id,
         condicao_id=args.condicao_id,
         max_new_tokens=args.max_new_tokens,
@@ -289,7 +305,8 @@ def main() -> None:
         limit=args.limit,
         flush_every=args.flush_every,
         trust_remote_code=args.trust_remote_code,
-        manifest_path=args.manifest_path,
+        perfil_execucao=args.perfil_execucao,
+        manifest_path=args.manifest_path or manifest_paths[args.condicao_id],
     )
     log.info("Predições do baseline Qwen persistidas em %s", output_path)
 

@@ -15,7 +15,19 @@ from pipeline.core.jsonl_utils import (
     validar_prompt_canonico_do_registro,
 )
 from pipeline.core.data_cadastro_utils import validar_e_converter_data_cadastro
-from pipeline.core.project_paths import DATASET_PATHS, DATASET_TESTE_PATH, DATASET_TREINO_PATH, SYSTEM_PROMPT_PATH
+from pipeline.core.project_paths import (
+    DATASET_PATHS,
+    DATASET_TESTE_PATH,
+    DATASET_TREINO_PATH,
+    PERFIL_EXECUCAO_EXPLORATORIO,
+    PERFIL_EXECUCAO_OFICIAL,
+    SYSTEM_PROMPT_PATH,
+    resolver_artefatos_fase5,
+    resolver_manifestos_predicoes_fase7,
+    resolver_predicoes_fase7,
+    resolver_prefixo_gcs_fase5,
+    validar_perfil_execucao,
+)
 
 
 def test_extrai_fundamentacao_e_ementa_do_formato_jsonl() -> None:
@@ -128,6 +140,30 @@ def test_project_paths_mantem_mapeamento_dos_datasets() -> None:
     assert DATASET_PATHS["teste"] == DATASET_TESTE_PATH
     assert SYSTEM_PROMPT_PATH.name == "system_prompt.txt"
     assert SYSTEM_PROMPT_PATH.exists()
+
+
+def test_project_paths_separam_artefatos_exploratorios_e_oficiais() -> None:
+    assert validar_perfil_execucao(PERFIL_EXECUCAO_EXPLORATORIO) == PERFIL_EXECUCAO_EXPLORATORIO
+    assert validar_perfil_execucao(PERFIL_EXECUCAO_OFICIAL) == PERFIL_EXECUCAO_OFICIAL
+
+    artefatos_fase5_expl = resolver_artefatos_fase5(PERFIL_EXECUCAO_EXPLORATORIO)
+    artefatos_fase5_of = resolver_artefatos_fase5(PERFIL_EXECUCAO_OFICIAL)
+    predicoes_expl = resolver_predicoes_fase7(PERFIL_EXECUCAO_EXPLORATORIO)
+    predicoes_of = resolver_predicoes_fase7(PERFIL_EXECUCAO_OFICIAL)
+    manifestos_expl = resolver_manifestos_predicoes_fase7(PERFIL_EXECUCAO_EXPLORATORIO)
+
+    assert "exploratorio/fase5" in str(artefatos_fase5_expl["gemini_manifest_path"])
+    assert "exploratorio/fase7/predicoes" in str(predicoes_expl["gemini_zero_shot"])
+    assert artefatos_fase5_of["gemini_manifest_path"].name == "gemini_sft_manifest.json"
+    assert predicoes_of["gemini_zero_shot"].name == "gemini_zero_shot.jsonl"
+    assert manifestos_expl["gemini_zero_shot"].name == "gemini_zero_shot.manifest.json"
+    assert resolver_prefixo_gcs_fase5(PERFIL_EXECUCAO_EXPLORATORIO) == "testes/fase5"
+    assert resolver_prefixo_gcs_fase5(PERFIL_EXECUCAO_OFICIAL) == "dissertacao-ementas-tr/fase5"
+
+
+def test_project_paths_rejeitam_perfil_execucao_invalido() -> None:
+    with pytest.raises(ValueError, match="perfil_execucao"):
+        validar_perfil_execucao("rascunho")
 
 
 def test_escrever_json_atomico_cria_pasta_e_sobrescreve_arquivo(tmp_path) -> None:

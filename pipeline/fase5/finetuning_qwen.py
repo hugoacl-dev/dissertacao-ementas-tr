@@ -24,7 +24,12 @@ from pipeline.core.project_paths import (
     DATASET_TREINO_PATH,
     FASE5_QWEN_CHECKPOINT_DIR,
     FASE5_QWEN_MANIFEST_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIL_EXECUCAO_OFICIAL,
+    PERFIS_EXECUCAO,
     SYSTEM_PROMPT_PATH,
+    resolver_artefatos_fase5,
+    validar_perfil_execucao,
 )
 
 log = logging.getLogger(__name__)
@@ -64,11 +69,13 @@ def executar_finetuning_qwen(
     save_total_limit: int = 2,
     load_in_4bit: bool = True,
     prepare_only: bool = False,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
     seed: int = 3407,
     target_modules: tuple[str, ...] = TARGET_MODULES_PADRAO,
     manifest_path: Path = FASE5_QWEN_MANIFEST_PATH,
 ) -> Path:
     """Prepara e opcionalmente executa o fine-tuning LoRA do Qwen."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
     amostras = preparar_dataset_qwen(dataset_path)
     system_prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
     effective_batch_size = calcular_batch_size_efetivo(
@@ -79,6 +86,7 @@ def executar_finetuning_qwen(
 
     manifesto: dict[str, Any] = {
         "plataforma": "unsloth_trl",
+        "perfil_execucao": perfil_execucao,
         "model_id": model_id,
         "dataset_path_local": str(dataset_path),
         "system_prompt_path": str(SYSTEM_PROMPT_PATH),
@@ -170,9 +178,14 @@ def executar_finetuning_qwen(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fine-tuning LoRA do Qwen 2.5 14B-Instruct.")
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
     parser.add_argument("--dataset-path", type=Path, default=DATASET_TREINO_PATH)
     parser.add_argument("--model-id", default=MODELO_BASE_PADRAO)
-    parser.add_argument("--output-dir", type=Path, default=FASE5_QWEN_CHECKPOINT_DIR)
+    parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--max-seq-length", type=int, default=8192)
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--lora-alpha", type=int, default=16)
@@ -197,10 +210,11 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    artefatos = resolver_artefatos_fase5(args.perfil_execucao)
     output_path = executar_finetuning_qwen(
         dataset_path=args.dataset_path,
         model_id=args.model_id,
-        output_dir=args.output_dir,
+        output_dir=args.output_dir or artefatos["qwen_checkpoint_dir"],
         max_seq_length=args.max_seq_length,
         lora_rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
@@ -214,7 +228,9 @@ def main() -> None:
         save_total_limit=args.save_total_limit,
         load_in_4bit=not args.no_4bit,
         prepare_only=args.prepare_only,
+        perfil_execucao=args.perfil_execucao,
         seed=args.seed,
+        manifest_path=artefatos["qwen_manifest_path"],
     )
     log.info("Manifesto Qwen SFT persistido em %s", output_path)
 

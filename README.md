@@ -59,6 +59,7 @@ pytest -q
 python3 -m pipeline.fase7.casos_avaliacao
 
 # Preparar o job SFT do Gemini sem submeter ao Vertex AI
+# Por padrão, a CLI grava artefatos exploratórios em data/exploratorio/
 python3 -m pipeline.fase5.finetuning_gemini --project-id SEU_PROJECT_ID --staging-bucket gs://SEU_BUCKET --prepare-only
 
 # Preparar o treino LoRA do Qwen sem executar localmente
@@ -70,11 +71,15 @@ python3 -m pipeline.fase6.baseline_gemini
 # Executar baseline zero-shot do Qwen
 python3 -m pipeline.fase6.baseline_qwen --model-id Qwen/Qwen2.5-14B-Instruct
 
-# Gerar predições fine-tuned do Gemini usando o modelo ajustado da Fase 5
-python3 -m pipeline.fase6.baseline_gemini --condicao-id gemini_ft --model-id "$(cat data/fase5/modelo_gemini_nome.txt)"
+# Rodar explicitamente no perfil oficial após congelamento metodológico
+python3 -m pipeline.fase5.finetuning_gemini --project-id SEU_PROJECT_ID --staging-bucket gs://SEU_BUCKET --prepare-only --perfil-execucao oficial
+python3 -m pipeline.fase6.baseline_gemini --perfil-execucao oficial
 
-# Gerar predições fine-tuned do Qwen usando o checkpoint LoRA local da Fase 5
-python3 -m pipeline.fase6.baseline_qwen --condicao-id qwen_ft --model-id data/fase5/modelo_qwen_checkpoint
+# Gerar predições fine-tuned do Gemini usando o modelo ajustado da Fase 5 oficial
+python3 -m pipeline.fase6.baseline_gemini --perfil-execucao oficial --condicao-id gemini_ft --model-id "$(cat data/fase5/modelo_gemini_nome.txt)"
+
+# Gerar predições fine-tuned do Qwen usando o checkpoint LoRA local da Fase 5 oficial
+python3 -m pipeline.fase6.baseline_qwen --perfil-execucao oficial --condicao-id qwen_ft --model-id data/fase5/modelo_qwen_checkpoint
 
 # Gerar o manifesto versionado da Fase 7
 python3 -m pipeline.fase7.protocolo
@@ -94,6 +99,15 @@ python3 -m pipeline.fase7.metricas
 # Gerar o relatório estatístico da Fase 7 a partir da tabela consolidada
 python3 -m pipeline.fase7.estatisticas
 ```
+
+### Perfis de Execução
+
+As CLIs das Fases 5 e 6 agora distinguem dois perfis:
+
+- `exploratorio` (padrão): artefatos locais em `data/exploratorio/` e, no Gemini SFT, prefixo GCS padrão `testes/fase5`
+- `oficial`: artefatos nos caminhos canônicos `data/fase5/` e `data/fase7/`, a serem usados somente após o congelamento do pipeline, prompt e parâmetros
+
+Essa separação evita que smoke tests e rodadas exploratórias contaminem os artefatos destinados ao resultado final.
 
 ## Dashboard
 
@@ -136,11 +150,11 @@ Infraestrutura já versionada no repositório:
 | `requirements_fases_avancadas.txt` | Dependências opcionais das Fases 5–7, para ambientes específicos |
 | `tests/` | Suíte mínima de regressão e smoke test sintético das Fases 2–4 |
 | `.github/workflows/testes.yml` | CI executando `pytest -q` em `push` para `main` e em PRs |
-| `pipeline/fase5/finetuning_gemini.py` | Preparação e submissão do SFT do Gemini, com manifesto em `data/fase5/gemini_sft_manifest.json` |
-| `pipeline/fase5/finetuning_qwen.py` | Preparação e execução do SFT LoRA do Qwen, com manifesto em `data/fase5/qwen_sft_manifest.json` |
+| `pipeline/fase5/finetuning_gemini.py` | Preparação e submissão do SFT do Gemini, com perfis `exploratorio`/`oficial`; a CLI grava em `data/exploratorio/fase5/` por padrão e usa `data/fase5/` apenas com `--perfil-execucao oficial` |
+| `pipeline/fase5/finetuning_qwen.py` | Preparação e execução do SFT LoRA do Qwen, com separação entre artefatos exploratórios e oficiais |
 | `pipeline/fase5/tuning_utils.py` | Carregamento do dataset conversacional, nomes de experimento e persistência dos manifestos da Fase 5 |
-| `pipeline/fase6/baseline_gemini.py` | Geração das predições `gemini_zero_shot.jsonl` e `gemini_ft.jsonl`, com manifesto por condição em `data/fase7/predicoes/*.manifest.json` |
-| `pipeline/fase6/baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` e `qwen_ft.jsonl`, com suporte a checkpoint LoRA local e manifesto por condição |
+| `pipeline/fase6/baseline_gemini.py` | Geração das predições `gemini_zero_shot.jsonl` e `gemini_ft.jsonl`, com perfis `exploratorio`/`oficial`; a CLI usa `data/exploratorio/fase7/predicoes/` por padrão |
+| `pipeline/fase6/baseline_qwen.py` | Geração das predições `qwen_zero_shot.jsonl` e `qwen_ft.jsonl`, com suporte a checkpoint LoRA local e separação entre artefatos exploratórios e oficiais |
 | `pipeline/fase7/casos_avaliacao.py` | Geração de `data/fase7/casos_avaliacao.jsonl` a partir de `data/dataset_teste.jsonl` |
 | `pipeline/fase7/avaliacao_judge.py` | Execução incremental do DeepSeek V3 / `deepseek-chat` com persistência normalizada em `data/fase7/avaliacao_llm_judge.jsonl` e artefato bruto em `data/fase7/avaliacao_llm_judge_bruta.jsonl` |
 | `pipeline/fase7/avaliacao_humana.py` | Geração da amostra estratificada cega (`amostra_humana.json`), gabarito separado (`gabarito_cegamento_humano.json`), template `avaliacao_humana.csv` e relatório humano consolidado |

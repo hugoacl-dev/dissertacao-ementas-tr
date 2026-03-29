@@ -12,9 +12,13 @@ PIPELINE_DIR = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = PIPELINE_DIR / "prompts"
 DATA_DIR = Path("data")
 DOCS_DATA_DIR = Path("docs/data")
+DATA_EXPLORATORIO_DIR = DATA_DIR / "exploratorio"
 FASE5_DIR = DATA_DIR / "fase5"
 FASE7_DIR = DATA_DIR / "fase7"
 FASE7_PREDICOES_DIR = FASE7_DIR / "predicoes"
+FASE5_EXPLORATORIA_DIR = DATA_EXPLORATORIO_DIR / "fase5"
+FASE7_EXPLORATORIA_DIR = DATA_EXPLORATORIO_DIR / "fase7"
+FASE7_PREDICOES_EXPLORATORIA_DIR = FASE7_EXPLORATORIA_DIR / "predicoes"
 
 DUMP_PATH = DATA_DIR / "dump_sistema_judicial.sql"
 SQLITE_DB_PATH = DATA_DIR / "banco_sistema_judicial.sqlite"
@@ -65,3 +69,77 @@ FASE7_PREDICAO_MANIFEST_PATHS = {
     condicao_id: path.with_suffix(".manifest.json")
     for condicao_id, path in FASE7_PREDICAO_PATHS.items()
 }
+
+PERFIL_EXECUCAO_EXPLORATORIO = "exploratorio"
+PERFIL_EXECUCAO_OFICIAL = "oficial"
+PERFIL_EXECUCAO_CLI_PADRAO = PERFIL_EXECUCAO_EXPLORATORIO
+PERFIS_EXECUCAO = (
+    PERFIL_EXECUCAO_EXPLORATORIO,
+    PERFIL_EXECUCAO_OFICIAL,
+)
+
+
+def validar_perfil_execucao(perfil_execucao: str) -> str:
+    """Valida o perfil de execução usado para separar testes e runs oficiais."""
+    if perfil_execucao not in PERFIS_EXECUCAO:
+        raise ValueError(
+            f"`perfil_execucao` inválido: {perfil_execucao}. "
+            f"Use um dentre {list(PERFIS_EXECUCAO)}."
+        )
+    return perfil_execucao
+
+
+def resolver_fase5_dir(perfil_execucao: str) -> Path:
+    """Resolve o diretório base da Fase 5 para o perfil informado."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
+    if perfil_execucao == PERFIL_EXECUCAO_OFICIAL:
+        return FASE5_DIR
+    return FASE5_EXPLORATORIA_DIR
+
+
+def resolver_fase7_dir(perfil_execucao: str) -> Path:
+    """Resolve o diretório base da Fase 7 para o perfil informado."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
+    if perfil_execucao == PERFIL_EXECUCAO_OFICIAL:
+        return FASE7_DIR
+    return FASE7_EXPLORATORIA_DIR
+
+
+def resolver_artefatos_fase5(perfil_execucao: str) -> dict[str, Path]:
+    """Retorna os caminhos canônicos da Fase 5 para um perfil."""
+    fase5_dir = resolver_fase5_dir(perfil_execucao)
+    return {
+        "fase5_dir": fase5_dir,
+        "gemini_manifest_path": fase5_dir / "gemini_sft_manifest.json",
+        "gemini_modelo_path": fase5_dir / "modelo_gemini_nome.txt",
+        "qwen_manifest_path": fase5_dir / "qwen_sft_manifest.json",
+        "qwen_checkpoint_dir": fase5_dir / "modelo_qwen_checkpoint",
+    }
+
+
+def resolver_predicoes_fase7(perfil_execucao: str) -> dict[str, Path]:
+    """Retorna os caminhos das predições da Fase 7 para um perfil."""
+    fase7_dir = resolver_fase7_dir(perfil_execucao)
+    predicoes_dir = fase7_dir / "predicoes"
+    return {
+        "gemini_ft": predicoes_dir / "gemini_ft.jsonl",
+        "gemini_zero_shot": predicoes_dir / "gemini_zero_shot.jsonl",
+        "qwen_ft": predicoes_dir / "qwen_ft.jsonl",
+        "qwen_zero_shot": predicoes_dir / "qwen_zero_shot.jsonl",
+    }
+
+
+def resolver_manifestos_predicoes_fase7(perfil_execucao: str) -> dict[str, Path]:
+    """Retorna os manifests das predições da Fase 7 para um perfil."""
+    return {
+        condicao_id: path.with_suffix(".manifest.json")
+        for condicao_id, path in resolver_predicoes_fase7(perfil_execucao).items()
+    }
+
+
+def resolver_prefixo_gcs_fase5(perfil_execucao: str) -> str:
+    """Retorna o prefixo GCS padrão para a Fase 5 conforme o perfil."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
+    if perfil_execucao == PERFIL_EXECUCAO_OFICIAL:
+        return "dissertacao-ementas-tr/fase5"
+    return "testes/fase5"

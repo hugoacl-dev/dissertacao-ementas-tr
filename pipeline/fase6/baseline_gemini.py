@@ -27,7 +27,13 @@ from pipeline.core.project_paths import (
     FASE7_CASOS_AVALIACAO_PATH,
     FASE7_PREDICAO_MANIFEST_PATHS,
     FASE7_PREDICAO_PATHS,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIL_EXECUCAO_OFICIAL,
+    PERFIS_EXECUCAO,
     SYSTEM_PROMPT_PATH,
+    resolver_manifestos_predicoes_fase7,
+    resolver_predicoes_fase7,
+    validar_perfil_execucao,
 )
 from pipeline.fase7.protocolo import CONDICOES_EXPERIMENTAIS, calcular_sha256_texto
 
@@ -178,6 +184,7 @@ def executar_baseline_gemini(
     flush_every: int = 20,
     max_retries: int = 3,
     retry_backoff_seconds: float = 2.0,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
     manifest_path: Path | None = None,
 ) -> Path:
     """Executa inferência do Gemini com retomada incremental.
@@ -186,6 +193,7 @@ def executar_baseline_gemini(
     fine-tuned, desde que `condicao_id` e `model_id` sejam consistentes.
     """
     condicao_id = _validar_condicao_gemini(condicao_id)
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
     _validar_modelo_gemini_para_condicao(condicao_id=condicao_id, model_id=model_id)
     if output_path is None:
         output_path = FASE7_PREDICAO_PATHS[condicao_id]
@@ -211,6 +219,7 @@ def executar_baseline_gemini(
 
     manifesto: dict[str, Any] = {
         "condicao_id": condicao_id,
+        "perfil_execucao": perfil_execucao,
         "familia_modelo": "gemini",
         "model_id": model_id,
         "casos_path": str(casos_path),
@@ -282,6 +291,11 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Inferência do Gemini 2.5 Flash para condições zero-shot ou fine-tuned."
     )
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
     parser.add_argument("--casos-path", type=Path, default=FASE7_CASOS_AVALIACAO_PATH)
     parser.add_argument("--output-path", type=Path, default=None)
     parser.add_argument("--model-id", default=MODELO_PADRAO)
@@ -304,9 +318,11 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    predicao_paths = resolver_predicoes_fase7(args.perfil_execucao)
+    manifest_paths = resolver_manifestos_predicoes_fase7(args.perfil_execucao)
     output_path = executar_baseline_gemini(
         casos_path=args.casos_path,
-        output_path=args.output_path,
+        output_path=args.output_path or predicao_paths[args.condicao_id],
         model_id=args.model_id,
         condicao_id=args.condicao_id,
         temperature=args.temperature,
@@ -316,7 +332,8 @@ def main() -> None:
         flush_every=args.flush_every,
         max_retries=args.max_retries,
         retry_backoff_seconds=args.retry_backoff_seconds,
-        manifest_path=args.manifest_path,
+        perfil_execucao=args.perfil_execucao,
+        manifest_path=args.manifest_path or manifest_paths[args.condicao_id],
     )
     log.info("Predições do baseline Gemini persistidas em %s", output_path)
 

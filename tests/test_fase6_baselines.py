@@ -101,3 +101,17 @@ def test_runner_qwen_rejeita_rotulo_ft_sem_checkpoint_local() -> None:
             condicao_id="qwen_ft",
             model_id="Qwen/Qwen2.5-14B-Instruct",
         )
+
+
+def test_runners_rejeitam_perfil_execucao_invalido() -> None:
+    with pytest.raises(ValueError, match="perfil_execucao"):
+        baseline_gemini.executar_baseline_gemini(
+            condicao_id="gemini_zero_shot",
+            perfil_execucao="rascunho",
+        )
+
+    with pytest.raises(ValueError, match="perfil_execucao"):
+        baseline_qwen.executar_baseline_qwen(
+            condicao_id="qwen_zero_shot",
+            perfil_execucao="rascunho",
+        )

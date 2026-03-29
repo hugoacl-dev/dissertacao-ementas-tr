@@ -25,7 +25,13 @@ from pipeline.core.project_paths import (
     DATASET_TREINO_PATH,
     FASE5_GEMINI_MANIFEST_PATH,
     FASE5_GEMINI_MODELO_PATH,
+    PERFIL_EXECUCAO_CLI_PADRAO,
+    PERFIL_EXECUCAO_OFICIAL,
+    PERFIS_EXECUCAO,
     SYSTEM_PROMPT_PATH,
+    resolver_artefatos_fase5,
+    resolver_prefixo_gcs_fase5,
+    validar_perfil_execucao,
 )
 
 log = logging.getLogger(__name__)
@@ -105,10 +111,12 @@ def executar_finetuning_gemini(
     wait: bool = False,
     poll_interval_seconds: int = 60,
     prepare_only: bool = False,
+    perfil_execucao: str = PERFIL_EXECUCAO_OFICIAL,
     manifest_path: Path = FASE5_GEMINI_MANIFEST_PATH,
     output_model_name_path: Path = FASE5_GEMINI_MODELO_PATH,
 ) -> Path:
     """Prepara e opcionalmente submete o job SFT do Gemini."""
+    perfil_execucao = validar_perfil_execucao(perfil_execucao)
     system_prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
     if train_dataset_gcs_uri is None:
         if staging_bucket is None:
@@ -121,6 +129,7 @@ def executar_finetuning_gemini(
     display_name = tuned_model_display_name or gerar_nome_experimento("gemini_sft")
     manifesto: dict[str, Any] = {
         "plataforma": "vertex_ai",
+        "perfil_execucao": perfil_execucao,
         "source_model": source_model,
         "project_id": project_id,
         "location": location,
@@ -172,13 +181,18 @@ def executar_finetuning_gemini(
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fine-tuning supervisionado do Gemini 2.5 Flash.")
     parser.add_argument("--project-id", required=True)
+    parser.add_argument(
+        "--perfil-execucao",
+        choices=PERFIS_EXECUCAO,
+        default=PERFIL_EXECUCAO_CLI_PADRAO,
+    )
     parser.add_argument("--location", default=REGIAO_PADRAO)
     parser.add_argument("--dataset-path", type=Path, default=DATASET_TREINO_PATH)
     parser.add_argument("--source-model", default=MODELO_BASE_PADRAO)
     parser.add_argument("--train-dataset-gcs-uri", default=None)
     parser.add_argument("--validation-dataset-gcs-uri", default=None)
     parser.add_argument("--staging-bucket", default=None)
-    parser.add_argument("--gcs-prefix", default="dissertacao-ementas-tr/fase5")
+    parser.add_argument("--gcs-prefix", default=None)
     parser.add_argument("--tuned-model-display-name", default=None)
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--adapter-size", type=int, default=None)
@@ -196,6 +210,8 @@ def main() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     args = _parse_args()
+    artefatos = resolver_artefatos_fase5(args.perfil_execucao)
+    gcs_prefix = args.gcs_prefix or resolver_prefixo_gcs_fase5(args.perfil_execucao)
     output_path = executar_finetuning_gemini(
         project_id=args.project_id,
         location=args.location,
@@ -204,7 +220,7 @@ def main() -> None:
         train_dataset_gcs_uri=args.train_dataset_gcs_uri,
         validation_dataset_gcs_uri=args.validation_dataset_gcs_uri,
         staging_bucket=args.staging_bucket,
-        gcs_prefix=args.gcs_prefix,
+        gcs_prefix=gcs_prefix,
         tuned_model_display_name=args.tuned_model_display_name,
         epochs=args.epochs,
         adapter_size=args.adapter_size,
@@ -212,6 +228,9 @@ def main() -> None:
         wait=args.wait,
         poll_interval_seconds=args.poll_interval_seconds,
         prepare_only=args.prepare_only,
+        perfil_execucao=args.perfil_execucao,
+        manifest_path=artefatos["gemini_manifest_path"],
+        output_model_name_path=artefatos["gemini_modelo_path"],
     )
     log.info("Manifesto Gemini SFT persistido em %s", output_path)
 
