@@ -31,6 +31,7 @@ from typing import Any
 
 import pandas as pd
 import numpy as np
+from data_cadastro_utils import validar_e_converter_data_cadastro
 from jsonl_utils import extrair_fundamentacao_e_ementa
 
 # ---------------------------------------------------------------------------
@@ -293,17 +294,17 @@ def calcular_funil(
 def calcular_periodo_temporal(df_brutos: pd.DataFrame) -> dict:
     """Extrai o período temporal do campo data_cadastro usando pandas.
 
-    Substitui o loop manual de strings por operações de datetime vetorizadas.
-    Fallback para SQLite se o campo não estiver nos dados brutos.
+    Usa parse estrito de datetime para garantir consistência com o split
+    cronológico realizado na Fase 3.
     """
     if "data_cadastro" in df_brutos.columns and df_brutos["data_cadastro"].notna().any():
-        datas = df_brutos["data_cadastro"].dropna().astype(str)
+        datas_brutas = df_brutos["data_cadastro"]
     else:
         # Fallback: ler do SQLite
         import sqlite3
         db_path = Path("data/banco_sistema_judicial.sqlite")
         if not db_path.exists():
-            return {"erro": "data_cadastro não disponível"}
+            raise ValueError("Fase 4 / período temporal: `data_cadastro` não disponível.")
         conn = sqlite3.connect(db_path)
         rows = conn.execute(
             "SELECT data_cadastro FROM turmarecursal_processo "
@@ -311,22 +312,25 @@ def calcular_periodo_temporal(df_brutos: pd.DataFrame) -> dict:
         ).fetchall()
         conn.close()
         if not rows:
-            return {"erro": "data_cadastro não disponível"}
-        datas = pd.Series([r[0] for r in rows], dtype=str)
+            raise ValueError("Fase 4 / período temporal: `data_cadastro` não disponível.")
+        datas_brutas = pd.Series([r[0] for r in rows], dtype=str, name="data_cadastro")
 
-    # Extrair anos para contagem (evita parse completo de datetimes)
-    anos = datas.str[:4]
-    anos_validos = anos[anos.str.match(r"^\d{4}$")]
+    datas = validar_e_converter_data_cadastro(
+        datas_brutas,
+        contexto="Fase 4 / período temporal",
+    )
+
+    anos = datas.dt.year.astype(str)
     distribuicao = (
-        anos_validos.value_counts()
+        anos.value_counts()
         .sort_index()
         .to_dict()
     )
 
-    datas_ordenadas = datas.sort_values()
+    datas_ordenadas = datas.sort_values(kind="stable")
     return {
-        "data_mais_antiga":      str(datas_ordenadas.iloc[0])[:10],
-        "data_mais_recente":     str(datas_ordenadas.iloc[-1])[:10],
+        "data_mais_antiga":      datas_ordenadas.iloc[0].strftime("%Y-%m-%d"),
+        "data_mais_recente":     datas_ordenadas.iloc[-1].strftime("%Y-%m-%d"),
         "distribuicao_por_ano":  {str(k): int(v) for k, v in distribuicao.items()},
     }
 
@@ -863,6 +867,6 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (FileNotFoundError, OSError) as exc:
+    except (FileNotFoundError, OSError, ValueError) as exc:
         log.critical("Execução interrompida: %s", exc)
         sys.exit(1)

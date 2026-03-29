@@ -115,6 +115,7 @@ Estas regras são centrais para a pesquisa e não devem ser alteradas incidental
 - A divisão é **cronológica** por `data_cadastro`.
 - As decisões mais antigas vão para treino; as mais recentes vão para teste.
 - Não usar `shuffle`, `random_state` ou `train_test_split` aleatório para este protocolo.
+- `data_cadastro` deve ser válida e parseável; registros com data nula, vazia ou inválida devem abortar a execução em vez de serem tolerados silenciosamente.
 
 ### Unidade de medida
 

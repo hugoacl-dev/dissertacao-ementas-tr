@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+from data_cadastro_utils import validar_e_converter_data_cadastro
 from jsonl_utils import MARCADOR_FUNDAMENTACAO
 
 
@@ -403,8 +404,9 @@ def _dividir_e_gravar(
 ) -> tuple[int, int]:
     """Divide cronologicamente e grava os datasets de treino e teste.
 
-    Usa pandas sort_values() para ordenar por data_cadastro e iloc[] para
-    o split cronológico, substituindo o sorted() manual anterior.
+    Usa `data_cadastro` validada como datetime para ordenar e fazer o split
+    cronológico. Datas inválidas abortam a execução para preservar a
+    integridade metodológica do experimento.
 
     A divisão é feita por 'data_cadastro' (campo preservado desde a Fase 1):
     as decisões mais antigas vão para treino e as mais recentes para teste.
@@ -416,15 +418,17 @@ def _dividir_e_gravar(
     Returns:
         Tupla (qtd_treino, qtd_teste).
     """
-    # Extrair data_cadastro de cada exemplo para sor
-    datas = pd.Series(
-        [ex.get("data_cadastro", "") or "" for ex in df_exemplos["exemplo"]],
+    datas_brutas = pd.Series(
+        [ex.get("data_cadastro") for ex in df_exemplos["exemplo"]],
         name="data_cadastro",
+    )
+    datas = validar_e_converter_data_cadastro(
+        datas_brutas,
+        contexto="Fase 3 / split cronológico",
     )
     df_com_data = df_exemplos.copy()
     df_com_data["_data_cadastro"] = datas
 
-    # Ordenar cronologicamente (registros sem data ficam no início — tratados como antigos)
     df_ordenado = df_com_data.sort_values("_data_cadastro", kind="stable").reset_index(drop=True)
 
     qtd_total = len(df_ordenado)
@@ -440,8 +444,8 @@ def _dividir_e_gravar(
     )
 
     # Validação cronológica
-    treino_ultima = df_treino["_data_cadastro"].iloc[-1] if len(df_treino) else "?"
-    teste_primeira = df_teste["_data_cadastro"].iloc[0]  if len(df_teste)  else "?"
+    treino_ultima = df_treino["_data_cadastro"].iloc[-1].isoformat() if len(df_treino) else "?"
+    teste_primeira = df_teste["_data_cadastro"].iloc[0].isoformat()  if len(df_teste)  else "?"
     log.info(
         "Validação cronológica: treino até %s | teste a partir de %s",
         treino_ultima, teste_primeira,
@@ -553,6 +557,6 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (FileNotFoundError, OSError) as exc:
+    except (FileNotFoundError, OSError, ValueError) as exc:
         log.critical("Execução interrompida: %s", exc)
         sys.exit(1)
