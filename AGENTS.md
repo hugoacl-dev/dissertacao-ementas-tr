@@ -184,7 +184,7 @@ Não commitar:
 ### Auditoria LGPD
 
 - Novos padrões de anonimização devem ser validados com `python3 pipeline/audit.py`.
-- A auditoria verifica 7 categorias de vazamento residual.
+- A auditoria verifica 8 categorias de vazamento residual, incluindo nomes próprios em contexto privado residual.
 - Decisões metodológicas de anonimização devem ser refletidas em `pesquisa/NOTAS_PESQUISA.md` quando alterarem comportamento experimental.
 
 ## Contrato Atual do JSONL

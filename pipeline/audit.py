@@ -41,6 +41,31 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     ),
 }
 
+_MARCADORES_NOME_PRIVADO_CONTEXTUAL = (
+    "AUTOR:",
+    "AUTORA:",
+    "movido por",
+    "movida por",
+    "representado por",
+    "representada por",
+    "Sr(a).",
+)
+
+_RE_NOME_PRIVADO_CONTEXTUAL = re.compile(
+    r"(?P<prefixo>\b(?:AUTOR(?:A)?\s*:|movid[oa]\s+por|representad[oa]\s+por|Sr\(a\)\.)\s*)"
+    r"(?P<nome>[A-ZÀ-Ý]{2,}(?:\s+[A-ZÀ-Ý]{2,}){1,6}?)"
+    r"(?=\s*(?:R[ÉE]U\s*:|I(?:\.\d+)?\)|QUESTÕES\s+DO\b|ESPECIALIDADE\s*:|IDADE\s*:|"
+    r"DATA(?:\s+DA\s+REALIZAÇÃO)?\s*:|em\s+face\b|por\s+intermédio\b|/|,|;|\.|\)|$))"
+)
+
+_HONORIFICOS_PRIVADOS = (
+    r"(?:Sr\.|Sra\.|Dr\.|Dra\.|advogado|advogada|réu|ré|perito|perita)"
+)
+_RE_NOME_PRIVADO_HONORIFICO = re.compile(
+    rf"(?i:\b(?:{_HONORIFICOS_PRIVADOS}))\s+"
+    r"([A-ZÀ-Ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+){1,5})\b"
+)
+
 # ---------------------------------------------------------------------------
 # Extração dos campos de dado (excluindo instrução embutida)
 # ---------------------------------------------------------------------------
@@ -54,6 +79,27 @@ def _extrair_textos_de_dado(obj: dict) -> str:
     """
     fundamentacao, ementa = extrair_fundamentacao_e_ementa(obj)
     return " ".join(parte for parte in (fundamentacao, ementa) if parte)
+
+
+def _detectar_nomes_privados_residuais(texto: str) -> list[str]:
+    """Detecta nomes próprios residuais em contextos fortemente privados."""
+    if not any(marcador in texto for marcador in _MARCADORES_NOME_PRIVADO_CONTEXTUAL) and not any(
+        termo in texto for termo in ("Sr.", "Sra.", "Dr.", "Dra.", "advogado", "advogada", "réu", "ré", "perito", "perita")
+    ):
+        return []
+
+    encontrados: list[str] = []
+    for match in _RE_NOME_PRIVADO_CONTEXTUAL.finditer(texto):
+        nome = match.group("nome").strip()
+        if nome and "[" not in nome and "]" not in nome:
+            encontrados.append(nome)
+
+    for match in _RE_NOME_PRIVADO_HONORIFICO.finditer(texto):
+        nome = match.group(1).strip()
+        if nome and "[" not in nome and "]" not in nome:
+            encontrados.append(nome)
+
+    return encontrados
 
 
 # ---------------------------------------------------------------------------
@@ -95,12 +141,20 @@ def audit(file_path: str | Path) -> bool:
                         if len(examples[cat]) < 3:
                             m = matches[0]
                             examples[cat].append(m if isinstance(m, str) else m[0])
+
+                nomes_residuais = _detectar_nomes_privados_residuais(text)
+                if nomes_residuais:
+                    cat = "8. Nome próprio residual (contexto privado)"
+                    counts[cat] += len(nomes_residuais)
+                    if len(examples[cat]) < 3:
+                        examples[cat].extend(nomes_residuais[: 3 - len(examples[cat])])
             except (json.JSONDecodeError, KeyError):
                 pass
 
     print(f"Total de registros analisados: {total}\n")
     all_clean = True
-    for cat in PATTERNS:
+    categorias = list(PATTERNS) + ["8. Nome próprio residual (contexto privado)"]
+    for cat in categorias:
         if counts[cat] > 0:
             all_clean = False
             print(f"[!] VAZAMENTO - {cat}: {counts[cat]} ocorrências")
