@@ -91,7 +91,7 @@ def verificar_pg_restore() -> None:
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         raise RuntimeError(
             "pg_restore não encontrado.\n"
-            "O arquivo dump_sistema_judicial.sql é um PostgreSQL Custom Dump (binário comprimido).\n"
+            "O arquivo data/dump_sistema_judicial.sql é um PostgreSQL Custom Dump (binário comprimido).\n"
             "Instale no Mac via: brew install postgresql@16"
         ) from exc
 

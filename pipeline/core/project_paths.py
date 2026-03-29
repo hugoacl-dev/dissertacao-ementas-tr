@@ -16,7 +16,7 @@ FASE5_DIR = DATA_DIR / "fase5"
 FASE7_DIR = DATA_DIR / "fase7"
 FASE7_PREDICOES_DIR = FASE7_DIR / "predicoes"
 
-DUMP_PATH = Path("dump_sistema_judicial.sql")
+DUMP_PATH = DATA_DIR / "dump_sistema_judicial.sql"
 SQLITE_DB_PATH = DATA_DIR / "banco_sistema_judicial.sqlite"
 
 DADOS_BRUTOS_PATH = DATA_DIR / "dados_brutos.json"
