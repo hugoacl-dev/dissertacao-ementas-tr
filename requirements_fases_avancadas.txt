@@ -1,0 +1,10 @@
+# Dependências das fases avançadas — instalar apenas nos ambientes apropriados.
+#
+# Fase 5a (fine-tuning Gemini 2.5 Flash via Vertex AI):
+google-cloud-aiplatform>=1.40.0
+#
+# Fase 5b (fine-tuning Qwen 2.5 14B via LoRA/Unsloth — executar em RunPod):
+# unsloth[cu124-torch260]   # instalar no ambiente RunPod, não localmente
+#
+# Fases 6 e 7 (baseline + avaliação no Colab):
+# rouge-score, bert-score, transformers, deepseek-sdk  # instalar no Colab

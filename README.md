@@ -78,7 +78,8 @@ A Fase 7 compara **quatro condições experimentais** (Gemini FT, Gemini Zero-Sh
 
 | Artefato | Descrição |
 |---|---|
-| `requirements.txt` | Dependências do pipeline local (Fases 1–4) |
+| `requirements.txt` | Dependências do pipeline local e da suíte de testes |
+| `requirements_fases_avancadas.txt` | Dependências opcionais das Fases 5–7, para ambientes específicos |
 | **Divisão cronológica** | Por `data_cadastro` em `pipeline/03_anonimizacao.py` (sem shuffle aleatório) |
 | Versão dos modelos base | Registrada em `modelo_gemini_nome.txt` e `modelo_qwen_checkpoint/` |
 | `.gitignore` | Exclui dados brutos, banco SQLite e documentos privados |

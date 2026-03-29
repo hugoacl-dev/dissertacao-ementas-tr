@@ -73,10 +73,9 @@ A pasta `pesquisa/` existe neste ambiente local e é uma fonte importante de con
 
 ### Dependências registradas
 
-- Produção local: `pandas>=2.2.0`
+- Produção local e testes: `requirements.txt`
 - Estatísticas: `numpy` já é usado pelo código de `pipeline/04_estatisticas.py`
-- Fase 5a: `google-cloud-aiplatform>=1.40.0`
-- Fase 5b e Fases 6–7 rodam em ambientes próprios, conforme `requirements.txt` e documentação da pesquisa
+- Fases 5–7: `requirements_fases_avancadas.txt` e ambientes próprios, conforme a documentação da pesquisa
 
 ## Convenções de Código
 
@@ -277,6 +276,7 @@ Observação: a API de tuning do Gemini não aceita `role: "system"` em `content
 - `AGENTS.md`
 - `README.md`
 - `requirements.txt`
+- `requirements_fases_avancadas.txt`
 
 ### Workflow comum após regenerar estatísticas
 
