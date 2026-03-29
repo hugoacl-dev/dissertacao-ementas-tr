@@ -117,7 +117,12 @@ _PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     # 12. "Súmula de Julgamento: …" até o final da string
     (
         "sumula_julgamento",
-        re.compile(r"Súmula de Julgamento:?.*$", re.IGNORECASE),
+        re.compile(
+            r"(?:^|[\n\r]|[.;:]\s+|\s{2,}|[\xa0]+)"
+            r"(?:\d+\.\s*)?S[úu]mula\s+d[eo]\s+julgamento"
+            r"(?:\s*:\s*.*|\s*)$",
+            re.IGNORECASE | re.DOTALL,
+        ),
         " ",
     ),
 
