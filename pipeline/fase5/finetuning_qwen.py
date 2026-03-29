@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import logging
 import sys
 from pathlib import Path
@@ -117,9 +118,9 @@ def executar_finetuning_qwen(
         return manifest_path
 
     try:
+        from unsloth import FastLanguageModel
         from datasets import Dataset
         from trl import SFTConfig, SFTTrainer
-        from unsloth import FastLanguageModel
     except ImportError as exc:
         raise ImportError(
             "Dependências ausentes: instale `datasets`, `trl` e `unsloth` no ambiente da Fase 5."
@@ -142,27 +143,38 @@ def executar_finetuning_qwen(
         random_state=seed,
     )
 
+    sft_config_kwargs: dict[str, Any] = {
+        "output_dir": str(output_dir),
+        "per_device_train_batch_size": per_device_train_batch_size,
+        "gradient_accumulation_steps": gradient_accumulation_steps,
+        "learning_rate": learning_rate,
+        "num_train_epochs": num_train_epochs,
+        "warmup_steps": warmup_steps,
+        "logging_steps": logging_steps,
+        "save_strategy": save_strategy,
+        "save_total_limit": save_total_limit,
+        "seed": seed,
+        "report_to": "none",
+        "run_name": run_name,
+        "packing": False,
+    }
+    sft_config_signature = inspect.signature(SFTConfig.__init__)
+    if "max_length" in sft_config_signature.parameters:
+        sft_config_kwargs["max_length"] = max_seq_length
+    else:
+        sft_config_kwargs["max_seq_length"] = max_seq_length
+
+    trainer_kwargs: dict[str, Any] = {
+        "model": model,
+        "train_dataset": dataset,
+        "args": SFTConfig(**sft_config_kwargs),
+    }
+    trainer_signature = inspect.signature(SFTTrainer.__init__)
+    processing_kwarg = "processing_class" if "processing_class" in trainer_signature.parameters else "tokenizer"
+    trainer_kwargs[processing_kwarg] = tokenizer
+
     trainer = SFTTrainer(
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=dataset,
-        args=SFTConfig(
-            output_dir=str(output_dir),
-            dataset_text_field=None,
-            max_seq_length=max_seq_length,
-            per_device_train_batch_size=per_device_train_batch_size,
-            gradient_accumulation_steps=gradient_accumulation_steps,
-            learning_rate=learning_rate,
-            num_train_epochs=num_train_epochs,
-            warmup_steps=warmup_steps,
-            logging_steps=logging_steps,
-            save_strategy=save_strategy,
-            save_total_limit=save_total_limit,
-            seed=seed,
-            report_to="none",
-            run_name=run_name,
-            packing=False,
-        ),
+        **trainer_kwargs,
     )
     resultado = trainer.train()
     trainer.save_model(str(output_dir))
@@ -200,6 +212,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=3407)
     parser.add_argument("--no-4bit", action="store_true")
     parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--manifest-path", type=Path, default=None)
     return parser.parse_args()
 
 
@@ -230,7 +243,7 @@ def main() -> None:
         prepare_only=args.prepare_only,
         perfil_execucao=args.perfil_execucao,
         seed=args.seed,
-        manifest_path=artefatos["qwen_manifest_path"],
+        manifest_path=args.manifest_path or artefatos["qwen_manifest_path"],
     )
     log.info("Manifesto Qwen SFT persistido em %s", output_path)
 
