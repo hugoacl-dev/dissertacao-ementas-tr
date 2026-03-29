@@ -260,19 +260,10 @@ function buildExperimentalPhase(phase) {
 
   const warning = el('div', 'experimental-callout');
   warning.innerHTML = `
-    <div class="experimental-callout__title">Leitura correta desta fase</div>
     <p>${phase.aviso_leitor || 'Os artefatos abaixo documentam prontidão técnica e smoke tests exploratórios.'}</p>
     ${phase.bloqueio_principal ? `<p><strong>Bloqueio atual:</strong> ${phase.bloqueio_principal}</p>` : ''}
   `;
   body.appendChild(warning);
-
-  const summaryCards = el('div', 'cards');
-  summaryCards.append(
-    experimentalStatusCard('implementacao', phase.implementacao_status),
-    experimentalStatusCard('exploratorio', phase.validacao_exploratoria_status),
-    experimentalStatusCard('oficial', phase.execucao_oficial_status),
-  );
-  body.appendChild(summaryCards);
 
   if (phase.componentes && phase.componentes.length > 0) {
     const componentsGrid = el('div', 'cards');
@@ -675,7 +666,7 @@ function render(data, status57) {
   } else {
     const pendingPhases = [
       { num: 5, nome: 'Fine-Tuning', desc: 'Fase implementada no código, mas ainda sem snapshot de prontidão experimental disponível no dashboard.' },
-      { num: 6, nome: 'Inferência e Predições', desc: 'Runners implementados, mas sem snapshot de prontidão experimental disponível no dashboard.' },
+      { num: 6, nome: 'Inferência e Ementas Geradas', desc: 'Runners implementados, mas sem snapshot de prontidão experimental disponível no dashboard.' },
       { num: 7, nome: 'Avaliação Final', desc: 'Infraestrutura implementada, mas sem snapshot de prontidão experimental disponível no dashboard.' },
     ];
     pendingPhases.forEach(p => {

@@ -250,7 +250,7 @@ def gerar_status_fases_5_7() -> dict[str, Any]:
             "artefato_exploratorio": (
                 str(fase5_expl["gemini_manifest_path"]) if gemini_expl_manifest else None
             ),
-            "observacao": "A execução oficial permanece pendente até o congelamento metodológico.",
+            "observacao": "Somente a preparação do job foi validada até agora.",
         },
         {
             "id": "qwen_ft",
@@ -273,7 +273,7 @@ def gerar_status_fases_5_7() -> dict[str, Any]:
             "artefato_exploratorio": (
                 str(fase5_expl["qwen_manifest_path"]) if qwen_expl_manifest else None
             ),
-            "observacao": "O treino oficial com JSONL reais ainda não foi executado no perfil oficial.",
+            "observacao": "O smoke em GPU usou dataset sintético mínimo; o treino oficial com JSONL reais ainda não começou.",
         },
     ]
 
@@ -305,15 +305,13 @@ def gerar_status_fases_5_7() -> dict[str, Any]:
                 ),
                 "evidencia_exploratoria": (
                     (
-                        f"{manifest_expl.get('predicoes_persistidas', '—')} predições persistidas em smoke exploratório"
+                        f"{manifest_expl.get('predicoes_persistidas', '—')} ementas geradas persistidas em smoke exploratório"
                     )
                     if manifest_expl
                     else "condição ainda sem artefato exploratório canônico"
                 ),
                 "artefato_exploratorio": str(output_expl) if manifest_expl else None,
-                "observacao": (
-                    "Os artefatos exploratórios atuais servem para validação operacional. O perfil oficial permanece vazio."
-                ),
+                "observacao": None,
             }
         )
 
@@ -415,14 +413,14 @@ def gerar_status_fases_5_7() -> dict[str, Any]:
             [item["execucao_oficial_status"] for item in fase5_componentes]
         ),
         "aviso_leitor": (
-            "Esta seção documenta prontidão técnica e smoke tests. Nenhum modelo oficial foi treinado ainda."
+            "Smoke tests exploratórios aprovados; nenhum modelo oficial foi treinado ainda."
         ),
         "bloqueio_principal": "Congelamento metodológico e decisão final sobre a rodada oficial.",
         "componentes": fase5_componentes,
     }
     fase6 = {
         "numero": 6,
-        "nome": "Inferência e Predições",
+        "nome": "Inferência e Ementas Geradas",
         "descricao": (
             "Runners canônicos das quatro condições experimentais, com retomada incremental e manifests próprios."
         ),
@@ -434,7 +432,7 @@ def gerar_status_fases_5_7() -> dict[str, Any]:
             [item["execucao_oficial_status"] for item in fase6_componentes]
         ),
         "aviso_leitor": (
-            "As predições mostradas no perfil exploratório servem para validação operacional. Não são resultados finais."
+            "As quatro condições já têm runner canônico para geração de ementas; o perfil oficial ainda está vazio."
         ),
         "bloqueio_principal": "Rodada oficial ainda não iniciada nas quatro condições.",
         "componentes": fase6_componentes,
@@ -453,7 +451,7 @@ def gerar_status_fases_5_7() -> dict[str, Any]:
             [item["execucao_oficial_status"] for item in fase7_componentes]
         ),
         "aviso_leitor": (
-            "Os artefatos exploratórios desta fase foram usados apenas para smoke tests sintéticos ou integrações curtas."
+            "O pipeline avaliativo já roda no perfil exploratório; relatórios oficiais ainda não foram gerados."
         ),
         "bloqueio_principal": "Execução oficial depende das quatro condições completas e do congelamento do protocolo.",
         "componentes": fase7_componentes,
