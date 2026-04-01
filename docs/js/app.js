@@ -7,6 +7,12 @@
 const themeToggle = document.getElementById('themeToggle');
 const themeIcon   = document.getElementById('themeIcon');
 const themeLabel  = document.getElementById('themeLabel');
+const ASSET_VERSION = document.documentElement.dataset.assetVersion || '20260401-1645';
+
+function versionedPath(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return `${path}${sep}v=${ASSET_VERSION}`;
+}
 
 function getTheme() {
   return localStorage.getItem('dashboard-theme') || 'light';
@@ -62,6 +68,20 @@ function el(tag, cls) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
   return e;
+}
+
+function showFatalError(target, err) {
+  const message = err?.message || String(err);
+  console.error('Dashboard render failed:', err);
+  target.innerHTML = `
+    <div class="error-msg">
+      <p style="font-size:2rem;margin-bottom:1rem">⚠️</p>
+      <p><strong>Não foi possível renderizar o dashboard.</strong></p>
+      <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted)">
+        Atualize a página para buscar a versão mais recente dos arquivos.<br>
+        Erro: ${message}
+      </p>
+    </div>`;
 }
 
 function metricCard(label, value, sub, colorClass) {
@@ -379,8 +399,8 @@ function buildPhase(num, data, contentFn) {
 
   try {
     const [respStats, respStatus57] = await Promise.all([
-      fetch('data/estatisticas_corpus.json'),
-      fetch('data/fases_5_7_status.json').catch(() => null),
+      fetch(versionedPath('data/estatisticas_corpus.json'), { cache: 'no-store' }),
+      fetch(versionedPath('data/fases_5_7_status.json'), { cache: 'no-store' }).catch(() => null),
     ]);
     if (!respStats.ok) throw new Error(`HTTP ${respStats.status}: ${respStats.statusText}`);
     const data = await respStats.json();
@@ -388,19 +408,11 @@ function buildPhase(num, data, contentFn) {
     if (respStatus57 && respStatus57.ok) {
       status57 = await respStatus57.json();
     }
-    loading.remove();
     render(data, status57);
+    loading.remove();
     document.getElementById('footer').style.display = '';
   } catch (err) {
-    loading.innerHTML = `
-      <div class="error-msg">
-        <p style="font-size:2rem;margin-bottom:1rem">⚠️</p>
-        <p><strong>Não foi possível carregar os dados.</strong></p>
-        <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted)">
-          Execute <code>python3 -m pipeline.fase1_4.fase04_estatisticas</code> para gerar o JSON.<br>
-          Erro: ${err.message}
-        </p>
-      </div>`;
+    showFatalError(main, err);
   }
 })();
 
@@ -684,7 +696,15 @@ function render(data, status57) {
   window._chartsRendered = true;
 
   requestAnimationFrame(() => {
-    rerenderCharts(f4, f3);
-    observeStickyHeaders();
+    try {
+      rerenderCharts(f4, f3);
+    } catch (err) {
+      console.error('Chart render failed:', err);
+    }
+    try {
+      observeStickyHeaders();
+    } catch (err) {
+      console.error('Sticky header setup failed:', err);
+    }
   });
 }
