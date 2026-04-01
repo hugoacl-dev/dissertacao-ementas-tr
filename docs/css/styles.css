@@ -229,6 +229,27 @@ body {
   background: linear-gradient(90deg, var(--accent) 0%, var(--border) 50%, transparent 100%);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .phase {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.5s ease forwards;
+    will-change: opacity, transform;
+  }
+
+  .phase:nth-child(1) { animation-delay: 0.05s; }
+  .phase:nth-child(2) { animation-delay: 0.1s; }
+  .phase:nth-child(3) { animation-delay: 0.15s; }
+  .phase:nth-child(4) { animation-delay: 0.2s; }
+  .phase:nth-child(5) { animation-delay: 0.25s; }
+  .phase:nth-child(6) { animation-delay: 0.3s; }
+  .phase:nth-child(7) { animation-delay: 0.35s; }
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .phase__header {
   display: flex;
   align-items: center;
@@ -789,14 +810,6 @@ body {
 
   .phase__desc, .phase__meta, .phase__narrativa { padding-left: 0; }
   .phase__narrativa { padding-left: 0.8rem; }
-  .phase__header {
-    position: relative;
-    top: auto;
-  }
-  .phase__header--stuck {
-    border-bottom-color: transparent;
-    box-shadow: none;
-  }
 
   .gauge-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
   .gauge-item canvas { max-width: 120px; }

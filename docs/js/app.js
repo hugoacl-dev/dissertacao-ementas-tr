@@ -40,9 +40,7 @@ const stickyObserver = new IntersectionObserver(
 
 // Will be called after render
 function observeStickyHeaders() {
-  if (window.matchMedia('(max-width: 768px)').matches) return;
   document.querySelectorAll('.phase').forEach(phase => {
-    if (phase.querySelector('.sticky-sentinel')) return;
     const sentinel = document.createElement('div');
     sentinel.className = 'sticky-sentinel';
     sentinel.style.cssText = 'height:1px;width:100%;position:absolute;top:0;left:0;pointer-events:none;';
