@@ -148,5 +148,16 @@ def test_smoke_pipeline_fases_2_a_4_com_fixture_sintetica(
     assert estatisticas_json["fases"]["fase3_anonimizacao"]["treino"] == 3
     assert estatisticas_json["fases"]["fase3_anonimizacao"]["teste"] == 1
     assert estatisticas_json["fases"]["fase3_anonimizacao"]["pii_contagem"]["NOME_OCULTADO"] >= 3
+    outliers = estatisticas_json["fases"]["fase4_estatisticas"]["outliers"]
+    assert outliers["status"] == "proposta_metodologica"
+    assert outliers["anomalias_estruturais"]["rotulos_corrompidos"]["total"] == 0
+    assert outliers["anomalias_estruturais"]["inputs_contaminados"]["total"] == 0
+    qwen = next(item for item in outliers["compatibilidade_modelos"] if item["id"] == "qwen")
+    assert qwen["limite_tokens_input"] == 8192
+    if qwen["acima_limite"] is not None:
+        assert qwen["acima_limite"] == 0
+    else:
+        assert qwen["status"] in {"dependencia_ausente_transformers", "tokenizer_indisponivel"}
     assert docs_json["fases"]["fase4_estatisticas"]["funil"]["dataset_final_fase3"] == 4
+    assert "outliers" in docs_json["fases"]["fase4_estatisticas"]
     assert relatorio["fases"]["fase4_estatisticas"]["funil"]["dataset_final_fase3"] == 4

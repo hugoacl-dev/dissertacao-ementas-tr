@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -64,6 +65,13 @@ TOTAL_DUMP_FALLBACK = 32_478
 
 # Percentis padrão para distribuições de comprimento
 _PERCENTIS = [0.05, 0.25, 0.75, 0.95]
+
+_PREFIXO_INPUT_CONTAMINADO = "VOTO-EMENTA"
+_EMENTA_TRUNCADA_EXATA = "AMPARO ASSISTENCIAL. SENTENÇA DE IMPROCEDÊNCIA. RECORRE A PARTE-AUTORA"
+_HEADER_INSTITUCIONAL_PREFIXO = "JUSTIÇA FEDERAL DA 5ª REGIÃO"
+_QWEN_MODEL_ID = "Qwen/Qwen2.5-14B-Instruct"
+_QWEN_MAX_INPUT_TOKENS = 8192
+_GEMINI_MODEL_ID = "gemini-2.5-flash"
 
 
 # ---------------------------------------------------------------------------
@@ -208,6 +216,156 @@ def _histograma(serie: pd.Series, bin_size: int, limite: int = 15) -> dict[str, 
     )
 
     return {str(k): int(v) for k, v in contagens.items() if v > 0}
+
+
+def _resumo_iqr(serie: pd.Series, *, precisao: int) -> dict[str, float | int]:
+    """Resume sinais distribucionais via IQR, sem presumir exclusão automática."""
+    if serie.empty:
+        zero = round(0.0, precisao)
+        return {
+            "q1": zero,
+            "q3": zero,
+            "iqr": zero,
+            "limite_iqr_superior": zero,
+            "acima_limite_iqr": 0,
+            "limite_iqr_superior_severo": zero,
+            "acima_limite_iqr_severo": 0,
+        }
+
+    q1 = float(serie.quantile(0.25))
+    q3 = float(serie.quantile(0.75))
+    iqr = q3 - q1
+    limite_iqr = q3 + 1.5 * iqr
+    limite_iqr_severo = q3 + 3.0 * iqr
+    return {
+        "q1": round(q1, precisao),
+        "q3": round(q3, precisao),
+        "iqr": round(iqr, precisao),
+        "limite_iqr_superior": round(limite_iqr, precisao),
+        "acima_limite_iqr": int((serie > limite_iqr).sum()),
+        "limite_iqr_superior_severo": round(limite_iqr_severo, precisao),
+        "acima_limite_iqr_severo": int((serie > limite_iqr_severo).sum()),
+    }
+
+
+def _classificar_anomalias_ementa(ementa: str) -> list[str]:
+    """Identifica rótulos claramente corrompidos por regras estruturais conservadoras."""
+    texto = (ementa or "").strip()
+    if not texto:
+        return []
+
+    texto_upper = texto.upper()
+    anomalias: list[str] = []
+    if texto_upper == _EMENTA_TRUNCADA_EXATA:
+        anomalias.append("trunc_8w_exata")
+    if texto_upper.startswith(_HEADER_INSTITUCIONAL_PREFIXO):
+        anomalias.append("header_ementa")
+    if texto_upper.startswith("DESPACHO"):
+        anomalias.append("despacho_ementa")
+    if re.match(r"^\d+[\).\-]", texto):
+        anomalias.append("ementa_start_digit")
+    if len(texto.split()) > 300:
+        anomalias.append("ementa_longa_anomala")
+    return anomalias
+
+
+def _resumir_anomalias_estruturais(df: pd.DataFrame) -> dict[str, dict[str, int | str]]:
+    """Conta pares com rótulo corrompido e inputs contaminados por voto-ementa."""
+    rotulo_corrompido = df["ementa"].apply(lambda texto: bool(_classificar_anomalias_ementa(texto)))
+    input_contaminado = df["fundamentacao"].str.strip().str.upper().str.startswith(_PREFIXO_INPUT_CONTAMINADO)
+
+    return {
+        "rotulos_corrompidos": {
+            "total": int(rotulo_corrompido.sum()),
+            "treino": int((rotulo_corrompido & df["split"].eq("treino")).sum()),
+            "teste": int((rotulo_corrompido & df["split"].eq("teste")).sum()),
+            "acao": "quarentena_exclusao",
+        },
+        "inputs_contaminados": {
+            "total": int(input_contaminado.sum()),
+            "treino": int((input_contaminado & df["split"].eq("treino")).sum()),
+            "teste": int((input_contaminado & df["split"].eq("teste")).sum()),
+            "acao": "sanitizacao_prefixo_voto_ementa",
+        },
+    }
+
+
+def _compatibilidade_qwen(df: pd.DataFrame) -> dict[str, str | int | None]:
+    """Conta fundamentações que excedem o limite de contexto explicitado para o Qwen."""
+    base = {
+        "id": "qwen",
+        "model_id": _QWEN_MODEL_ID,
+        "limite_tokens_input": _QWEN_MAX_INPUT_TOKENS,
+        "acima_limite": None,
+        "treino": None,
+        "teste": None,
+        "acao": "estratificar_ou_excluir_do_benchmark_qwen",
+    }
+
+    try:
+        from transformers import AutoTokenizer
+    except ImportError:
+        log.warning("Outliers/Qwen: `transformers` indisponível; compatibilidade ficará sem contagem.")
+        return {**base, "status": "dependencia_ausente_transformers"}
+
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(_QWEN_MODEL_ID)
+    except Exception as exc:  # noqa: BLE001 - falha operacional de cache/rede
+        log.warning("Outliers/Qwen: tokenizer indisponível: %s", exc)
+        return {**base, "status": "tokenizer_indisponivel"}
+
+    acima_limite = {"treino": 0, "teste": 0}
+    for split, fundamentacao in df[["split", "fundamentacao"]].itertuples(index=False):
+        n_tokens = len(tokenizer.encode(fundamentacao, add_special_tokens=False))
+        if n_tokens > _QWEN_MAX_INPUT_TOKENS:
+            acima_limite[split] += 1
+
+    total = acima_limite["treino"] + acima_limite["teste"]
+    return {
+        **base,
+        "acima_limite": total,
+        "treino": acima_limite["treino"],
+        "teste": acima_limite["teste"],
+    }
+
+
+def calcular_outliers(df: pd.DataFrame) -> dict[str, Any]:
+    """Consolida sinais distribucionais, anomalias estruturais e compatibilidade experimental."""
+    anomalias_estruturais = _resumir_anomalias_estruturais(df)
+    compat_qwen = _compatibilidade_qwen(df)
+
+    return {
+        "status": "proposta_metodologica",
+        "enquadramento": {
+            "unidade_distribucional": "palavras",
+            "unidade_compatibilidade_modelo": "tokens",
+            "mensagem_principal": (
+                "IQR é triagem descritiva; tratamento de outliers depende de integridade "
+                "estrutural e compatibilidade experimental."
+            ),
+        },
+        "sinais_distribucionais": {
+            "fundamentacao": _resumo_iqr(df["n_fund"], precisao=1),
+            "ementa": _resumo_iqr(df["n_ementa"], precisao=1),
+            "razao_compressao": _resumo_iqr(df["razao"].dropna(), precisao=2),
+        },
+        "anomalias_estruturais": anomalias_estruturais,
+        "compatibilidade_modelos": [
+            compat_qwen,
+            {
+                "id": "gemini",
+                "model_id": _GEMINI_MODEL_ID,
+                "limite_tokens_input": None,
+                "status": "sem_limite_local_codificado",
+            },
+        ],
+        "principios": [
+            "IQR não implica exclusão automática.",
+            "Curto não implica erro.",
+            "Cauda longa válida deve ser preservada e, quando necessário, estratificada.",
+            "Erro estrutural e incompatibilidade experimental são problemas distintos.",
+        ],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -510,8 +668,18 @@ def gerar_relatorio(
 
     # --- Extrair textos do JSONL final para um DataFrame ---
     log.info("Extraindo textos do dataset final...")
-    pares = [extrair_fundamentacao_e_ementa(obj) for obj in treino_raw + teste_raw]
-    df = pd.DataFrame(pares, columns=["fundamentacao", "ementa"])
+    pares: list[dict[str, str]] = []
+    for split, registros in (("treino", treino_raw), ("teste", teste_raw)):
+        for obj in registros:
+            fundamentacao, ementa = extrair_fundamentacao_e_ementa(obj)
+            pares.append(
+                {
+                    "split": split,
+                    "fundamentacao": fundamentacao,
+                    "ementa": ementa,
+                }
+            )
+    df = pd.DataFrame(pares)
 
     # Contagem de palavras vetorizada
     df["n_fund"]  = df["fundamentacao"].str.split().str.len()
@@ -625,6 +793,30 @@ def gerar_relatorio(
     log.info("Calculando distribuição temática (matérias)...")
     distribuicao_materias = calcular_distribuicao_materias(df["ementa"])
     log.info("  Matérias: %s", {d["materia"]: d["contagem"] for d in distribuicao_materias[:5]})
+
+    # --- Outliers (metodologia) ---
+    log.info("Consolidando sinais de outliers...")
+    outliers = calcular_outliers(df)
+    log.info(
+        "  Outliers/IQR: fund=%d | ementa=%d | razão=%d",
+        outliers["sinais_distribucionais"]["fundamentacao"]["acima_limite_iqr"],
+        outliers["sinais_distribucionais"]["ementa"]["acima_limite_iqr"],
+        outliers["sinais_distribucionais"]["razao_compressao"]["acima_limite_iqr"],
+    )
+    log.info(
+        "  Anomalias estruturais: rótulos=%d | inputs contaminados=%d",
+        outliers["anomalias_estruturais"]["rotulos_corrompidos"]["total"],
+        outliers["anomalias_estruturais"]["inputs_contaminados"]["total"],
+    )
+    compat_qwen = outliers["compatibilidade_modelos"][0]
+    if compat_qwen.get("acima_limite") is not None:
+        log.info(
+            "  Compatibilidade Qwen: %d fundamentações acima de %d tokens",
+            compat_qwen["acima_limite"],
+            compat_qwen["limite_tokens_input"],
+        )
+    else:
+        log.info("  Compatibilidade Qwen: %s", compat_qwen.get("status", "indisponível"))
 
     # --- PII Stats ---
     pii_contagem: dict = {}
@@ -800,6 +992,7 @@ def gerar_relatorio(
         },
         "wordcloud": wordcloud_data,
         "distribuicao_materias": distribuicao_materias,
+        "outliers": outliers,
         "dicas": dicas,
         "artefatos": [
             {"nome": "dataset_treino.jsonl", "tamanho_mb": _file_size_mb(treino_path), "tipo": "entrada", "conteudo": "{contents: [{role, parts}]} anonimizado"},

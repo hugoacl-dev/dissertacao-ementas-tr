@@ -1,9 +1,9 @@
 {
   "meta": {
-    "gerado_em": "2026-03-29T21:01:54",
+    "gerado_em": "2026-04-14T20:18:03",
     "titulo_pesquisa": "Geração Abstrativa de Ementas Judiciais",
     "unidade_de_medida": "palavras (split por espaço)",
-    "pipeline_total_segundos": 726
+    "pipeline_total_segundos": 160
   },
   "fases": {
     "fase1_ingestao": {
@@ -12,7 +12,7 @@
       "narrativa": "O sistema judicial armazena votos e ementas em PostgreSQL. O dump original contém 32.478 registros. Após descartar 101 registros sem voto (fundamentação) ou ementa preenchida. 32.377 pares válidos foram exportados. uma retenção de 99.7%. indicando alta completude da base de dados.",
       "status": "concluida",
       "script": "python3 -m pipeline.fase1_4.fase01_ingestao",
-      "duracao_segundos": 6,
+      "duracao_segundos": 5,
       "registros_dump": 32478,
       "registros_exportados": 32377,
       "perda": 101,
@@ -39,7 +39,7 @@
       "narrativa": "Textos jurídicos contêm ruído processual (identificadores PJe. carimbos de publicação DJe. assinaturas) que polui o treinamento de modelos de linguagem. Após aplicar as regras de limpeza via expressões regulares e os filtros de qualidade da Fase 2. 56 registros foram descartados. A retenção de 99.8% confirma que o ruído era pontual e que a maior parte do corpus permaneceu utilizável.",
       "status": "concluida",
       "script": "python3 -m pipeline.fase1_4.fase02_higienizacao",
-      "duracao_segundos": 96,
+      "duracao_segundos": 55,
       "registros_entrada": 32377,
       "registros_saida": 32321,
       "perda": 56,
@@ -82,7 +82,7 @@
       "narrativa": "Para conformidade com a LGPD. dados pessoais (CPF. CNPJ. nomes. endereços) foram substituídos por tokens genéricos como [NOME_PESSOA] e [CPF]. O corpus anonimizado foi dividido em treino (29.089 registros. 90%) e teste (3.232 registros. 10%) por critério cronológico (data_cadastro). evitando temporal leakage.",
       "status": "concluida",
       "script": "python3 -m pipeline.fase1_4.fase03_anonimizacao",
-      "duracao_segundos": 564,
+      "duracao_segundos": 62,
       "registros_entrada": 32321,
       "registros_saida": 32321,
       "treino": 29089,
@@ -141,7 +141,7 @@
       "narrativa": "Esta fase analisa quantitativamente o corpus para caracterizar a complexidade da tarefa de sumarização e validar a qualidade dos dados.",
       "status": "concluida",
       "script": "python3 -m pipeline.fase1_4.fase04_estatisticas",
-      "duracao_segundos": 36,
+      "duracao_segundos": 20,
       "funil": {
         "dump_postgresql": 32478,
         "apos_filtro_nulos_fase1": 32377,
@@ -8709,6 +8709,80 @@
           "contagem": 165
         }
       ],
+      "outliers": {
+        "status": "proposta_metodologica",
+        "enquadramento": {
+          "unidade_distribucional": "palavras",
+          "unidade_compatibilidade_modelo": "tokens",
+          "mensagem_principal": "IQR é triagem descritiva; tratamento de outliers depende de integridade estrutural e compatibilidade experimental."
+        },
+        "sinais_distribucionais": {
+          "fundamentacao": {
+            "q1": 374.0,
+            "q3": 782.0,
+            "iqr": 408.0,
+            "limite_iqr_superior": 1394.0,
+            "acima_limite_iqr": 1636,
+            "limite_iqr_superior_severo": 2006.0,
+            "acima_limite_iqr_severo": 531
+          },
+          "ementa": {
+            "q1": 22.0,
+            "q3": 35.0,
+            "iqr": 13.0,
+            "limite_iqr_superior": 54.5,
+            "acima_limite_iqr": 1392,
+            "limite_iqr_superior_severo": 74.0,
+            "acima_limite_iqr_severo": 169
+          },
+          "razao_compressao": {
+            "q1": 13.45,
+            "q3": 28.67,
+            "iqr": 15.21,
+            "limite_iqr_superior": 51.48,
+            "acima_limite_iqr": 1814,
+            "limite_iqr_superior_severo": 74.3,
+            "acima_limite_iqr_severo": 468
+          }
+        },
+        "anomalias_estruturais": {
+          "rotulos_corrompidos": {
+            "total": 25,
+            "treino": 23,
+            "teste": 2,
+            "acao": "quarentena_exclusao"
+          },
+          "inputs_contaminados": {
+            "total": 15,
+            "treino": 10,
+            "teste": 5,
+            "acao": "sanitizacao_prefixo_voto_ementa"
+          }
+        },
+        "compatibilidade_modelos": [
+          {
+            "id": "qwen",
+            "model_id": "Qwen/Qwen2.5-14B-Instruct",
+            "limite_tokens_input": 8192,
+            "acima_limite": 71,
+            "treino": 69,
+            "teste": 2,
+            "acao": "estratificar_ou_excluir_do_benchmark_qwen"
+          },
+          {
+            "id": "gemini",
+            "model_id": "gemini-2.5-flash",
+            "limite_tokens_input": null,
+            "status": "sem_limite_local_codificado"
+          }
+        ],
+        "principios": [
+          "IQR não implica exclusão automática.",
+          "Curto não implica erro.",
+          "Cauda longa válida deve ser preservada e, quando necessário, estratificada.",
+          "Erro estrutural e incompatibilidade experimental são problemas distintos."
+        ]
+      },
       "dicas": {
         "funil": "O funil mostra quantos registros sobreviveram a cada etapa do pipeline. A perda total foi de apenas 0.5%, indicando que a base original é consistente e quase não há dados inutilizáveis.",
         "distribuicao": "A fundamentação tem mediana de 533.0 palavras enquanto a ementa tem apenas 27.0, uma razão de ~19:1. Essa assimetria extrema define a complexidade da tarefa de sumarização.",

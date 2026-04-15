@@ -379,6 +379,75 @@ body {
   margin-top: 0.55rem;
 }
 
+.outlier-callout {
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background:
+    linear-gradient(135deg, rgba(56, 189, 248, 0.09), rgba(129, 140, 248, 0.06)),
+    var(--bg-card);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.outlier-callout__title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.outlier-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.outlier-kpi {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.outlier-kpi__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.outlier-kpi__value {
+  font-size: 1.45rem;
+  line-height: 1.1;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.outlier-kpi__sub {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.outlier-table td {
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.outlier-footnote {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--table-border);
+  padding-top: 0.7rem;
+}
+
 .experimental-component {
   display: flex;
   flex-direction: column;
@@ -767,6 +836,8 @@ body {
 
   .gauge-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
   .gauge-item canvas { max-width: 120px; }
+  .outlier-kpis { grid-template-columns: repeat(3, 1fr); }
+  .outlier-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   .chart-container { height: 260px; }
 
@@ -829,6 +900,10 @@ body {
   .card__value { font-size: 1.5rem; }
   .card__sub { font-size: 0.8rem; }
   .card__hint { font-size: 0.85rem; line-height: 1.65; }
+  .outlier-kpi { padding: 0.8rem 0.9rem; }
+  .outlier-kpi__value { font-size: 1.25rem; }
+  .outlier-kpis { grid-template-columns: 1fr; }
+  .boxplot-grid { grid-template-columns: 1fr; }
 
   /* Charts — taller on mobile for readability */
   .chart-container { height: 240px; }

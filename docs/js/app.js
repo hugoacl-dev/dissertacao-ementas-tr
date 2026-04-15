@@ -56,6 +56,14 @@ function fmt(n) {
   return n.toLocaleString('pt-BR');
 }
 
+function fmtFixed(n, digits) {
+  if (n == null) return '—';
+  return Number(n).toLocaleString('pt-BR', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
 function el(tag, cls) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -570,6 +578,89 @@ function render(data, status57) {
         <div class="boxplot-panel"><div class="boxplot-panel__title">Ementa</div><div class="chart-container" style="height:260px"><canvas id="chart-boxplot-ementa"></canvas></div></div>
       </div>`;
     cards.appendChild(boxCard);
+
+    if (f4.outliers) {
+      const out = f4.outliers;
+      const sinais = out.sinais_distribucionais || {};
+      const fundOut = sinais.fundamentacao || {};
+      const ementaOut = sinais.ementa || {};
+      const razaoOut = sinais.razao_compressao || {};
+      const estruturais = out.anomalias_estruturais || {};
+      const rotulos = estruturais.rotulos_corrompidos || {};
+      const inputs = estruturais.inputs_contaminados || {};
+      const modelos = Array.isArray(out.compatibilidade_modelos) ? out.compatibilidade_modelos : [];
+      const qwen = modelos.find(item => item.id === 'qwen') || {};
+      const statusBadge = out.status === 'proposta_metodologica' ? 'Proposta metodológica' : fmt(out.status);
+
+      const qwenEvidence = qwen.acima_limite != null
+        ? `${fmt(qwen.acima_limite)} fundamentações acima de ${fmt(qwen.limite_tokens_input)} tokens no benchmark Qwen (${fmt(qwen.treino)} treino; ${fmt(qwen.teste)} teste).`
+        : `Limite do Qwen explicitado no código (${fmt(qwen.limite_tokens_input)} tokens), mas sem contagem automática neste ambiente (${qwen.status || 'indisponível'}).`;
+
+      const outlierCard = el('div', 'card card--wide');
+      outlierCard.innerHTML = `
+        <div class="card__label">Tratamento de Outliers <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— ${statusBadge}</span></div>
+        <p class="card__hint">Diagnóstico de qualidade e compatibilidade experimental dos pares do corpus.</p>
+        <div class="outlier-callout">
+          <div class="outlier-callout__title">Leitura metodológica</div>
+          <p>${out.enquadramento?.mensagem_principal || 'IQR funciona como triagem descritiva; a decisão metodológica depende do tipo de anomalia encontrado.'}</p>
+        </div>
+        <div class="outlier-kpis">
+          <div class="outlier-kpi">
+            <div class="outlier-kpi__label">Rótulos corrompidos</div>
+            <div class="outlier-kpi__value">${fmt(rotulos.total)}</div>
+            <div class="outlier-kpi__sub">${fmt(rotulos.treino)} treino · ${fmt(rotulos.teste)} teste</div>
+          </div>
+          <div class="outlier-kpi">
+            <div class="outlier-kpi__label">Inputs contaminados</div>
+            <div class="outlier-kpi__value">${fmt(inputs.total)}</div>
+            <div class="outlier-kpi__sub">${fmt(inputs.treino)} treino · ${fmt(inputs.teste)} teste</div>
+          </div>
+          <div class="outlier-kpi">
+            <div class="outlier-kpi__label">Overflow no Qwen</div>
+            <div class="outlier-kpi__value">${fmt(qwen.acima_limite)}</div>
+            <div class="outlier-kpi__sub">${fmt(qwen.treino)} treino · ${fmt(qwen.teste)} teste</div>
+          </div>
+        </div>
+        <table class="comp-table outlier-table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Evidência no corpus</th>
+              <th>Leitura</th>
+              <th>Tratamento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sinal distribucional (IQR)</td>
+              <td><strong>${fmt(fundOut.acima_limite_iqr)}</strong> fund. acima de ${fmtFixed(fundOut.limite_iqr_superior, 0)} pal.<br><strong>${fmt(ementaOut.acima_limite_iqr)}</strong> ementas acima de ${fmtFixed(ementaOut.limite_iqr_superior, 1)} pal.<br><strong>${fmt(razaoOut.acima_limite_iqr)}</strong> com razão acima de ${fmtFixed(razaoOut.limite_iqr_superior, 0)}:1</td>
+              <td>Triagem estatística, não critério de exclusão.</td>
+              <td>Complementar com verificação estrutural e semântica.</td>
+            </tr>
+            <tr>
+              <td>Rótulo corrompido</td>
+              <td>${fmt(rotulos.total)} pares com ementa estruturalmente inadequada (truncamento, cabeçalho institucional, despacho).</td>
+              <td>Erro de corpus, não variação natural.</td>
+              <td>Quarentena ou exclusão até correção upstream.</td>
+            </tr>
+            <tr>
+              <td>Input contaminado</td>
+              <td>${fmt(inputs.total)} fundamentações iniciam com <code>VOTO-EMENTA</code>, vazando parte do alvo na entrada.</td>
+              <td>Risco de vazamento, não ruído.</td>
+              <td>Sanitizar o prefixo ou excluir do benchmark.</td>
+            </tr>
+            <tr>
+              <td>Overflow (Qwen)</td>
+              <td>${qwenEvidence}</td>
+              <td>Limite do modelo, não do dado.</td>
+              <td>Estratificar ou excluir apenas do benchmark Qwen.</td>
+            </tr>
+
+          </tbody>
+        </table>
+        <div class="outlier-footnote">Qwen possui limite explicitado no código; Gemini não. O quadro apresenta proposta metodológica agregada, sem expor texto bruto dos casos.</div>`;
+      cards.appendChild(outlierCard);
+    }
 
     if (f4.histograma_ementa) {
       const histECard = el('div', 'card card--wide');
